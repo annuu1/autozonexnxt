@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
 import { Types } from "mongoose";
 
 export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  await dbConnect();
-
-  const { id } = params;
+    req: NextRequest,
+    context: { params: { id: string } }
+  ) {
+    await dbConnect();
+  
+    const { id } = await context.params;
 
   // validate objectId
   if (!Types.ObjectId.isValid(id)) {

@@ -28,10 +28,20 @@ export default function DemandZonesPage() {
         method: "POST",
       });
       const updated = await res.json();
-
-      // Update local state instantly
+  
+      // Grab last_seen from the API response
+      const lastSeen = updated?.data?.last_seen ?? new Date().toISOString();
+  
+      // Update local state → add or overwrite last_seen
       setZones((prev) =>
-        prev.map((z) => (z._id === zone._id ? { ...z, last_seen: updated.last_seen } : z))
+        prev.map((z) =>
+          z._id === zone._id
+            ? {
+                ...z,
+                last_seen: lastSeen, // overwrites if exists, adds if missing
+              }
+            : z
+        )
       );
     } catch (err) {
       console.error("Error updating last seen:", err);
@@ -90,6 +100,17 @@ export default function DemandZonesPage() {
     { label: "Freshness", accessor: "freshness" },
     { label: "Trade Score", accessor: "trade_score" },
     { label: "Base Candles", accessor: "base_candles" },
+    // ✅ Access nested symbol_data fields
+    {
+      label: "LTP",
+      accessor: "symbol_data.ltp",
+      render: (val: any, row: any) => formatNumber(row.symbol_data?.ltp),
+    },
+    {
+      label: "Day Low",
+      accessor: "symbol_data.day_low",
+      render: (val: any, row: any) => formatNumber(row.symbol_data?.day_low),
+    },
   ];
 
   return (

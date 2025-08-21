@@ -36,6 +36,7 @@ export async function GET(req: Request) {
         trade_score: 1,
         timestamp: 1,
         end_timestamp: 1,
+        last_seen: 1,
         "symbol_data.ltp": 1,
         "symbol_data.day_low": 1,
       },
