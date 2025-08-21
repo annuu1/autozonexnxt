@@ -15,6 +15,7 @@ const demandZoneSchema = new Schema(
     timeframes: { type: [String], required: true },
     timestamp: { type: Date, required: true },
     trade_score: { type: Number, required: true },
+    last_seen: { type: Date },
   },
   { timestamps: true } // adds createdAt, updatedAt
 );

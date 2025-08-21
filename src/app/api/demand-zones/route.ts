@@ -8,14 +8,42 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
-
   const skip = (page - 1) * limit;
 
+  const pipeline = [
+    { $sort: { timestamp: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "symbols",             // collection to join
+        localField: "ticker",        // field from demand_zones
+        foreignField: "symbol",      // field from symbols
+        as: "symbol_data",
+      },
+    },
+    { $unwind: { path: "$symbol_data", preserveNullAndEmptyArrays: true } }, // optional
+    {
+      $project: {
+        zone_id: 1,
+        base_candles: 1,
+        distal_line: 1,
+        proximal_line: 1,
+        freshness: 1,
+        pattern: 1,
+        ticker: 1,
+        timeframes: 1,
+        trade_score: 1,
+        timestamp: 1,
+        end_timestamp: 1,
+        "symbol_data.ltp": 1,
+        "symbol_data.day_low": 1,
+      },
+    },
+  ];
+
   const [zones, total] = await Promise.all([
-    DemandZone.find({})
-      .sort({ timestamp: -1 }) // newest first
-      .skip(skip)
-      .limit(limit),
+    DemandZone.aggregate(pipeline),
     DemandZone.countDocuments(),
   ]);
 
