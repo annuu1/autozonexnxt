@@ -1,137 +1,74 @@
 "use client";
-
-import { useEffect, useState } from "react";
-
-interface DemandZone {
-  _id: string;
-  zone_id: string;
-  base_candles: number;
-  distal_line: number;
-  proximal_line: number;
-  ticker: string;
-  pattern: string;
-  freshness: number;
-  trade_score: number;
-  timeframes: string[];
-  timestamp: string;
-}
-
-interface ApiResponse {
-  data: DemandZone[];
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+import React, { useEffect, useState } from "react";
+import Table from "@/components/ui/Table";
 
 export default function DemandZonesPage() {
-  const [zones, setZones] = useState<DemandZone[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [zones, setZones] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10); // default rows per page
-  const [totalPages, setTotalPages] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    async function fetchZones() {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/demandZones?page=${page}&limit=${limit}`);
-        const data: ApiResponse = await res.json();
-        setZones(data.data);
-        setTotalPages(data.totalPages);
-      } catch (error) {
-        console.error("Failed to fetch demand zones:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchZones();
-  }, [page, limit]);
+    fetch(`/api/demand-zones?page=${page}&limit=${rowsPerPage}`)
+      .then((res) => res.json())
+      .then((res) => {
+        setZones(res.data);
+        setTotal(res.total);
+      });
+  }, [page, rowsPerPage]);
 
-  if (loading) {
-    return <p className="p-4">Loading demand zones...</p>;
-  }
+  const formatNumber = (val: any) =>
+    typeof val === "number" ? val.toFixed(2) : val;
+
+  const columns = [
+    { label: "Symbol", accessor: "ticker" },
+    { label: "Timeframe", accessor: "timeframes" },
+    { label: "Pattern", accessor: "pattern" },
+    {
+      label: "Proximal Line",
+      accessor: "proximal_line",
+      render: (val: any) => formatNumber(val),
+    },
+    {
+      label: "Distal Line",
+      accessor: "distal_line",
+      render: (val: any) => formatNumber(val),
+    },
+    { label: "Freshness", accessor: "freshness" },
+    {
+      label: "Trade Score",
+      accessor: "trade_score",
+      render: (val: any) => formatNumber(val),
+    },
+    {
+      label: "Base Candles",
+      accessor: "base_candles",
+      render: (val: any) => formatNumber(val),
+    },
+  ];
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Demand Zones</h1>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-200 rounded-lg shadow-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-4 py-2 text-left">Ticker</th>
-              <th className="px-4 py-2 text-left">Pattern</th>
-              <th className="px-4 py-2 text-left">Timeframe</th>
-              <th className="px-4 py-2 text-left">Proximal</th>
-              <th className="px-4 py-2 text-left">Distal</th>
-              <th className="px-4 py-2 text-left">Freshness</th>
-              <th className="px-4 py-2 text-left">Trade Score</th>
-              <th className="px-4 py-2 text-left">Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {zones.map((zone) => (
-              <tr key={zone._id} className="border-t">
-                <td className="px-4 py-2">{zone.ticker}</td>
-                <td className="px-4 py-2">{zone.pattern}</td>
-                <td className="px-4 py-2">{zone.timeframes.join(", ")}</td>
-                <td className="px-4 py-2">{zone.proximal_line.toFixed(2)}</td>
-                <td className="px-4 py-2">{zone.distal_line.toFixed(2)}</td>
-                <td className="px-4 py-2">{zone.freshness}</td>
-                <td className="px-4 py-2">{zone.trade_score}</td>
-                <td className="px-4 py-2">
-                  {new Date(zone.timestamp).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6">
-        
-        {/* Rows per page selector */}
-        <div className="flex items-center gap-2">
-          <span>Rows per page:</span>
-          <select
-            className="border rounded px-2 py-1"
-            value={limit}
-            onChange={(e) => {
-              setLimit(Number(e.target.value));
-              setPage(1); // reset to first page when limit changes
-            }}
-          >
-            {[10, 20, 50, 100, 200, 500, 1000].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Prev / Next pagination */}
-        <div className="flex items-center gap-4">
-          <button
-            className="px-4 py-2 border rounded disabled:opacity-50"
-            onClick={() => setPage((p) => Math.max(p - 1, 1))}
-            disabled={page === 1}
-          >
-            Prev
-          </button>
-          <span>
-            Page {page} of {totalPages}
-          </span>
-          <button
-            className="px-4 py-2 border rounded disabled:opacity-50"
-            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-            disabled={page === totalPages}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      <h1 className="text-xl font-bold mb-4">Demand Zones</h1>
+      <Table
+        columns={columns}
+        data={zones}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={total}
+        onPageChange={setPage}
+        onRowsPerPageChange={setRowsPerPage}
+        actions={(row) => (
+          <div className="flex gap-2">
+            <button className="px-2 py-1 border rounded text-blue-600">
+              Edit
+            </button>
+            <button className="px-2 py-1 border rounded text-red-600">
+              Delete
+            </button>
+          </div>
+        )}
+      />
     </div>
   );
 }
