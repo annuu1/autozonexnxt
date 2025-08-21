@@ -7,10 +7,6 @@ if (!MONGODB_URI) {
   throw new Error("Please add your MongoDB URI to .env.local");
 }
 
-/**
- * Caching the connection to avoid multiple connections
- * in development (Next.js hot reload problem).
- */
 let cached = (global as any).mongoose;
 
 if (!cached) {
@@ -22,10 +18,11 @@ async function dbConnect() {
 
   if (!cached.promise) {
     cached.promise = mongoose
-      .connect(MONGODB_URI, {
-        bufferCommands: false,
-      })
-      .then((mongoose) => mongoose);
+      .connect(MONGODB_URI, { bufferCommands: false })
+      .then((mongoose) => {
+        console.log("✅ Connected to DB:", mongoose.connection.db.databaseName);
+        return mongoose;
+      });
   }
 
   cached.conn = await cached.promise;
