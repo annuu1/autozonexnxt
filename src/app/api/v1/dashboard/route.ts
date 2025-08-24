@@ -52,7 +52,7 @@ export async function GET(req: Request) {
         },
       },
     },
-    { $match: { percentDiff: { $lte: 0.03 } } }, // within 3%
+    { $match: { percentDiff: { $lte: 0.03 }, freshness: { $gt: 0 } } }, // within 3%
     { $count: "count" },
   ]);
 

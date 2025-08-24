@@ -7,10 +7,11 @@ import {
   Col,
   Table,
   Button,
-  Space,
   Typography,
   DatePicker,
   Modal,
+  Tag,
+  Space,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -20,9 +21,6 @@ import {
   WarningOutlined,
   ClockCircleOutlined,
   AimOutlined,
-  PlusOutlined,
-  DownloadOutlined,
-  DeleteOutlined,
 } from "@ant-design/icons";
 
 const { Title } = Typography;
@@ -82,8 +80,60 @@ export default function DashboardPage() {
     }
   };
 
+  // 🟢 Helper: Last Seen Tag
+  const getLastSeenTag = (lastSeen?: string) => {
+    if (!lastSeen) return <Tag color="blue">New</Tag>;
+
+    const seenDate = new Date(lastSeen);
+    const today = new Date();
+    const diffDays =
+      (today.getTime() - seenDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (diffDays < 1) return <Tag color="green">Today</Tag>;
+    if (diffDays <= 3) return <Tag color="lime">{seenDate.toLocaleDateString()}</Tag>;
+    if (diffDays <= 10) return <Tag color="orange">{seenDate.toLocaleDateString()}</Tag>;
+    return <Tag color="red">{seenDate.toLocaleDateString()}</Tag>;
+  };
+
+  // 🟢 Helper: Diff Tag
+  const getDiffTag = (percent: number) => {
+    if (percent < 0) return <Tag color="red">{percent.toFixed(2)}%</Tag>;
+    if (percent <= 1) return <Tag color="gold">{percent.toFixed(2)}%</Tag>;
+    if (percent <= 3) return <Tag color="green">{percent.toFixed(2)}%</Tag>;
+    return <Tag>{percent.toFixed(2)}%</Tag>;
+  };
+
+  // 🟢 Clickable Ticker → update last_seen
+  const handleTickerClick = async (zone: any) => {
+    try {
+      const res = await fetch(`/api/v1/demand-zones/${zone._id}/seen`, {
+        method: "POST",
+      });
+      const updated = await res.json();
+      const lastSeen = updated?.last_seen ?? new Date().toISOString();
+
+      setZonesData((prev) =>
+        prev.map((z) =>
+          z._id === zone._id ? { ...z, last_seen: lastSeen } : z
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update last_seen:", err);
+    }
+  };
+
   const zoneColumns = [
-    { title: "Ticker", dataIndex: "ticker", key: "ticker" },
+    {
+      title: "Ticker",
+      dataIndex: "ticker",
+      key: "ticker",
+      render: (_: any, row: any) => (
+        <Button type="link" onClick={() => handleTickerClick(row)}>
+          {row.ticker}
+          <div style={{ fontSize: 12 }}>{getLastSeenTag(row.last_seen)}</div>
+        </Button>
+      ),
+    },
     { title: "Zone ID", dataIndex: "zone_id", key: "zone_id" },
     { title: "Proximal", dataIndex: "proximal_line", key: "proximal_line" },
     { title: "Distal", dataIndex: "distal_line", key: "distal_line" },
@@ -95,7 +145,7 @@ export default function DashboardPage() {
       title: "Diff %",
       dataIndex: "percentDiff",
       key: "percentDiff",
-      render: (v: number) => (v * 100).toFixed(2) + "%",
+      render: (v: number) => getDiffTag(v * 100),
     },
   ];
 
@@ -184,7 +234,7 @@ export default function DashboardPage() {
         open={zonesVisible}
         onCancel={() => setZonesVisible(false)}
         footer={null}
-        width="80%"
+        width="85%"
       >
         <Table
           dataSource={zonesData}

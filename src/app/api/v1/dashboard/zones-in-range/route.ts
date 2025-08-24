@@ -27,7 +27,12 @@ export async function GET() {
         },
       },
     },
-    { $match: { percentDiff: { $lte: 0.03 } } },
+    {
+      $match: {
+        percentDiff: { $lte: 0.03 }, // within 3% of day low
+        freshness: { $gt: 0 },
+      },
+    },
     {
       $project: {
         _id: 1,
@@ -40,7 +45,11 @@ export async function GET() {
         trade_score: 1,
         day_low: "$symbol.day_low",
         percentDiff: 1,
+        last_seen: 1,
       },
+    },
+    {
+      $sort: { freshness: -1 }, // fresher zones first
     },
   ]);
 
