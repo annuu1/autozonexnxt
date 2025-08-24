@@ -1,8 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Table, InputNumber, Select, Button, Space, Tag } from "antd";
+import {
+  Table,
+  InputNumber,
+  Select,
+  Button,
+  Space,
+  Tag,
+  Card,
+  Typography,
+  Divider,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { EditOutlined, DeleteOutlined, FilterOutlined, ReloadOutlined } from "@ant-design/icons";
+
+const { Title } = Typography;
 
 export default function DemandZonesPage() {
   const [zones, setZones] = useState<any[]>([]);
@@ -59,17 +72,17 @@ export default function DemandZonesPage() {
       (today.getTime() - seenDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    if (diffDays === 0) return <Tag color="green">{seenDate.toLocaleDateString()}</Tag>;
+    if (diffDays === 0) return <Tag color="green">Today</Tag>;
     if (diffDays <= 3) return <Tag color="lime">{seenDate.toLocaleDateString()}</Tag>;
-    if (diffDays <= 10) return <Tag color="red">{seenDate.toLocaleDateString()}</Tag>;
-    return <Tag color="magenta">{seenDate.toLocaleDateString()}</Tag>;
+    if (diffDays <= 10) return <Tag color="orange">{seenDate.toLocaleDateString()}</Tag>;
+    return <Tag color="red">{seenDate.toLocaleDateString()}</Tag>;
   };
 
-  const getDiffColor = (diff: number) => {
-    if (diff < 0) return "red";
-    if (diff <= 1) return "gold";
-    if (diff <= 3) return "green";
-    return "gray";
+  const getDiffTag = (diff: number) => {
+    if (diff < 0) return <Tag color="red">{diff.toFixed(2)}%</Tag>;
+    if (diff <= 1) return <Tag color="gold">{diff.toFixed(2)}%</Tag>;
+    if (diff <= 3) return <Tag color="green">{diff.toFixed(2)}%</Tag>;
+    return <Tag>{diff.toFixed(2)}%</Tag>;
   };
 
   // 🔹 Ant Design Table Columns
@@ -81,12 +94,10 @@ export default function DemandZonesPage() {
         <Button
           type="link"
           onClick={() => handleSymbolClick(row)}
-          style={{ padding: 0 }}
+          style={{ padding: 0, fontWeight: 600 }}
         >
-          <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
-            <strong>{row.ticker}</strong>
-            {getLastSeenLabel(row.last_seen)}
-          </div>
+          {row.ticker}
+          <div style={{ fontSize: 12 }}>{getLastSeenLabel(row.last_seen)}</div>
         </Button>
       ),
     },
@@ -116,7 +127,7 @@ export default function DemandZonesPage() {
         return (
           <Space direction="vertical" size={0}>
             <span>{formatNumber(ltp)}</span>
-            <span style={{ color: getDiffColor(diff) }}>{diff.toFixed(2)}%</span>
+            {getDiffTag(diff)}
           </Space>
         );
       },
@@ -132,53 +143,55 @@ export default function DemandZonesPage() {
         return (
           <Space direction="vertical" size={0}>
             <span>{formatNumber(dayLow)}</span>
-            <span style={{ color: getDiffColor(diff) }}>{diff.toFixed(2)}%</span>
+            {getDiffTag(diff)}
           </Space>
         );
       },
     },
     {
       title: "Actions",
-      render: (_: any, row: any) => (
+      render: (_: any) => (
         <Space>
-          <Button type="link">Edit</Button>
-          <Button type="link" danger>
-            Delete
-          </Button>
+          <Button type="text" icon={<EditOutlined />} />
+          <Button type="text" danger icon={<DeleteOutlined />} />
         </Space>
       ),
     },
   ];
 
   return (
-    <div>
-      <h1 style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
-        Demand Zones
-      </h1>
+    <Card style={{ padding: 24 }}>
+      <Title level={3} style={{ marginBottom: 16 }}>
+        📈 Demand Zones
+      </Title>
 
       {/* 🔹 Filters */}
-      <Space style={{ marginBottom: 16 }}>
-        <InputNumber
-          value={proximalWithin}
-          min={0}
-          max={100}
-          onChange={(val) => setProximalWithin(val ?? 0)}
-          addonAfter="%"
-        />
-        <Select
-          value={compareTo}
-          onChange={(val) => setCompareTo(val)}
-          options={[
-            { value: "ltp", label: "LTP" },
-            { value: "day_low", label: "Day Low" },
-          ]}
-          style={{ width: 120 }}
-        />
-        <Button type="primary" onClick={() => setUseFilters(true)}>
-          Apply Filters
-        </Button>
-        <Button onClick={() => setUseFilters(false)}>Clear</Button>
-      </Space>
+      <Card size="small" style={{ marginBottom: 16, background: "#fafafa" }}>
+        <Space>
+          <InputNumber
+            value={proximalWithin}
+            min={0}
+            max={100}
+            onChange={(val) => setProximalWithin(val ?? 0)}
+            addonAfter="%"
+          />
+          <Select
+            value={compareTo}
+            onChange={(val) => setCompareTo(val)}
+            options={[
+              { value: "ltp", label: "LTP" },
+              { value: "day_low", label: "Day Low" },
+            ]}
+            style={{ width: 120 }}
+          />
+          <Button type="primary" icon={<FilterOutlined />} onClick={() => setUseFilters(true)}>
+            Apply
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={() => setUseFilters(false)}>
+            Reset
+          </Button>
+        </Space>
+      </Card>
 
       {/* 🔹 Table with pagination */}
       <Table
@@ -195,7 +208,8 @@ export default function DemandZonesPage() {
             setRowsPerPage(pageSize);
           },
         }}
+        bordered
       />
-    </div>
+    </Card>
   );
 }

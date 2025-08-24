@@ -1,7 +1,7 @@
 // app/v1/dashboard/layout.tsx
 "use client";
 
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Grid } from "antd";
 import {
   DashboardOutlined,
   BarChartOutlined,
@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 const { Header, Sider, Content } = Layout;
+const { useBreakpoint } = Grid;
 
 type NavItem = {
   label: string;
@@ -33,31 +34,51 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/v1/dashboard/settings", icon: <SettingOutlined /> },
   { label: "Profile", href: "/v1/dashboard/profile", icon: <UserOutlined /> },
 ];
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const screens = useBreakpoint();
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ minHeight: "100vh"}}>
       {/* Sidebar */}
       <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        breakpoint="lg"
-      >
-        <div
-          style={{
-            height: 64,
-            margin: 16,
-            background: "rgba(255, 255, 255, 0.2)",
-          }}
-        />
+          collapsible
+          collapsed={collapsed}
+          onCollapse={(value) => setCollapsed(value)}
+          breakpoint="lg"
+          collapsedWidth={screens.xs ? 0 : 80}
+        >
+          {/* Logo */}
+          <div
+            style={{
+              height: 64,
+              margin: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: collapsed ? "center" : "flex-start",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: collapsed ? 20 : 22,
+              letterSpacing: 1,
+            }}
+          >
+            {/* If collapsed, show only icon */}
+            {collapsed ? (
+              <span style={{ fontSize: 24 }}>📈</span>
+            ) : (
+              <>
+                <span style={{ marginRight: 8, fontSize: 24 }}>📈</span>
+                AutoZone
+              </>
+            )}
+          </div>
 
-        <Menu theme="dark" mode="inline">
+        <Menu theme="dark" mode="inline" selectedKeys={[]}>
           {navItems.map((item) => (
             <Menu.Item key={item.href} icon={item.icon}>
               <Link href={item.href}>{item.label}</Link>
@@ -74,23 +95,35 @@ export default function DashboardLayout({
             background: "#fff",
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid #f0f0f0",
           }}
         >
-          {collapsed ? (
-            <MenuUnfoldOutlined
-              onClick={() => setCollapsed(false)}
-              style={{ fontSize: 18 }}
-            />
-          ) : (
-            <MenuFoldOutlined
-              onClick={() => setCollapsed(true)}
-              style={{ fontSize: 18 }}
-            />
-          )}
-          <h1 style={{ marginLeft: 16 }}>Dashboard</h1>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {collapsed ? (
+              <MenuUnfoldOutlined
+                onClick={() => setCollapsed(false)}
+                style={{ fontSize: 18, cursor: "pointer" }}
+              />
+            ) : (
+              <MenuFoldOutlined
+                onClick={() => setCollapsed(true)}
+                style={{ fontSize: 18, cursor: "pointer" }}
+              />
+            )}
+            <h1 style={{ marginLeft: 16, fontSize: 18 }}>Dashboard</h1>
+          </div>
         </Header>
 
-        <Content style={{ margin: "24px 16px", padding: 24, background: "#fff" }}>
+        <Content
+          style={{
+            margin: screens.xs ? "12px" : "24px 16px",
+            padding: screens.xs ? 12 : 24,
+            background: "#fff",
+            borderRadius: 8,
+            minHeight: "calc(100vh - 112px)", // adjust for header
+          }}
+        >
           {children}
         </Content>
       </Layout>
