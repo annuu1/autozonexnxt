@@ -4,12 +4,12 @@ import DemandZone from "@/models/DemandZone";
 import { Types } from "mongoose";
 
 export async function POST(
-    req: NextRequest,
-    context: { params: { id: string } }
-  ) {
-    await dbConnect();
-  
-    const { id } = await context.params;
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  await dbConnect();
+
+  const { id } = context.params; // ✅ no "await"
 
   // validate objectId
   if (!Types.ObjectId.isValid(id)) {
@@ -26,7 +26,10 @@ export async function POST(
     );
 
     if (!zone) {
-      return NextResponse.json({ error: "Demand zone not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Demand zone not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
