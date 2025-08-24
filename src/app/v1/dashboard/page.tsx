@@ -1,13 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, Row, Col, Table, Button, Space, Typography } from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Button,
+  Space,
+  Typography,
+  DatePicker,
+  Modal,
+} from "antd";
+import dayjs from "dayjs";
 import {
   UserOutlined,
   DollarCircleOutlined,
   DesktopOutlined,
   WarningOutlined,
   ClockCircleOutlined,
+  AimOutlined,
   PlusOutlined,
   DownloadOutlined,
   DeleteOutlined,
@@ -22,34 +34,70 @@ export default function DashboardPage() {
     symbols: 0,
     invalidSymbols: 0,
     outdatedSymbols: 0,
+    zonesNearDayLow: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
-  const dataSource = [
-    { key: "1", name: "John Doe", email: "john@example.com", role: "Admin" },
-    { key: "2", name: "Jane Smith", email: "jane@example.com", role: "User" },
-  ];
+  // Modal state for zones
+  const [zonesVisible, setZonesVisible] = useState(false);
+  const [zonesData, setZonesData] = useState<any[]>([]);
+  const [zonesLoading, setZonesLoading] = useState(false);
 
-  const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Role", dataIndex: "role", key: "role" },
-  ];
+  async function fetchStats(date?: string) {
+    try {
+      let url = "/api/v1/dashboard";
+      if (date) url += `?date=${date}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to fetch stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        const res = await fetch("/api/v1/dashboard");
-        const data = await res.json();
-        setStats(data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchStats();
   }, []);
+
+  const handleDateChange = (date: any, dateString: string) => {
+    setSelectedDate(dateString);
+    fetchStats(dateString);
+  };
+
+  const openZones = async () => {
+    setZonesVisible(true);
+    setZonesLoading(true);
+    try {
+      const res = await fetch("/api/v1/dashboard/zones-in-range");
+      const data = await res.json();
+      setZonesData(data);
+    } catch (err) {
+      console.error("Failed to load zones:", err);
+    } finally {
+      setZonesLoading(false);
+    }
+  };
+
+  const zoneColumns = [
+    { title: "Ticker", dataIndex: "ticker", key: "ticker" },
+    { title: "Zone ID", dataIndex: "zone_id", key: "zone_id" },
+    { title: "Proximal", dataIndex: "proximal_line", key: "proximal_line" },
+    { title: "Distal", dataIndex: "distal_line", key: "distal_line" },
+    { title: "Pattern", dataIndex: "pattern", key: "pattern" },
+    { title: "Freshness", dataIndex: "freshness", key: "freshness" },
+    { title: "Trade Score", dataIndex: "trade_score", key: "trade_score" },
+    { title: "Day Low", dataIndex: "day_low", key: "day_low" },
+    {
+      title: "Diff %",
+      dataIndex: "percentDiff",
+      key: "percentDiff",
+      render: (v: number) => (v * 100).toFixed(2) + "%",
+    },
+  ];
 
   return (
     <div>
@@ -57,8 +105,18 @@ export default function DashboardPage() {
         📊 Dashboard
       </Title>
 
+      {/* Date selector for outdated check */}
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ marginRight: 8 }}>Check outdated symbols as of:</span>
+        <DatePicker
+          onChange={handleDateChange}
+          value={selectedDate ? dayjs(selectedDate) : null}
+        />
+      </div>
+
       {/* Top cards */}
       <Row gutter={[16, 16]}>
+        {/* Existing cards */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
@@ -68,7 +126,6 @@ export default function DashboardPage() {
             gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
           />
         </Col>
-
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
@@ -78,7 +135,6 @@ export default function DashboardPage() {
             gradient="linear-gradient(135deg, #F7971E, #FFD200)"
           />
         </Col>
-
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
@@ -89,6 +145,7 @@ export default function DashboardPage() {
           />
         </Col>
 
+        {/* Invalid + Outdated */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
@@ -98,59 +155,45 @@ export default function DashboardPage() {
             gradient="linear-gradient(135deg, #ff512f, #dd2476)"
           />
         </Col>
-
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
-            title="Outdated Symbols"
+            title={`Outdated Symbols`}
             value={stats.outdatedSymbols}
             icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #f7971e, #f44336)"
           />
         </Col>
-      </Row>
 
-      {/* Table section */}
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col span={24}>
-          <Card
-            title="Recent Users"
-            bordered={false}
-            style={{ borderRadius: 8 }}
-            bodyStyle={{ padding: 16 }}
-          >
-            <Table
-              dataSource={dataSource}
-              columns={columns}
-              pagination={false}
-              size="middle"
-              bordered
-            />
-          </Card>
+        {/* 🔹 New Card for Zones Near DayLow */}
+        <Col xs={24} sm={12} md={8}>
+          <StatCard
+            loading={loading}
+            title="Zones Near Day Low (3%)"
+            value={stats.zonesNearDayLow}
+            icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
+            gradient="linear-gradient(135deg, #00b09b, #96c93d)"
+            onClick={openZones}
+          />
         </Col>
       </Row>
 
-      {/* Quick actions */}
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col span={24}>
-          <Card
-            title="Quick Actions"
-            bordered={false}
-            style={{ borderRadius: 8 }}
-            bodyStyle={{ padding: 16 }}
-          >
-            <Space wrap>
-              <Button type="primary" icon={<PlusOutlined />}>
-                Add User
-              </Button>
-              <Button icon={<DownloadOutlined />}>Export Data</Button>
-              <Button danger icon={<DeleteOutlined />}>
-                Delete Selected
-              </Button>
-            </Space>
-          </Card>
-        </Col>
-      </Row>
+      {/* Zones Modal */}
+      <Modal
+        title="Zones Near Day Low (within 3%)"
+        open={zonesVisible}
+        onCancel={() => setZonesVisible(false)}
+        footer={null}
+        width="80%"
+      >
+        <Table
+          dataSource={zonesData}
+          columns={zoneColumns}
+          rowKey="_id"
+          loading={zonesLoading}
+          bordered
+        />
+      </Modal>
     </div>
   );
 }
@@ -162,12 +205,14 @@ function StatCard({
   icon,
   gradient,
   loading,
+  onClick,
 }: {
   title: string;
   value: number;
   icon: React.ReactNode;
   gradient: string;
   loading: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Card
@@ -175,9 +220,11 @@ function StatCard({
         background: gradient,
         color: "#fff",
         borderRadius: 8,
+        cursor: onClick ? "pointer" : "default",
       }}
       bordered={false}
       loading={loading}
+      onClick={onClick}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
         {icon}

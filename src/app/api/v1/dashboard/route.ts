@@ -9,35 +9,61 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const dateParam = url.searchParams.get("date");
-
-  // Reference date = today if not passed
   const selectedDate = dateParam ? new Date(dateParam) : new Date();
   selectedDate.setHours(0, 0, 0, 0);
 
-  // Base counts
+  // Counts
   const users = await User.countDocuments();
   const demandZones = await DemandZone.countDocuments();
   const symbols = await Symbols.countDocuments();
 
-  // Invalid = ltp null, NaN, missing, or string
   const invalidSymbols = await Symbols.countDocuments({
     $or: [
       { ltp: null },
       { ltp: { $exists: false } },
-      { ltp: { $type: "string" } }
-    ]
+      { ltp: { $type: "string" } },
+    ],
   });
 
-  // Outdated = last_updated < selectedDate
   const outdatedSymbols = await Symbols.countDocuments({
-    last_updated: { $lt: selectedDate }
+    last_updated: { $lt: selectedDate },
   });
+
+  // 🔹 Demand zones within 3% of symbol day_low
+  const zonesInRange = await DemandZone.aggregate([
+    {
+      $lookup: {
+        from: "symbols",
+        localField: "ticker",
+        foreignField: "symbol",
+        as: "symbol",
+      },
+    },
+    { $unwind: "$symbol" },
+    {
+      $addFields: {
+        percentDiff: {
+          $abs: {
+            $divide: [
+              { $subtract: ["$proximal_line", "$symbol.day_low"] },
+              "$symbol.day_low",
+            ],
+          },
+        },
+      },
+    },
+    { $match: { percentDiff: { $lte: 0.03 } } }, // within 3%
+    { $count: "count" },
+  ]);
+
+  const zonesNearDayLow = zonesInRange.length > 0 ? zonesInRange[0].count : 0;
 
   return NextResponse.json({
     users,
     demandZones,
     symbols,
     invalidSymbols,
-    outdatedSymbols
+    outdatedSymbols,
+    zonesNearDayLow, // 🔹 new field
   });
 }
