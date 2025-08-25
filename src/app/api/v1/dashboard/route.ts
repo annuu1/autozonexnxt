@@ -22,6 +22,7 @@ export async function GET(req: Request) {
       { ltp: null },
       { ltp: { $exists: false } },
       { ltp: { $type: "string" } },
+      { status: "inactive" },
     ],
   });
 

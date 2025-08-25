@@ -12,6 +12,8 @@ import {
   Modal,
   Tag,
   Space,
+  Popconfirm,
+  message,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -37,10 +39,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  // Modal state for zones
+  // 🔹 State for Zones Near Day Low
   const [zonesVisible, setZonesVisible] = useState(false);
   const [zonesData, setZonesData] = useState<any[]>([]);
   const [zonesLoading, setZonesLoading] = useState(false);
+
+  // 🔹 State for Invalid Symbols
+  const [invalidVisible, setInvalidVisible] = useState(false);
+  const [invalidData, setInvalidData] = useState<any[]>([]);
+  const [invalidLoading, setInvalidLoading] = useState(false);
 
   async function fetchStats(date?: string) {
     try {
@@ -66,6 +73,7 @@ export default function DashboardPage() {
     fetchStats(dateString);
   };
 
+  // 🔹 Open Zones Near Day Low
   const openZones = async () => {
     setZonesVisible(true);
     setZonesLoading(true);
@@ -80,72 +88,94 @@ export default function DashboardPage() {
     }
   };
 
-  // 🟢 Helper: Last Seen Tag
-  const getLastSeenTag = (lastSeen?: string) => {
-    if (!lastSeen) return <Tag color="blue">New</Tag>;
-
-    const seenDate = new Date(lastSeen);
-    const today = new Date();
-    const diffDays =
-      (today.getTime() - seenDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diffDays < 1) return <Tag color="green">Today</Tag>;
-    if (diffDays <= 3) return <Tag color="lime">{seenDate.toLocaleDateString()}</Tag>;
-    if (diffDays <= 10) return <Tag color="orange">{seenDate.toLocaleDateString()}</Tag>;
-    return <Tag color="red">{seenDate.toLocaleDateString()}</Tag>;
-  };
-
-  // 🟢 Helper: Diff Tag
-  const getDiffTag = (percent: number) => {
-    if (percent < 0) return <Tag color="red">{percent.toFixed(2)}%</Tag>;
-    if (percent <= 1) return <Tag color="gold">{percent.toFixed(2)}%</Tag>;
-    if (percent <= 3) return <Tag color="green">{percent.toFixed(2)}%</Tag>;
-    return <Tag>{percent.toFixed(2)}%</Tag>;
-  };
-
-  // 🟢 Clickable Ticker → update last_seen
-  const handleTickerClick = async (zone: any) => {
+  // 🔹 Open Invalid Symbols
+  const openInvalidSymbols = async () => {
+    setInvalidVisible(true);
+    setInvalidLoading(true);
     try {
-      const res = await fetch(`/api/v1/demand-zones/${zone._id}/seen`, {
-        method: "POST",
-      });
-      const updated = await res.json();
-      const lastSeen = updated?.last_seen ?? new Date().toISOString();
-
-      setZonesData((prev) =>
-        prev.map((z) =>
-          z._id === zone._id ? { ...z, last_seen: lastSeen } : z
-        )
-      );
+      const res = await fetch("/api/v1/dashboard/invalid-symbols");
+      const data = await res.json();
+      setInvalidData(data);
     } catch (err) {
-      console.error("Failed to update last_seen:", err);
+      console.error("Failed to load invalid symbols:", err);
+    } finally {
+      setInvalidLoading(false);
     }
   };
 
-  const zoneColumns = [
+  // 🔹 Delete Invalid Symbol
+  const handleDeleteSymbol = async (id: string) => {
+    try {
+      await fetch(`/api/v1/symbols/${id}`, { method: "DELETE" });
+      message.success("Symbol deleted");
+      setInvalidData((prev) => prev.filter((s) => s._id !== id));
+    } catch {
+      message.error("Failed to delete symbol");
+    }
+  };
+
+  // 🔹 Update Invalid Symbol (example only)
+  const handleUpdateSymbol = async (symbol: any) => {
+    try {
+      const res = await fetch(`/api/v1/symbols/${symbol._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "active",
+          company_name: symbol.company_name || "Updated Company",
+        }),
+      });
+      const updated = await res.json();
+      setInvalidData((prev) =>
+        prev.map((s) => (s._id === updated._id ? updated : s))
+      );
+      message.success("Symbol updated");
+    } catch {
+      message.error("Failed to update symbol");
+    }
+  };
+
+  // 🔹 Table columns for Invalid Symbols
+  const invalidColumns = [
+    { title: "Symbol", dataIndex: "symbol", key: "symbol" },
     {
-      title: "Ticker",
-      dataIndex: "ticker",
-      key: "ticker",
-      render: (_: any, row: any) => (
-        <Button type="link" onClick={() => handleTickerClick(row)}>
-          {row.ticker}
-          <div style={{ fontSize: 12 }}>{getLastSeenTag(row.last_seen)}</div>
-        </Button>
-      ),
+      title: "Company",
+      dataIndex: "company_name",
+      key: "company_name",
+      render: (v: string) => v || <Tag color="red">Unknown</Tag>,
     },
-    { title: "Zone ID", dataIndex: "zone_id", key: "zone_id" },
-    { title: "Proximal", dataIndex: "proximal_line", key: "proximal_line" },
-    { title: "Distal", dataIndex: "distal_line", key: "distal_line" },
-    { title: "Pattern", dataIndex: "pattern", key: "pattern" },
-    { title: "Freshness", dataIndex: "freshness", key: "freshness" },
-    { title: "Trade Score", dataIndex: "trade_score", key: "trade_score" },
+    { title: "LTP", dataIndex: "ltp", key: "ltp" },
     { title: "Day Low", dataIndex: "day_low", key: "day_low" },
     {
-      title: "Diff %",
-      dataIndex: "percentDiff",
-      key: "percentDiff",
-      render: (v: number) => getDiffTag(v * 100),
+      title: "Watchlists",
+      dataIndex: "watchlists",
+      key: "watchlists",
+      render: (arr: string[]) => arr?.join(", "),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (s: string) => (
+        <Tag color={s === "active" ? "green" : "red"}>{s}</Tag>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_: any, row: any) => (
+        <Space>
+          <Button type="primary" onClick={() => handleUpdateSymbol(row)}>
+            Update
+          </Button>
+          <Popconfirm
+            title="Delete this symbol?"
+            onConfirm={() => handleDeleteSymbol(row._id)}
+          >
+            <Button danger>Delete</Button>
+          </Popconfirm>
+        </Space>
+      ),
     },
   ];
 
@@ -166,7 +196,6 @@ export default function DashboardPage() {
 
       {/* Top cards */}
       <Row gutter={[16, 16]}>
-        {/* Existing cards */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
@@ -181,7 +210,9 @@ export default function DashboardPage() {
             loading={loading}
             title="Demand Zones"
             value={stats.demandZones}
-            icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+            icon={
+              <DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />
+            }
             gradient="linear-gradient(135deg, #F7971E, #FFD200)"
           />
         </Col>
@@ -203,6 +234,7 @@ export default function DashboardPage() {
             value={stats.invalidSymbols}
             icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #ff512f, #dd2476)"
+            onClick={openInvalidSymbols}
           />
         </Col>
         <Col xs={24} sm={12} md={8}>
@@ -210,12 +242,13 @@ export default function DashboardPage() {
             loading={loading}
             title={`Outdated Symbols`}
             value={stats.outdatedSymbols}
-            icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+            icon={
+              <ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />
+            }
             gradient="linear-gradient(135deg, #f7971e, #f44336)"
           />
         </Col>
 
-        {/* 🔹 New Card for Zones Near DayLow */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
@@ -238,9 +271,29 @@ export default function DashboardPage() {
       >
         <Table
           dataSource={zonesData}
-          columns={zoneColumns}
+          columns={[
+            { title: "Ticker", dataIndex: "ticker", key: "ticker" },
+            { title: "Zone ID", dataIndex: "zone_id", key: "zone_id" },
+          ]}
           rowKey="_id"
           loading={zonesLoading}
+          bordered
+        />
+      </Modal>
+
+      {/* Invalid Symbols Modal */}
+      <Modal
+        title="Invalid Symbols"
+        open={invalidVisible}
+        onCancel={() => setInvalidVisible(false)}
+        footer={null}
+        width="85%"
+      >
+        <Table
+          dataSource={invalidData}
+          columns={invalidColumns}
+          rowKey="_id"
+          loading={invalidLoading}
           bordered
         />
       </Modal>
