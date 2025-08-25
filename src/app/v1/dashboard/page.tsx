@@ -227,6 +227,7 @@ export default function DashboardPage() {
     },
     { title: "Company", dataIndex: "company_name", key: "company_name" },
     { title: "Last Updated", dataIndex: "updated_at", key: "updated_at" },
+    {status: "Status", dataIndex: "status", key: "status", render: (s: string) => <Tag color={s === "active" ? "green" : "red"}>{s}</Tag>},
     {
       title: "Actions",
       key: "actions",
