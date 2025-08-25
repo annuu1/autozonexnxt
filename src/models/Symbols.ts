@@ -11,6 +11,7 @@ const symbolSchema = new Schema(
     last_updated: { type: Date },
     day_low: { type: Number },
     updated_at: { type: Date },
+    status: { type: String },
   },
   { timestamps: true }
 );
