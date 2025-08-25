@@ -16,81 +16,47 @@ import StatCard from "@/components/dashboard/StatCard";
 import ZonesModal from "@/components/dashboard/ZonesModal";
 import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 
+// Hooks
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useZones } from "@/hooks/useZones";
+import { useInvalidSymbols }  from "@/hooks/useInvalidSymbols";
+
 const { Title } = Typography;
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    users: 0,
-    demandZones: 0,
-    symbols: 0,
-    invalidSymbols: 0,
-    outdatedSymbols: 0,
-    zonesNearDayLow: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>("");
 
   // Zones modal state
   const [zonesVisible, setZonesVisible] = useState(false);
-  const [zonesData, setZonesData] = useState<any[]>([]);
-  const [zonesLoading, setZonesLoading] = useState(false);
 
   // Invalid modal state
   const [invalidVisible, setInvalidVisible] = useState(false);
-  const [invalidData, setInvalidData] = useState<any[]>([]);
-  const [invalidLoading, setInvalidLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingSymbol, setEditingSymbol] = useState<string>("");
 
-  // Fetch stats
-  async function fetchStats(date?: string) {
-    try {
-      let url = "/api/v1/dashboard";
-      if (date) url += `?date=${date}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      setStats(data);
-    } catch (error) {
-      console.error("Failed to fetch stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [selectedDate, setSelectedDate] = useState<string>("");
+
+const { data: stats, isLoading, isError, error, refetch } = useDashboardStats(selectedDate);
+const { data: zonesData, isFetching: zonesLoading, refetch: refetchZones, markZoneSeen } = useZones();
+const { data: invalidData, isFetching: invalidLoading, refetch: refetchInvalid, updateSymbol, deleteSymbol } = useInvalidSymbols();
 
   useEffect(() => {
-    fetchStats();
+    refetch();
   }, []);
 
   const handleDateChange = (date: any, dateString: string) => {
     setSelectedDate(dateString);
-    fetchStats(dateString);
+    refetch();
   };
 
   // Zones handlers
   const openZones = async () => {
     setZonesVisible(true);
-    setZonesLoading(true);
-    try {
-      const res = await fetch("/api/v1/dashboard/zones-in-range");
-      const data = await res.json();
-      setZonesData(data);
-    } catch (err) {
-      console.error("Failed to load zones:", err);
-    } finally {
-      setZonesLoading(false);
-    }
+    refetchZones();
   };
 
   const handleTickerClick = async (zone: any) => {
     try {
-      const res = await fetch(`/api/v1/demand-zones/${zone._id}/seen`, {
-        method: "POST",
-      });
-      const updated = await res.json();
-      const lastSeen = updated?.last_seen ?? new Date().toISOString();
-      setZonesData((prev) =>
-        prev.map((z) => (z._id === zone._id ? { ...z, last_seen: lastSeen } : z))
-      );
+      await markZoneSeen.mutateAsync(zone._id);
     } catch (err) {
       console.error("Failed to update last_seen:", err);
     }
@@ -99,55 +65,18 @@ export default function DashboardPage() {
   // Invalid symbols handlers
   const openInvalidSymbols = async () => {
     setInvalidVisible(true);
-    setInvalidLoading(true);
-    try {
-      const res = await fetch("/api/v1/dashboard/invalid-symbols");
-      const data = await res.json();
-      setInvalidData(data);
-    } catch (err) {
-      console.error("Failed to load invalid symbols:", err);
-    } finally {
-      setInvalidLoading(false);
-    }
+    refetchInvalid();
   };
 
   const handleUpdateSymbol = async (record: any) => {
-    try {
-      const res = await fetch(`/api/v1/symbols/${record._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol: editingSymbol }),
-      });
-      if (res.ok) {
-        message.success("Symbol updated");
-        setInvalidData((prev) =>
-          prev.map((s) =>
-            s._id === record._id ? { ...s, symbol: editingSymbol } : s
-          )
-        );
-        setEditingId(null);
-      } else {
-        message.error("Failed to update");
-      }
-    } catch (err) {
-      console.error("Update failed:", err);
-      message.error("Error updating symbol");
-    }
+    updateSymbol.mutate({ id: record._id, symbol: editingSymbol });
+    message.success("Symbol updated");
+    setEditingId(null);
   };
 
   const handleDeleteSymbol = async (id: string) => {
-    try {
-      const res = await fetch(`/api/v1/symbols/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        message.success("Symbol deleted");
-        setInvalidData((prev) => prev.filter((s) => s._id !== id));
-      } else {
-        message.error("Failed to delete");
-      }
-    } catch (err) {
-      console.error("Delete failed:", err);
-      message.error("Error deleting symbol");
-    }
+    deleteSymbol.mutate(id);
+    message.success("Symbol deleted");
   };
 
   return (
@@ -169,27 +98,27 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={8}>
           <StatCard
-            loading={loading}
+            loading={isLoading}
             title="Users"
-            value={stats.users}
+            value={stats?.users??0}
             icon={<UserOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
           />
         </Col>
         <Col xs={24} sm={12} md={8}>
           <StatCard
-            loading={loading}
+            loading={isLoading}
             title="Demand Zones"
-            value={stats.demandZones}
+            value={stats?.demandZones??0}
             icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #F7971E, #FFD200)"
           />
         </Col>
         <Col xs={24} sm={12} md={8}>
           <StatCard
-            loading={loading}
+            loading={isLoading}
             title="Symbols"
-            value={stats.symbols}
+            value={stats?.symbols??0}
             icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
           />
@@ -198,9 +127,9 @@ export default function DashboardPage() {
         {/* Invalid */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
-            loading={loading}
+            loading={isLoading}
             title="Invalid Symbols"
-            value={stats.invalidSymbols}
+            value={stats?.invalidSymbols??0}
             icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #ff512f, #dd2476)"
             onClick={openInvalidSymbols}
@@ -210,9 +139,9 @@ export default function DashboardPage() {
         {/* Outdated */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
-            loading={loading}
+            loading={isLoading}
             title="Outdated Symbols"
-            value={stats.outdatedSymbols}
+            value={stats?.outdatedSymbols??0}
             icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #f7971e, #f44336)"
           />
@@ -221,9 +150,9 @@ export default function DashboardPage() {
         {/* Zones Near Day Low */}
         <Col xs={24} sm={12} md={8}>
           <StatCard
-            loading={loading}
+            loading={isLoading}
             title="Zones Near Day Low (3%)"
-            value={stats.zonesNearDayLow}
+            value={stats?.zonesNearDayLow??0}
             icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #00b09b, #96c93d)"
             onClick={openZones}
