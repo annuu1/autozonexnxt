@@ -1,21 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  Row,
-  Col,
-  Table,
-  Button,
-  Typography,
-  DatePicker,
-  Modal,
-  Tag,
-  Space,
-  Input,
-  Popconfirm,
-  message,
-} from "antd";
+import { Row, Col, Typography, DatePicker, message } from "antd";
 import dayjs from "dayjs";
 import {
   UserOutlined,
@@ -25,6 +11,10 @@ import {
   ClockCircleOutlined,
   AimOutlined,
 } from "@ant-design/icons";
+
+import StatCard from "@/components/dashboard/StatCard";
+import ZonesModal from "@/components/dashboard/ZonesModal";
+import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 
 const { Title } = Typography;
 
@@ -40,18 +30,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  // Zones modal
+  // Zones modal state
   const [zonesVisible, setZonesVisible] = useState(false);
   const [zonesData, setZonesData] = useState<any[]>([]);
   const [zonesLoading, setZonesLoading] = useState(false);
 
-  // Invalid Symbols modal
+  // Invalid modal state
   const [invalidVisible, setInvalidVisible] = useState(false);
   const [invalidData, setInvalidData] = useState<any[]>([]);
   const [invalidLoading, setInvalidLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingSymbol, setEditingSymbol] = useState<string>("");
 
+  // Fetch stats
   async function fetchStats(date?: string) {
     try {
       let url = "/api/v1/dashboard";
@@ -75,7 +66,7 @@ export default function DashboardPage() {
     fetchStats(dateString);
   };
 
-  // 🟢 Open Zones Modal
+  // Zones handlers
   const openZones = async () => {
     setZonesVisible(true);
     setZonesLoading(true);
@@ -90,7 +81,22 @@ export default function DashboardPage() {
     }
   };
 
-  // 🟢 Open Invalid Symbols Modal
+  const handleTickerClick = async (zone: any) => {
+    try {
+      const res = await fetch(`/api/v1/demand-zones/${zone._id}/seen`, {
+        method: "POST",
+      });
+      const updated = await res.json();
+      const lastSeen = updated?.last_seen ?? new Date().toISOString();
+      setZonesData((prev) =>
+        prev.map((z) => (z._id === zone._id ? { ...z, last_seen: lastSeen } : z))
+      );
+    } catch (err) {
+      console.error("Failed to update last_seen:", err);
+    }
+  };
+
+  // Invalid symbols handlers
   const openInvalidSymbols = async () => {
     setInvalidVisible(true);
     setInvalidLoading(true);
@@ -105,7 +111,6 @@ export default function DashboardPage() {
     }
   };
 
-  // 🟢 Update Symbol
   const handleUpdateSymbol = async (record: any) => {
     try {
       const res = await fetch(`/api/v1/symbols/${record._id}`, {
@@ -130,7 +135,6 @@ export default function DashboardPage() {
     }
   };
 
-  // 🟢 Delete Symbol
   const handleDeleteSymbol = async (id: string) => {
     try {
       const res = await fetch(`/api/v1/symbols/${id}`, { method: "DELETE" });
@@ -145,123 +149,6 @@ export default function DashboardPage() {
       message.error("Error deleting symbol");
     }
   };
-
-  // 🟢 Helpers for Zones
-  const getLastSeenTag = (lastSeen?: string) => {
-    if (!lastSeen) return <Tag color="blue">New</Tag>;
-    const seenDate = new Date(lastSeen);
-    const today = new Date();
-    const diffDays =
-      (today.getTime() - seenDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays < 1) return <Tag color="green">Today</Tag>;
-    if (diffDays <= 3) return <Tag color="lime">{seenDate.toLocaleDateString()}</Tag>;
-    if (diffDays <= 10) return <Tag color="orange">{seenDate.toLocaleDateString()}</Tag>;
-    return <Tag color="red">{seenDate.toLocaleDateString()}</Tag>;
-  };
-
-  const getDiffTag = (percent: number) => {
-    if (percent < 0) return <Tag color="red">{percent.toFixed(2)}%</Tag>;
-    if (percent <= 1) return <Tag color="gold">{percent.toFixed(2)}%</Tag>;
-    if (percent <= 3) return <Tag color="green">{percent.toFixed(2)}%</Tag>;
-    return <Tag>{percent.toFixed(2)}%</Tag>;
-  };
-
-  const handleTickerClick = async (zone: any) => {
-    try {
-      const res = await fetch(`/api/v1/demand-zones/${zone._id}/seen`, {
-        method: "POST",
-      });
-      const updated = await res.json();
-      const lastSeen = updated?.last_seen ?? new Date().toISOString();
-      setZonesData((prev) =>
-        prev.map((z) => (z._id === zone._id ? { ...z, last_seen: lastSeen } : z))
-      );
-    } catch (err) {
-      console.error("Failed to update last_seen:", err);
-    }
-  };
-
-  // 🟢 Zones Table
-  const zoneColumns = [
-    {
-      title: "Ticker",
-      dataIndex: "ticker",
-      key: "ticker",
-      render: (_: any, row: any) => (
-        <Button type="link" onClick={() => handleTickerClick(row)}>
-          {row.ticker}
-          <div style={{ fontSize: 12 }}>{getLastSeenTag(row.last_seen)}</div>
-        </Button>
-      ),
-    },
-    { title: "Zone ID", dataIndex: "zone_id", key: "zone_id" },
-    { title: "Proximal", dataIndex: "proximal_line", key: "proximal_line" },
-    { title: "Distal", dataIndex: "distal_line", key: "distal_line" },
-    { title: "Pattern", dataIndex: "pattern", key: "pattern" },
-    { title: "Freshness", dataIndex: "freshness", key: "freshness" },
-    { title: "Trade Score", dataIndex: "trade_score", key: "trade_score" },
-    { title: "Day Low", dataIndex: "day_low", key: "day_low" },
-    {
-      title: "Diff %",
-      dataIndex: "percentDiff",
-      key: "percentDiff",
-      render: (v: number) => getDiffTag(v * 100),
-    },
-  ];
-
-  // 🟢 Invalid Symbols Table
-  const invalidColumns = [
-    {
-      title: "Symbol",
-      dataIndex: "symbol",
-      key: "symbol",
-      render: (_: any, record: any) =>
-        editingId === record._id ? (
-          <Input
-            defaultValue={record.symbol}
-            onChange={(e) => setEditingSymbol(e.target.value)}
-          />
-        ) : (
-          record.symbol
-        ),
-    },
-    { title: "Company", dataIndex: "company_name", key: "company_name" },
-    { title: "Last Updated", dataIndex: "updated_at", key: "updated_at" },
-    {status: "Status", dataIndex: "status", key: "status", render: (s: string) => <Tag color={s === "active" ? "green" : "red"}>{s}</Tag>},
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: any, record: any) =>
-        editingId === record._id ? (
-          <Space>
-            <Button type="primary" onClick={() => handleUpdateSymbol(record)}>
-              Save
-            </Button>
-            <Button onClick={() => setEditingId(null)}>Cancel</Button>
-          </Space>
-        ) : (
-          <Space>
-            <Button
-              type="link"
-              onClick={() => {
-                setEditingId(record._id);
-                setEditingSymbol(record.symbol);
-              }}
-            >
-              Edit
-            </Button>
-            <Popconfirm
-              title="Are you sure delete this symbol?"
-              onConfirm={() => handleDeleteSymbol(record._id)}
-            >
-              <Button danger type="link">
-                Delete
-              </Button>
-            </Popconfirm>
-          </Space>
-        ),
-    },
-  ];
 
   return (
     <div>
@@ -344,78 +231,27 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* Zones Modal */}
-      <Modal
-        title="Zones Near Day Low (within 3%)"
+      {/* Modals */}
+      <ZonesModal
         open={zonesVisible}
-        onCancel={() => setZonesVisible(false)}
-        footer={null}
-        width="85%"
-      >
-        <Table
-          dataSource={zonesData}
-          columns={zoneColumns}
-          rowKey="_id"
-          loading={zonesLoading}
-          bordered
-        />
-      </Modal>
+        onClose={() => setZonesVisible(false)}
+        zones={zonesData}
+        loading={zonesLoading}
+        onTickerClick={handleTickerClick}
+      />
 
-      {/* Invalid Symbols Modal */}
-      <Modal
-        title="Invalid Symbols"
+      <InvalidSymbolsModal
         open={invalidVisible}
-        onCancel={() => setInvalidVisible(false)}
-        footer={null}
-        width="70%"
-      >
-        <Table
-          dataSource={invalidData}
-          columns={invalidColumns}
-          rowKey="_id"
-          loading={invalidLoading}
-          bordered
-        />
-      </Modal>
+        onClose={() => setInvalidVisible(false)}
+        data={invalidData}
+        loading={invalidLoading}
+        editingId={editingId}
+        editingSymbol={editingSymbol}
+        setEditingId={setEditingId}
+        setEditingSymbol={setEditingSymbol}
+        handleUpdateSymbol={handleUpdateSymbol}
+        handleDeleteSymbol={handleDeleteSymbol}
+      />
     </div>
-  );
-}
-
-// 🔹 Reusable Stat Card
-function StatCard({
-  title,
-  value,
-  icon,
-  gradient,
-  loading,
-  onClick,
-}: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  gradient: string;
-  loading: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <Card
-      style={{
-        background: gradient,
-        color: "#fff",
-        borderRadius: 8,
-        cursor: onClick ? "pointer" : "default",
-      }}
-      bordered={false}
-      loading={loading}
-      onClick={onClick}
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        {icon}
-        <div style={{ marginLeft: 16 }}>
-          <div style={{ fontSize: 16, fontWeight: 500 }}>{title}</div>
-          <div style={{ fontSize: 24, fontWeight: "bold" }}>{value}</div>
-        </div>
-      </div>
-    </Card>
   );
 }
