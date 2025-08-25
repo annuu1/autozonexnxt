@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Row, Col, Typography, DatePicker, message } from "antd";
+import {
+  Row,
+  Col,
+  Typography,
+  DatePicker,
+  message,
+  Table,
+  Button,
+  Card,
+  List,
+} from "antd";
 import dayjs from "dayjs";
 import {
   UserOutlined,
@@ -10,6 +20,9 @@ import {
   WarningOutlined,
   ClockCircleOutlined,
   AimOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 
 import StatCard from "@/components/dashboard/StatCard";
@@ -19,12 +32,11 @@ import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 // Hooks
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
-import { useInvalidSymbols }  from "@/hooks/useInvalidSymbols";
+import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
 
 const { Title } = Typography;
 
 export default function DashboardPage() {
-
   // Zones modal state
   const [zonesVisible, setZonesVisible] = useState(false);
 
@@ -35,9 +47,24 @@ export default function DashboardPage() {
 
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-const { data: stats, isLoading, isError, error, refetch } = useDashboardStats(selectedDate);
-const { data: zonesData, isFetching: zonesLoading, refetch: refetchZones, markZoneSeen } = useZones();
-const { data: invalidData, isFetching: invalidLoading, refetch: refetchInvalid, updateSymbol, deleteSymbol } = useInvalidSymbols();
+  const {
+    data: stats,
+    isLoading,
+    refetch,
+  } = useDashboardStats(selectedDate);
+  const {
+    data: zonesData,
+    isFetching: zonesLoading,
+    refetch: refetchZones,
+    markZoneSeen,
+  } = useZones();
+  const {
+    data: invalidData,
+    isFetching: invalidLoading,
+    refetch: refetchInvalid,
+    updateSymbol,
+    deleteSymbol,
+  } = useInvalidSymbols();
 
   useEffect(() => {
     refetch();
@@ -79,86 +106,136 @@ const { data: invalidData, isFetching: invalidLoading, refetch: refetchInvalid, 
     message.success("Symbol deleted");
   };
 
+  // Static table data
+  const columns = [
+    { title: "Symbol", dataIndex: "symbol", key: "symbol" },
+    { title: "Type", dataIndex: "type", key: "type" },
+    { title: "Status", dataIndex: "status", key: "status" },
+  ];
+
+  const dataSource = [
+    { key: "1", symbol: "RELIANCE", type: "Demand Zone", status: "Active" },
+    { key: "2", symbol: "TCS", type: "Supply Zone", status: "Pending" },
+    { key: "3", symbol: "INFY", type: "Invalid", status: "Removed" },
+  ];
+
   return (
-    <div>
-      <Title level={2} style={{ marginBottom: 24 }}>
-        📊 Dashboard
-      </Title>
+    <Row gutter={16}>
+      {/* Main Content */}
+      <Col xs={24} md={18}>
+        <Title level={2} style={{ marginBottom: 24 }}>
+          📊 Dashboard
+        </Title>
 
-      {/* Date selector */}
-      <div style={{ marginBottom: 20 }}>
-        <span style={{ marginRight: 8 }}>Check outdated symbols as of:</span>
-        <DatePicker
-          onChange={handleDateChange}
-          value={selectedDate ? dayjs(selectedDate) : null}
-        />
-      </div>
+        {/* Date selector + Quick Actions */}
+        <div style={{ marginBottom: 20, display: "flex", gap: 10 }}>
+          <div>
+            <span style={{ marginRight: 8 }}>Check outdated symbols as of:</span>
+            <DatePicker
+              onChange={handleDateChange}
+              value={selectedDate ? dayjs(selectedDate) : null}
+            />
+          </div>
+          <div style={{ marginLeft: "auto" }}>
+            <Button icon={<ReloadOutlined />} style={{ marginRight: 8 }}>
+              Refresh
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} style={{ marginRight: 8 }}>
+              Add Symbol
+            </Button>
+            <Button icon={<DownloadOutlined />}>Export</Button>
+          </div>
+        </div>
 
-      {/* Top Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={8}>
-          <StatCard
-            loading={isLoading}
-            title="Users"
-            value={stats?.users??0}
-            icon={<UserOutlined style={{ fontSize: 32, color: "#fff" }} />}
-            gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <StatCard
-            loading={isLoading}
-            title="Demand Zones"
-            value={stats?.demandZones??0}
-            icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
-            gradient="linear-gradient(135deg, #F7971E, #FFD200)"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <StatCard
-            loading={isLoading}
-            title="Symbols"
-            value={stats?.symbols??0}
-            icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
-            gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
-          />
-        </Col>
+        {/* Top Cards */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={8}>
+            <StatCard
+              loading={isLoading}
+              title="Users"
+              value={stats?.users ?? 0}
+              icon={<UserOutlined style={{ fontSize: 32, color: "#fff" }} />}
+              gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <StatCard
+              loading={isLoading}
+              title="Demand Zones"
+              value={stats?.demandZones ?? 0}
+              icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+              gradient="linear-gradient(135deg, #F7971E, #FFD200)"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <StatCard
+              loading={isLoading}
+              title="Symbols"
+              value={stats?.symbols ?? 0}
+              icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
+              gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <StatCard
+              loading={isLoading}
+              title="Invalid Symbols"
+              value={stats?.invalidSymbols ?? 0}
+              icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
+              gradient="linear-gradient(135deg, #ff512f, #dd2476)"
+              onClick={openInvalidSymbols}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <StatCard
+              loading={isLoading}
+              title="Outdated Symbols"
+              value={stats?.outdatedSymbols ?? 0}
+              icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+              gradient="linear-gradient(135deg, #f7971e, #f44336)"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <StatCard
+              loading={isLoading}
+              title="Zones Near Day Low (3%)"
+              value={stats?.zonesNearDayLow ?? 0}
+              icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
+              gradient="linear-gradient(135deg, #00b09b, #96c93d)"
+              onClick={openZones}
+            />
+          </Col>
+        </Row>
 
-        {/* Invalid */}
-        <Col xs={24} sm={12} md={8}>
-          <StatCard
-            loading={isLoading}
-            title="Invalid Symbols"
-            value={stats?.invalidSymbols??0}
-            icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
-            gradient="linear-gradient(135deg, #ff512f, #dd2476)"
-            onClick={openInvalidSymbols}
+        {/* Table below cards */}
+        <Card title="📋 Recent Symbols" style={{ marginTop: 24 }}>
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            pagination={false}
           />
-        </Col>
+        </Card>
+      </Col>
 
-        {/* Outdated */}
-        <Col xs={24} sm={12} md={8}>
-          <StatCard
-            loading={isLoading}
-            title="Outdated Symbols"
-            value={stats?.outdatedSymbols??0}
-            icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
-            gradient="linear-gradient(135deg, #f7971e, #f44336)"
-          />
-        </Col>
+      {/* Aside Section */}
+      <Col xs={24} md={6}>
+        <Card title="📌 Market Summary" style={{ marginBottom: 20 }}>
+          <p>✅ NIFTY: 22,300 (+0.5%)</p>
+          <p>✅ BANKNIFTY: 48,200 (+0.3%)</p>
+          <p>📉 SENSEX: 74,100 (-0.2%)</p>
+        </Card>
 
-        {/* Zones Near Day Low */}
-        <Col xs={24} sm={12} md={8}>
-          <StatCard
-            loading={isLoading}
-            title="Zones Near Day Low (3%)"
-            value={stats?.zonesNearDayLow??0}
-            icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
-            gradient="linear-gradient(135deg, #00b09b, #96c93d)"
-            onClick={openZones}
+        <Card title="🔔 Notifications">
+          <List
+            dataSource={[
+              "3 Invalid symbols detected",
+              "New demand zone in RELIANCE",
+              "INFY removed from outdated list",
+            ]}
+            renderItem={(item) => <List.Item>{item}</List.Item>}
           />
-        </Col>
-      </Row>
+        </Card>
+      </Col>
 
       {/* Modals */}
       <ZonesModal
@@ -181,6 +258,6 @@ const { data: invalidData, isFetching: invalidLoading, refetch: refetchInvalid, 
         handleUpdateSymbol={handleUpdateSymbol}
         handleDeleteSymbol={handleDeleteSymbol}
       />
-    </div>
+    </Row>
   );
 }
