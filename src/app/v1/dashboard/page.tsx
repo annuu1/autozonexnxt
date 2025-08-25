@@ -14,6 +14,8 @@ import {
   Space,
   Popconfirm,
   message,
+  Form,
+  Input,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -39,15 +41,20 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  // 🔹 State for Zones Near Day Low
+  // 🔹 Zones Near Day Low
   const [zonesVisible, setZonesVisible] = useState(false);
   const [zonesData, setZonesData] = useState<any[]>([]);
   const [zonesLoading, setZonesLoading] = useState(false);
 
-  // 🔹 State for Invalid Symbols
+  // 🔹 Invalid Symbols
   const [invalidVisible, setInvalidVisible] = useState(false);
   const [invalidData, setInvalidData] = useState<any[]>([]);
   const [invalidLoading, setInvalidLoading] = useState(false);
+
+  // 🔹 Edit Symbol Modal
+  const [editVisible, setEditVisible] = useState(false);
+  const [editingSymbol, setEditingSymbol] = useState<any>(null);
+  const [form] = Form.useForm();
 
   async function fetchStats(date?: string) {
     try {
@@ -73,7 +80,7 @@ export default function DashboardPage() {
     fetchStats(dateString);
   };
 
-  // 🔹 Open Zones Near Day Low
+  // 🔹 Zones
   const openZones = async () => {
     setZonesVisible(true);
     setZonesLoading(true);
@@ -88,7 +95,7 @@ export default function DashboardPage() {
     }
   };
 
-  // 🔹 Open Invalid Symbols
+  // 🔹 Invalid Symbols
   const openInvalidSymbols = async () => {
     setInvalidVisible(true);
     setInvalidLoading(true);
@@ -103,7 +110,7 @@ export default function DashboardPage() {
     }
   };
 
-  // 🔹 Delete Invalid Symbol
+  // 🔹 Delete Symbol
   const handleDeleteSymbol = async (id: string) => {
     try {
       await fetch(`/api/v1/symbols/${id}`, { method: "DELETE" });
@@ -114,70 +121,47 @@ export default function DashboardPage() {
     }
   };
 
-  // 🔹 Update Invalid Symbol
-  const handleUpdateSymbol = async (symbol: any) => {
+  // 🔹 Open Edit Modal
+  const openEditModal = (symbol: any) => {
+    setEditingSymbol(symbol);
+    form.setFieldsValue({
+      symbol: symbol.symbol,
+      company_name: symbol.company_name || "",
+    });
+    setEditVisible(true);
+  };
+
+  // 🔹 Submit Update
+  const handleUpdateSymbol = async () => {
     try {
-      const res = await fetch(`/api/v1/symbols/${symbol._id}`, {
+      const values = await form.validateFields();
+
+      const res = await fetch(`/api/v1/symbols/${editingSymbol._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          symbol: values.symbol,
+          company_name: values.company_name,
           status: "active",
-          company_name: symbol.company_name || "Updated Company",
         }),
       });
+
       const updated = await res.json();
+
       setInvalidData((prev) =>
         prev.map((s) => (s._id === updated._id ? updated : s))
       );
-      message.success("Symbol updated");
-    } catch {
+
+      message.success("Symbol updated successfully");
+      setEditVisible(false);
+      setEditingSymbol(null);
+      form.resetFields();
+    } catch (err) {
       message.error("Failed to update symbol");
     }
   };
 
-  // 🟢 Helper: Last Seen Tag
-  const getLastSeenTag = (lastSeen?: string) => {
-    if (!lastSeen) return <Tag color="blue">New</Tag>;
-
-    const seenDate = new Date(lastSeen);
-    const today = new Date();
-    const diffDays =
-      (today.getTime() - seenDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diffDays < 1) return <Tag color="green">Today</Tag>;
-    if (diffDays <= 3) return <Tag color="lime">{seenDate.toLocaleDateString()}</Tag>;
-    if (diffDays <= 10) return <Tag color="orange">{seenDate.toLocaleDateString()}</Tag>;
-    return <Tag color="red">{seenDate.toLocaleDateString()}</Tag>;
-  };
-
-  // 🟢 Helper: Diff Tag
-  const getDiffTag = (percent: number) => {
-    if (percent < 0) return <Tag color="red">{percent.toFixed(2)}%</Tag>;
-    if (percent <= 1) return <Tag color="gold">{percent.toFixed(2)}%</Tag>;
-    if (percent <= 3) return <Tag color="green">{percent.toFixed(2)}%</Tag>;
-    return <Tag>{percent.toFixed(2)}%</Tag>;
-  };
-
-  // 🟢 Clickable Ticker → update last_seen
-  const handleTickerClick = async (zone: any) => {
-    try {
-      const res = await fetch(`/api/v1/demand-zones/${zone._id}/seen`, {
-        method: "POST",
-      });
-      const updated = await res.json();
-      const lastSeen = updated?.last_seen ?? new Date().toISOString();
-
-      setZonesData((prev) =>
-        prev.map((z) =>
-          z._id === zone._id ? { ...z, last_seen: lastSeen } : z
-        )
-      );
-    } catch (err) {
-      console.error("Failed to update last_seen:", err);
-    }
-  };
-
-  // 🔹 Table columns for Invalid Symbols
+  // 🟢 Invalid Symbols Columns
   const invalidColumns = [
     { title: "Symbol", dataIndex: "symbol", key: "symbol" },
     {
@@ -207,7 +191,7 @@ export default function DashboardPage() {
       key: "actions",
       render: (_: any, row: any) => (
         <Space>
-          <Button type="primary" onClick={() => handleUpdateSymbol(row)}>
+          <Button type="primary" onClick={() => openEditModal(row)}>
             Update
           </Button>
           <Popconfirm
@@ -221,16 +205,18 @@ export default function DashboardPage() {
     },
   ];
 
-  // 🔹 Table columns for Zones
+  // 🟢 Zones Columns
   const zoneColumns = [
     {
       title: "Ticker",
       dataIndex: "ticker",
       key: "ticker",
       render: (_: any, row: any) => (
-        <Button type="link" onClick={() => handleTickerClick(row)}>
+        <Button type="link">
           {row.ticker}
-          <div style={{ fontSize: 12 }}>{getLastSeenTag(row.last_seen)}</div>
+          <div style={{ fontSize: 12 }}>
+            {row.last_seen ? dayjs(row.last_seen).format("YYYY-MM-DD") : "New"}
+          </div>
         </Button>
       ),
     },
@@ -241,12 +227,6 @@ export default function DashboardPage() {
     { title: "Freshness", dataIndex: "freshness", key: "freshness" },
     { title: "Trade Score", dataIndex: "trade_score", key: "trade_score" },
     { title: "Day Low", dataIndex: "day_low", key: "day_low" },
-    {
-      title: "Diff %",
-      dataIndex: "percentDiff",
-      key: "percentDiff",
-      render: (v: number) => getDiffTag(v * 100),
-    },
   ];
 
   return (
@@ -255,7 +235,6 @@ export default function DashboardPage() {
         📊 Dashboard
       </Title>
 
-      {/* Date selector for outdated check */}
       <div style={{ marginBottom: 20 }}>
         <span style={{ marginRight: 8 }}>Check outdated symbols as of:</span>
         <DatePicker
@@ -308,7 +287,7 @@ export default function DashboardPage() {
         <Col xs={24} sm={12} md={8}>
           <StatCard
             loading={loading}
-            title={`Outdated Symbols`}
+            title="Outdated Symbols"
             value={stats.outdatedSymbols}
             icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
             gradient="linear-gradient(135deg, #f7971e, #f44336)"
@@ -360,6 +339,30 @@ export default function DashboardPage() {
           loading={invalidLoading}
           bordered
         />
+      </Modal>
+
+      {/* Edit Symbol Modal */}
+      <Modal
+        title="Edit Symbol"
+        open={editVisible}
+        onCancel={() => {
+          setEditVisible(false);
+          form.resetFields();
+        }}
+        onOk={handleUpdateSymbol}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="symbol"
+            label="Symbol"
+            rules={[{ required: true, message: "Symbol is required" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item name="company_name" label="Company Name">
+            <Input />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
