@@ -18,7 +18,7 @@ export default function Home() {
             Contact
           </Link>
           <Link
-            href="#"
+            href="/v1/dashboard"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
           >
             Get Started
@@ -38,13 +38,13 @@ export default function Home() {
           </p>
           <div className="space-x-4">
             <Link
-              href="#"
+              href="/v1/dashboard"
               className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
             >
               Get Started
             </Link>
             <Link
-              href="#features"
+              href="/v1/dashboard/features"
               className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
             >
               Learn More

@@ -34,6 +34,7 @@ import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
 import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
+import AsidePanel from "@/components/dashboard/AsidePanel";
 
 const { Title } = Typography;
 
@@ -219,25 +220,25 @@ export default function DashboardPage() {
         </Card>
       </Col>
 
-      {/* Aside Section */}
-      <Col xs={24} md={6}>
-        <Card title="📌 Market Summary" style={{ marginBottom: 20 }}>
-          <p>✅ NIFTY: 22,300 (+0.5%)</p>
-          <p>✅ BANKNIFTY: 48,200 (+0.3%)</p>
-          <p>📉 SENSEX: 74,100 (-0.2%)</p>
-        </Card>
-
-        <Card title="🔔 Notifications">
-          <List
-            dataSource={[
-              "3 Invalid symbols detected",
-              "New demand zone in RELIANCE",
-              "INFY removed from outdated list",
-            ]}
-            renderItem={(item) => <List.Item>{item}</List.Item>}
-          />
-        </Card>
-      </Col>
+    {/* Aside Section */}
+    <Col xs={24} md={6}>
+      <AsidePanel
+        marketSummary={[
+          { label: "NIFTY", value: "22,300 (+0.5%)", trend: "up" },
+          { label: "BANKNIFTY", value: "48,200 (+0.3%)", trend: "up" },
+          { label: "SENSEX", value: "74,100 (-0.2%)", trend: "down" },
+        ]}
+        alerts={[
+          "30 Zones Near Day Low (3%)",
+          "20 Symbols missing from zones",
+          "10 Outdated symbols",
+        ]}
+        notifications={[
+          "New demand zone in RELIANCE",
+          "INFY removed from outdated list",
+        ]}
+      />
+    </Col>
 
       {/* Modals */}
       <ZonesModal
