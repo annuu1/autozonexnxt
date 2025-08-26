@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import SymbolModel from "@/models/Symbol";
+import SymbolModel from "@/models/Symbols";
 
 // GET all symbols
 export async function GET() {
