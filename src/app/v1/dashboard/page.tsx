@@ -13,6 +13,7 @@ import {
   List,
 } from "antd";
 import dayjs from "dayjs";
+import { Dayjs } from "dayjs";
 import {
   UserOutlined,
   DollarCircleOutlined,
@@ -70,11 +71,12 @@ export default function DashboardPage() {
     refetch();
   }, []);
 
-  const handleDateChange = (date: any, dateString: string) => {
-    setSelectedDate(dateString);
-    refetch();
+  const handleDateChange = (date: Dayjs | null, dateString: string | string[]) => {
+    if (typeof dateString === "string") {
+      setSelectedDate(dateString);
+      refetch();
+    }
   };
-
   // Zones handlers
   const openZones = async () => {
     setZonesVisible(true);

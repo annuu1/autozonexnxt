@@ -22,7 +22,7 @@ export async function PUT(req: Request) {
     const updatedSymbol = await SymbolModel.findByIdAndUpdate(id, updates, { new: true });
 
     return NextResponse.json(updatedSymbol);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
