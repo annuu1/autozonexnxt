@@ -18,6 +18,7 @@ import {
   DeleteOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
+import TradeFormModal from "@/components/trades/TradeFormModal";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -61,6 +62,40 @@ export default function TradesPage() {
         return <Tag color="green">TARGET HIT</Tag>;
       default:
         return <Tag>{status}</Tag>;
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/v1/trades`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _id: id }),
+      });
+  
+      if (!res.ok) throw new Error("Failed to delete");
+  
+      // 🔹 Remove from local state
+      setTrades((prev) => prev.filter((trade) => trade._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEdit = async (id: string) => {
+    try {
+      const res = await fetch(`/api/v1/trades`, {
+        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        body: JSON.stringify({ _id: id }),
+      });
+  
+      if (!res.ok) throw new Error("Failed to edit"); 
+  
+      // 🔹 Remove from local state
+      console.log(res)
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -108,8 +143,8 @@ export default function TradesPage() {
       title: "Actions",
       render: (_: any, row: any) => (
         <Space>
-          <Button type="text" icon={<EditOutlined />} />
-          <Button type="text" danger icon={<DeleteOutlined />} />
+          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(row._id)} />
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(row._id)} />
         </Space>
       ),
     },
@@ -117,9 +152,13 @@ export default function TradesPage() {
 
   return (
     <Card style={{ padding: 24 }}>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        📊 Trades
-      </Title>
+      <Space style={{ marginBottom: 16 }}>
+    <Title level={3}>📊 Trades</Title>
+    <TradeFormModal onSuccess={() => {
+      // refresh table after adding
+      setPage(1);
+    }} />
+  </Space>
 
       {/* 🔹 Desktop = Table | Mobile = Card List */}
       {screens.md ? (
