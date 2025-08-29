@@ -1,13 +1,65 @@
-import mongoose, { Schema, model, models } from "mongoose";
+// models/User.ts
+import { Schema, model, models } from "mongoose";
 
-const userSchema = new Schema(
+const UserSchema = new Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    passwordHash: {
+      type: String,
+      required: true, // hashed password (bcrypt/argon2)
+    },
+
+    roles: {
+      type: [String],
+      enum: ["user", "admin", "moderator", "analyst", "superadmin"],
+      default: ["user"],
+    },
+
+    permissions: {
+      type: [String], // Flexible fine-grained permissions (e.g., "notes:write")
+      default: [],
+    },
+
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["free", "pro", "enterprise"],
+        default: "free",
+      },
+      status: {
+        type: String,
+        enum: ["active", "expired", "canceled"],
+        default: "active",
+      },
+      startDate: { type: Date },
+      endDate: { type: Date },
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false, // email/phone verification
+    },
+
+    lastLogin: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
 
-const User = models.User || model("User", userSchema);
+const User = models.User || model("User", UserSchema);
 
 export default User;
