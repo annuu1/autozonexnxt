@@ -10,10 +10,10 @@ const nextConfig: NextConfig = {
     // 🚀 Allow production builds to succeed even if there are TS type errors
     ignoreBuildErrors: true,
   },
-  react: {
-    // 🚀 Allow production builds to succeed even if there are React errors
-    strictMode: false,
-  },
+  // react: {
+  //   // 🚀 Allow production builds to succeed even if there are React errors
+  //   strictMode: false,
+  // },
 };
 
 export default nextConfig;
