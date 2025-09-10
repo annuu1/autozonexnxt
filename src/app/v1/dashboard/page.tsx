@@ -10,7 +10,6 @@ import {
   Table,
   Button,
   Card,
-  List,
 } from "antd";
 import dayjs from "dayjs";
 import { Dayjs } from "dayjs";
@@ -29,13 +28,13 @@ import {
 import StatCard from "@/components/dashboard/StatCard";
 import ZonesModal from "@/components/dashboard/ZonesModal";
 import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
+import AsidePanel from "@/components/dashboard/AsidePanel";
 
 // Hooks
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
 import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
-import AsidePanel from "@/components/dashboard/AsidePanel";
-import useAuthStore from "@/store/useAuthStore"
+import useAuthStore from "@/store/useAuthStore";
 
 const { Title } = Typography;
 
@@ -55,12 +54,14 @@ export default function DashboardPage() {
     isLoading,
     refetch,
   } = useDashboardStats(selectedDate);
+
   const {
     data: zonesData,
     isFetching: zonesLoading,
     refetch: refetchZones,
     markZoneSeen,
   } = useZones();
+
   const {
     data: invalidData,
     isFetching: invalidLoading,
@@ -81,6 +82,7 @@ export default function DashboardPage() {
       refetch();
     }
   };
+
   // Zones handlers
   const openZones = async () => {
     setZonesVisible(true);
@@ -125,6 +127,9 @@ export default function DashboardPage() {
     { key: "3", symbol: "INFY", type: "Invalid", status: "Removed" },
   ];
 
+  const isAdmin = user?.roles.includes("admin");
+  const isUser = user?.roles.includes("user");
+
   return (
     <Row gutter={16}>
       {/* Main Content */}
@@ -153,64 +158,103 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Top Cards */}
+        {/* Role-based Cards */}
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={8}>
-            <StatCard
-              loading={isLoading}
-              title="Users"
-              value={stats?.users ?? 0}
-              icon={<UserOutlined style={{ fontSize: 32, color: "#fff" }} />}
-              gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <StatCard
-              loading={isLoading}
-              title="Demand Zones"
-              value={stats?.demandZones ?? 0}
-              icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
-              gradient="linear-gradient(135deg, #F7971E, #FFD200)"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <StatCard
-              loading={isLoading}
-              title="Symbols"
-              value={stats?.symbols ?? 0}
-              icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
-              gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <StatCard
-              loading={isLoading}
-              title="Invalid Symbols"
-              value={stats?.invalidSymbols ?? 0}
-              icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
-              gradient="linear-gradient(135deg, #ff512f, #dd2476)"
-              onClick={openInvalidSymbols}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <StatCard
-              loading={isLoading}
-              title="Outdated Symbols"
-              value={stats?.outdatedSymbols ?? 0}
-              icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
-              gradient="linear-gradient(135deg, #f7971e, #f44336)"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <StatCard
-              loading={isLoading}
-              title="Zones Near Day Low (3%)"
-              value={stats?.zonesNearDayLow ?? 0}
-              icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
-              gradient="linear-gradient(135deg, #00b09b, #96c93d)"
-              onClick={openZones}
-            />
-          </Col>
+          {/* Admin: show all cards */}
+          {isAdmin && (
+            <>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Users"
+                  value={stats?.users ?? 0}
+                  icon={<UserOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Demand Zones"
+                  value={stats?.demandZones ?? 0}
+                  icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #F7971E, #FFD200)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Symbols"
+                  value={stats?.symbols ?? 0}
+                  icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Invalid Symbols"
+                  value={stats?.invalidSymbols ?? 0}
+                  icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #ff512f, #dd2476)"
+                  onClick={openInvalidSymbols}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Outdated Symbols"
+                  value={stats?.outdatedSymbols ?? 0}
+                  icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #f7971e, #f44336)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Zones Near Day Low (3%)"
+                  value={stats?.zonesNearDayLow ?? 0}
+                  icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #00b09b, #96c93d)"
+                  onClick={openZones}
+                />
+              </Col>
+            </>
+          )}
+
+          {/* User: show only 3 cards */}
+          {isUser && (
+            <>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Demand Zones"
+                  value={stats?.demandZones ?? 0}
+                  icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #F7971E, #FFD200)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Symbols"
+                  value={stats?.symbols ?? 0}
+                  icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Zones Near Day Low (3%)"
+                  value={stats?.zonesNearDayLow ?? 0}
+                  icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #00b09b, #96c93d)"
+                  onClick={openZones}
+                />
+              </Col>
+            </>
+          )}
         </Row>
 
         {/* Table below cards */}
@@ -223,25 +267,25 @@ export default function DashboardPage() {
         </Card>
       </Col>
 
-    {/* Aside Section */}
-    <Col xs={24} md={6}>
-      <AsidePanel
-        marketSummary={[
-          { label: "NIFTY", value: "22,300 (+0.5%)", trend: "up" },
-          { label: "BANKNIFTY", value: "48,200 (+0.3%)", trend: "up" },
-          { label: "SENSEX", value: "74,100 (-0.2%)", trend: "down" },
-        ]}
-        alerts={[
-          "30 Zones Near Day Low (3%)",
-          "20 Symbols missing from zones",
-          "10 Outdated symbols",
-        ]}
-        notifications={[
-          "New demand zone in RELIANCE",
-          "INFY removed from outdated list",
-        ]}
-      />
-    </Col>
+      {/* Aside Section */}
+      <Col xs={24} md={6}>
+        <AsidePanel
+          marketSummary={[
+            { label: "NIFTY", value: "22,300 (+0.5%)", trend: "up" },
+            { label: "BANKNIFTY", value: "48,200 (+0.3%)", trend: "up" },
+            { label: "SENSEX", value: "74,100 (-0.2%)", trend: "down" },
+          ]}
+          alerts={[
+            "30 Zones Near Day Low (3%)",
+            "20 Symbols missing from zones",
+            "10 Outdated symbols",
+          ]}
+          notifications={[
+            "New demand zone in RELIANCE",
+            "INFY removed from outdated list",
+          ]}
+        />
+      </Col>
 
       {/* Modals */}
       <ZonesModal
