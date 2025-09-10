@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Form, Input, Button, Typography, Alert } from "antd";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function LoginPage() {
         </Form>
 
         <Typography.Paragraph style={{ textAlign: "center", color: "#888", marginTop: 8 }}>
-          You will be redirected to: <code>{from}</code>
+          Don't have an account? <Link href={`/v1/register?from=${encodeURIComponent(from)}`}>Sign up</Link>
         </Typography.Paragraph>
       </Card>
     </div>
