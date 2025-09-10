@@ -35,6 +35,7 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
 import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
 import AsidePanel from "@/components/dashboard/AsidePanel";
+import useAuthStore from "@/store/useAuthStore"
 
 const { Title } = Typography;
 
@@ -67,6 +68,8 @@ export default function DashboardPage() {
     updateSymbol,
     deleteSymbol,
   } = useInvalidSymbols();
+
+  const { user } = useAuthStore();
 
   useEffect(() => {
     refetch();
