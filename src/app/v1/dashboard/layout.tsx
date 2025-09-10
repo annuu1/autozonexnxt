@@ -1,7 +1,7 @@
 // app/v1/dashboard/layout.tsx
 "use client";
 
-import { Layout, Menu, Grid } from "antd";
+import { Layout, Menu, Grid, Spin } from "antd";
 import {
   DashboardOutlined,
   BarChartOutlined,
@@ -15,6 +15,7 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useState } from "react";
+import useAuthGuard from "@/hooks/useAuthGuard";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -42,6 +43,15 @@ export default function DashboardLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const screens = useBreakpoint();
+  const { user, loading } = useAuthGuard();
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <Layout style={{ minHeight: "100vh"}}>
@@ -113,6 +123,11 @@ export default function DashboardLayout({
             )}
             <h1 style={{ marginLeft: 16, fontSize: 18 }}>Dashboard</h1>
           </div>
+          {user && (
+            <div style={{ fontSize: 13, color: "#555" }}>
+              {user.name} · {user.roles?.[0] || "user"}
+            </div>
+          )}
         </Header>
 
         <Content

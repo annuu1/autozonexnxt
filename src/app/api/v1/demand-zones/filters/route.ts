@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
+  // Require auth and Starter+
+  const auth = await requireAuth(req, { rolesAllowed: ["user", "agent", "manager", "admin"], minPlan: "starter" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   await dbConnect();
 
   const { searchParams } = new URL(req.url);
@@ -25,7 +32,7 @@ export async function GET(req: Request) {
     { $unwind: { path: "$symbol_data", preserveNullAndEmptyArrays: true } },
   ];
 
-  // ✅ Apply filter if provided
+  // Apply filter if provided
   if (proximalWithin > 0) {
     pipeline.push({
       $match: {
@@ -46,10 +53,10 @@ export async function GET(req: Request) {
     });
   }
 
-  // ✅ Sort by freshness highest → lowest
+  // Sort by freshness highest → lowest
   pipeline.push({ $sort: { freshness: -1 } });
 
-  // ✅ Pagination after filtering + sorting
+  // Pagination after filtering + sorting
   pipeline.push({ $skip: skip }, { $limit: limit });
 
   // Final projection

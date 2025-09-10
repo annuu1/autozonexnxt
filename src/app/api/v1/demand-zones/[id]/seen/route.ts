@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
 import { Types } from "mongoose";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(
     req: NextRequest,
     context: { params: { id: string } }
   ) {
+    // Agents and above; Starter+
+    const auth = await requireAuth(req, { rolesAllowed: ["agent", "manager", "admin"], minPlan: "starter" });
+    if (!("ok" in auth) || !auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await dbConnect();
   
     const { id } = await context.params;

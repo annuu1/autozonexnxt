@@ -3,8 +3,18 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import DemandZone from "@/models/DemandZone";
 import Symbols from "@/models/Symbols";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
+  // Require authentication for dashboard stats
+  const auth = await requireAuth(req, {
+    rolesAllowed: ["user", "agent", "manager", "admin"],
+    // minPlan: "starter", // uncomment if you want to require Starter+ for stats
+  });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   await dbConnect();
 
   const url = new URL(req.url);

@@ -2,9 +2,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import { requireAuth } from "@/lib/auth";
 
 // GET all users (optionally filter by role or search)
 export async function GET(req: Request) {
+  // Only admin or manager can list users
+  const auth = await requireAuth(req, { rolesAllowed: ["admin", "manager"] });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
     const { searchParams } = new URL(req.url);
@@ -30,6 +37,12 @@ export async function GET(req: Request) {
 
 // CREATE a new user
 export async function POST(req: Request) {
+  // Only admin can create users directly
+  const auth = await requireAuth(req, { rolesAllowed: ["admin"] });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
     const body = await req.json();

@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
+  // Require signed-in user; optionally enforce plan tier
+  const auth = await requireAuth(req, { rolesAllowed: ["user", "agent", "manager", "admin"], minPlan: "starter" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   await dbConnect();
 
   const { searchParams } = new URL(req.url);

@@ -24,7 +24,7 @@ const UserSchema = new Schema(
 
     roles: {
       type: [String],
-      enum: ["user", "admin", "moderator", "analyst", "superadmin"],
+      enum: ["user", "agent", "manager", "admin"],
       default: ["user"],
     },
 
@@ -36,8 +36,8 @@ const UserSchema = new Schema(
     subscription: {
       plan: {
         type: String,
-        enum: ["free", "pro", "enterprise"],
-        default: "free",
+        enum: ["freemium", "starter", "pro"],
+        default: "freemium",
       },
       status: {
         type: String,

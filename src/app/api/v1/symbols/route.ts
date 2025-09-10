@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import SymbolModel from "@/models/Symbols";
+import { requireAuth } from "@/lib/auth";
 
 // GET symbols with optional search query
 export async function GET(req: Request) {
+  // Any signed-in user (freemium ok)
+  const auth = await requireAuth(req, { rolesAllowed: ["user", "agent", "manager", "admin"], minPlan: "freemium" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
 
@@ -29,6 +36,12 @@ export async function GET(req: Request) {
 
 // UPDATE symbol by ID
 export async function PUT(req: Request) {
+  // Only manager/admin and Starter+ can update symbols
+  const auth = await requireAuth(req, { rolesAllowed: ["manager", "admin"], minPlan: "starter" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
     const { id, updates } = await req.json();

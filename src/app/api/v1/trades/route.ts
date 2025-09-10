@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Trades from "@/models/Trade";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
+    // Any signed-in user can view trades
+    const auth = await requireAuth(req, { rolesAllowed: ["user", "agent", "manager", "admin"], minPlan: "freemium" });
+    if (!("ok" in auth) || !auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -24,6 +31,12 @@ export async function GET(req: Request) {
 
 // ✅ POST a new trade
 export async function POST(req: Request) {
+  // Agents and above; Starter+
+  const auth = await requireAuth(req, { rolesAllowed: ["agent", "manager", "admin"], minPlan: "starter" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
     const body = await req.json();
@@ -54,6 +67,12 @@ export async function POST(req: Request) {
 
 // ✅ PUT update a trade
 export async function PUT(req: Request) {
+  // Agents and above; Starter+
+  const auth = await requireAuth(req, { rolesAllowed: ["agent", "manager", "admin"], minPlan: "starter" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
     const body = await req.json();
@@ -66,6 +85,12 @@ export async function PUT(req: Request) {
 
 // ✅ DELETE a trade
 export async function DELETE(req: Request) {
+  // Managers and above; Starter+
+  const auth = await requireAuth(req, { rolesAllowed: ["manager", "admin"], minPlan: "starter" });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await dbConnect();
     const body = await req.json();
