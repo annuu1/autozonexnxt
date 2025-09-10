@@ -7,8 +7,6 @@ import { Card, Form, Input, Button, Typography, Alert, Select } from "antd";
 import Link from "next/link";
 import useAuthStore from "@/store/useAuthStore"
 
-const { setUser } = useAuthStore();
-
 const PLAN_OPTIONS = [
   { label: "Freemium", value: "freemium" },
   { label: "Starter", value: "starter" },
@@ -21,6 +19,8 @@ export default function RegisterPageInner() {
   const from = useMemo(() => params.get("from") || "/v1/dashboard", [params]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { setUser } = useAuthStore();
 
   // If already logged in, redirect
   useEffect(() => {
