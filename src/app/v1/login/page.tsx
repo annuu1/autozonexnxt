@@ -1,10 +1,14 @@
 // app/v1/login/page.tsx
+
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Form, Input, Button, Typography, Alert } from "antd";
 import Link from "next/link";
+
 
 export default function LoginPage() {
   const router = useRouter();

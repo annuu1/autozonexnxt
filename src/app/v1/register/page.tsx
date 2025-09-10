@@ -1,4 +1,7 @@
 // app/v1/register/page.tsx
+
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -11,6 +14,7 @@ const PLAN_OPTIONS = [
   { label: "Starter", value: "starter" },
   { label: "Pro", value: "pro" },
 ];
+
 
 export default function RegisterPage() {
   const router = useRouter();
