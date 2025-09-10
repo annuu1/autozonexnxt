@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Form, Input, Button, Typography, Alert } from "antd";
 import Link from "next/link";
+import useAuthStore from "@/store/useAuthStore"
 
 export default function LoginPageInner() {
   const router = useRouter();
@@ -13,6 +14,8 @@ export default function LoginPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { user, setUser, clearUser } = useAuthStore();
+
   // If already logged in, redirect
   useEffect(() => {
     let active = true;
@@ -20,7 +23,7 @@ export default function LoginPageInner() {
       try {
         const res = await fetch("/api/v1/auth/me", { cache: "no-store" });
         if (res.ok && active) {
-          router.replace(from);
+                    router.replace(from);
         }
       } catch {}
     })();
@@ -42,6 +45,13 @@ export default function LoginPageInner() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || "Login failed");
+      }
+
+      // ✅ fetch user profile after login
+      const me = await fetch("/api/v1/auth/me", { cache: "no-store" })
+      if (me.ok) {
+        const userData = await me.json()
+        setUser(userData) // store user globally
       }
 
       // Success: cookie set via API, redirect to intended page

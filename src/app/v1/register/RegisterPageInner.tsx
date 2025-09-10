@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Form, Input, Button, Typography, Alert, Select } from "antd";
 import Link from "next/link";
+import useAuthStore from "@/store/useAuthStore"
+
+const { setUser } = useAuthStore();
 
 const PLAN_OPTIONS = [
   { label: "Freemium", value: "freemium" },
@@ -53,6 +56,13 @@ export default function RegisterPageInner() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || "Registration failed");
+      }
+
+      // ✅ fetch user profile after successful registration
+      const me = await fetch("/api/v1/auth/me", { cache: "no-store" })
+      if (me.ok) {
+        const userData = await me.json()
+        setUser(userData) // store in Zustand
       }
 
       router.replace(from);
