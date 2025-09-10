@@ -35,6 +35,8 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
 import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
 import useAuthStore from "@/store/useAuthStore";
+import { features } from "@/config/features";
+import FeatureWrapper from "@/components/wrappers/FeatureWrapper";
 
 const { Title } = Typography;
 
@@ -128,6 +130,7 @@ export default function DashboardPage() {
   ];
 
   const isAdmin = user?.roles.includes("admin");
+  const isManager = user?.roles.includes("manager");
   const isUser = user?.roles.includes("user");
 
   return (
@@ -222,6 +225,69 @@ export default function DashboardPage() {
             </>
           )}
 
+          {/* Manager: show all cards */}
+          {isManager && (
+            <>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Users"
+                  value={stats?.users ?? 0}
+                  icon={<UserOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #6DD5FA, #2980B9)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Demand Zones"
+                  value={stats?.demandZones ?? 0}
+                  icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #F7971E, #FFD200)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Symbols"
+                  value={stats?.symbols ?? 0}
+                  icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Invalid Symbols"
+                  value={stats?.invalidSymbols ?? 0}
+                  icon={<WarningOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #ff512f, #dd2476)"
+                  onClick={openInvalidSymbols}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Outdated Symbols"
+                  value={stats?.outdatedSymbols ?? 0}
+                  icon={<ClockCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #f7971e, #f44336)"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
+                  title="Zones Near Day Low (3%)"
+                  value={stats?.zonesNearDayLow ?? 0}
+                  icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #00b09b, #96c93d)"
+                  onClick={openZones}
+                />
+              </Col>
+            </>
+          )}
+
+
           {/* User: show only 3 cards */}
           {isUser && (
             <>
@@ -285,6 +351,7 @@ export default function DashboardPage() {
             "INFY removed from outdated list",
           ]}
         />
+     
       </Col>
 
       {/* Modals */}
