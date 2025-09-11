@@ -35,8 +35,6 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
 import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
 import useAuthStore from "@/store/useAuthStore";
-import { features } from "@/config/features";
-import FeatureWrapper from "@/components/wrappers/FeatureWrapper";
 
 const { Title } = Typography;
 

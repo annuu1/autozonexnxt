@@ -1,8 +1,7 @@
 "use client";
 
-import { Card, List } from "antd";
+import { List } from "antd";
 import FeatureWrapper from "../wrappers/FeatureWrapper";
-import { features } from "@/config/features";
 import useAuthStore from "@/store/useAuthStore";
 
 interface AsidePanelProps {
@@ -17,7 +16,7 @@ export default function AsidePanel({ marketSummary, alerts, notifications }: Asi
   return (
     <>
       {/* Market Summary (wrapped as paid feature) */}
-      <FeatureWrapper title="📌 Sectoral Summary" feature={features.marketSummary} user={user}>
+      <FeatureWrapper title="📌 Sectoral Summary" featureKey="marketSummary" user={user}>
         {marketSummary.map((item, idx) => (
           <p key={idx}>
             {item.trend === "up" && "✅ "}
@@ -29,7 +28,7 @@ export default function AsidePanel({ marketSummary, alerts, notifications }: Asi
       </FeatureWrapper>
 
       {/* Alerts (free feature) */}
-      <FeatureWrapper title="⚠️ Alerts" feature={features.alerts} user={user}>
+      <FeatureWrapper title="⚠️ Alerts" featureKey="alerts" user={user}>
         <List
           dataSource={alerts}
           renderItem={(item) => <List.Item>{item}</List.Item>}
@@ -37,7 +36,7 @@ export default function AsidePanel({ marketSummary, alerts, notifications }: Asi
       </FeatureWrapper>
 
       {/* Notifications (free feature) */}
-      <FeatureWrapper title="🔔 Notifications" feature={features.notifications} user={user}>
+      <FeatureWrapper title="🔔 Notifications" featureKey="notifications" user={user}>
         <List
           dataSource={notifications}
           renderItem={(item) => <List.Item>{item}</List.Item>}
@@ -46,3 +45,4 @@ export default function AsidePanel({ marketSummary, alerts, notifications }: Asi
     </>
   );
 }
+
