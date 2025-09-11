@@ -42,7 +42,7 @@ function formatBreached(doc: any) {
           minute: "2-digit",
         })
       : null,
-    reaction: "Failed", // placeholder — can refine later
+    reaction: "Failed", // placeholder
   };
 }
 
@@ -65,67 +65,19 @@ export async function GET(req: Request) {
   const tomorrow = new Date(selectedDate);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // 🔹 Fetch today's zones (convert string → date)
+  // 🔹 Use ISO strings for range filtering
+  const startIso = selectedDate.toISOString();
+  const endIso = tomorrow.toISOString();
+
+  // 🔹 Today’s zones
   const todayZones = await DemandZone.find({
     $or: [
-      {
-        $expr: {
-          $and: [
-            {
-              $gte: [
-                { $dateFromString: { dateString: "$zone_alert_time" } },
-                selectedDate,
-              ],
-            },
-            {
-              $lt: [
-                { $dateFromString: { dateString: "$zone_alert_time" } },
-                tomorrow,
-              ],
-            },
-          ],
-        },
-      },
-      {
-        $expr: {
-          $and: [
-            {
-              $gte: [
-                { $dateFromString: { dateString: "$zone_entry_time" } },
-                selectedDate,
-              ],
-            },
-            {
-              $lt: [
-                { $dateFromString: { dateString: "$zone_entry_time" } },
-                tomorrow,
-              ],
-            },
-          ],
-        },
-      },
-      {
-        $expr: {
-          $and: [
-            {
-              $gte: [
-                { $dateFromString: { dateString: "$zone_breach_time" } },
-                selectedDate,
-              ],
-            },
-            {
-              $lt: [
-                { $dateFromString: { dateString: "$zone_breach_time" } },
-                tomorrow,
-              ],
-            },
-          ],
-        },
-      },
+      { zone_alert_time: { $gte: startIso, $lt: endIso } },
+      { zone_entry_time: { $gte: startIso, $lt: endIso } },
+      { zone_breach_time: { $gte: startIso, $lt: endIso } },
     ],
   }).lean();
 
-  // 🔹 Categorize
   const todayData = {
     approaching: todayZones
       .filter((z) => z.zone_alert_time && !z.zone_entry_time)
@@ -136,42 +88,19 @@ export async function GET(req: Request) {
     breached: todayZones.filter((z) => z.zone_breach_time).map(formatBreached),
   };
 
-  // 🔹 Fetch history (before today)
+  // 🔹 Past zones (before today)
   const pastZones = await DemandZone.find({
     $or: [
-      {
-        $expr: {
-          $lt: [
-            { $dateFromString: { dateString: "$zone_alert_time" } },
-            selectedDate,
-          ],
-        },
-      },
-      {
-        $expr: {
-          $lt: [
-            { $dateFromString: { dateString: "$zone_entry_time" } },
-            selectedDate,
-          ],
-        },
-      },
-      {
-        $expr: {
-          $lt: [
-            { $dateFromString: { dateString: "$zone_breach_time" } },
-            selectedDate,
-          ],
-        },
-      },
+      { zone_alert_time: { $lt: startIso } },
+      { zone_entry_time: { $lt: startIso } },
+      { zone_breach_time: { $lt: startIso } },
     ],
   }).lean();
 
-  // 🔹 Group daywise
   const daywiseData: Record<string, any> = {};
   for (const doc of pastZones) {
     const rawTime =
       doc.zone_breach_time || doc.zone_entry_time || doc.zone_alert_time;
-
     if (!rawTime) continue;
 
     const dateKey = new Date(rawTime).toLocaleDateString("en-IN", {
@@ -193,5 +122,16 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ today: todayData, history: daywiseData });
+  // 🔹 Sort history dates (latest → oldest)
+  const sortedDaywiseData: Record<string, any> = {};
+  Object.keys(daywiseData)
+    .sort(
+      (a, b) =>
+        new Date(b).getTime() - new Date(a).getTime() // newest first
+    )
+    .forEach((key) => {
+      sortedDaywiseData[key] = daywiseData[key];
+    });
+
+  return NextResponse.json({ today: todayData, history: sortedDaywiseData });
 }
