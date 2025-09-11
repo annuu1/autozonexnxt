@@ -294,6 +294,16 @@ export default function DashboardPage() {
               <Col xs={24} sm={12} md={8}>
                 <StatCard
                   loading={isLoading}
+                  title="Zones in Action"
+                  value={stats?.zonesNearDayLow ?? 0}
+                  icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
+                  gradient="linear-gradient(135deg, #00b09b, #96c93d)"
+                  onClick={openZones}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard
+                  loading={isLoading}
                   title="Demand Zones"
                   value={stats?.demandZones ?? 0}
                   icon={<DollarCircleOutlined style={{ fontSize: 32, color: "#fff" }} />}
@@ -307,16 +317,6 @@ export default function DashboardPage() {
                   value={stats?.symbols ?? 0}
                   icon={<DesktopOutlined style={{ fontSize: 32, color: "#fff" }} />}
                   gradient="linear-gradient(135deg, #56ab2f, #a8e063)"
-                />
-              </Col>
-              <Col xs={24} sm={12} md={8}>
-                <StatCard
-                  loading={isLoading}
-                  title="Zones Near Day Low (3%)"
-                  value={stats?.zonesNearDayLow ?? 0}
-                  icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
-                  gradient="linear-gradient(135deg, #00b09b, #96c93d)"
-                  onClick={openZones}
                 />
               </Col>
             </>

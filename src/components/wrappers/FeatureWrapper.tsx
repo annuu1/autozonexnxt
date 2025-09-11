@@ -13,7 +13,7 @@ export default function FeatureWrapper({ title, feature, user, children }: Featu
   return (
     <Card title={title} style={{ marginBottom: 20 }}>
       {feature.comingSoon ? (
-        <Text type="secondary">🚧 This feature is coming soon!</Text>
+        <Text type="secondary">🚧 This feature will be unlocked soon!</Text>
       ) : feature.paid && !user?.isSubscribed ? (
         <Text strong>🔒 Upgrade to Pro to access this feature.</Text>
       ) : feature.enabled ? (

@@ -17,7 +17,7 @@ export default function AsidePanel({ marketSummary, alerts, notifications }: Asi
   return (
     <>
       {/* Market Summary (wrapped as paid feature) */}
-      <FeatureWrapper title="📌 Market Summary" feature={features.marketSummary} user={user}>
+      <FeatureWrapper title="📌 Sectoral Summary" feature={features.marketSummary} user={user}>
         {marketSummary.map((item, idx) => (
           <p key={idx}>
             {item.trend === "up" && "✅ "}
