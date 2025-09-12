@@ -19,6 +19,9 @@ import { useState } from "react";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import useAuthStore from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
+import PlanBadge from "@/components/common/PlanBadge";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { features } from "@/config/features";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -38,6 +41,17 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/v1/dashboard/settings", icon: <SettingOutlined /> },
   { label: "Profile", href: "/v1/dashboard/profile", icon: <UserOutlined /> },
 ];
+
+// Map routes to feature keys for access control
+const routeFeatureMap: Record<string, keyof typeof features | null> = {
+  "/v1/dashboard": null,
+  "/v1/dashboard/trades": "trades",
+  "/v1/dashboard/reports": "zonesReport",
+  "/v1/dashboard/demand-zones": "allZoneList",
+  "/v1/dashboard/notifications": "notifications",
+  "/v1/dashboard/settings": null,
+  "/v1/dashboard/profile": null,
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -81,7 +95,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
         <Avatar size={40} icon={<UserOutlined />} />
         <div style={{ marginLeft: 12 }}>
-          <div style={{ fontWeight: 600 }}>{user?.name}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontWeight: 600 }}>{user?.name}</div>
+            <PlanBadge plan={user?.subscription?.plan || "freemium"} />
+          </div>
           <div style={{ fontSize: 12, color: "#888" }}>{user?.email}</div>
         </div>
       </div>
@@ -147,11 +164,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <Menu theme="dark" mode="inline" selectedKeys={[]}>
-          {navItems.map((item) => (
-            <Menu.Item key={item.href} icon={item.icon}>
-              <Link href={item.href}>{item.label}</Link>
-            </Menu.Item>
-          ))}
+          {navItems.map((item) => {
+            const fkey = routeFeatureMap[item.href];
+            let disabled = false;
+            if (fkey) {
+              const { allowed } = useFeatureAccess(fkey, user);
+              disabled = !allowed;
+            }
+            return (
+              <Menu.Item key={item.href} icon={item.icon} hidden={disabled}>
+                <Link href={item.href}>{item.label}</Link>
+              </Menu.Item>
+            );
+          })}
         </Menu>
       </Sider>
 
@@ -184,9 +209,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {user && (
             <Dropdown overlay={userCard} trigger={["click"]} placement="bottomRight" arrow>
-              <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 8 }}>
                 <Avatar size="small" icon={<UserOutlined />} />
-                <span style={{ marginLeft: 8 }}>{user.name}</span>
+                <span>{user.name}</span>
+                <PlanBadge plan={user?.subscription?.plan || "freemium"} />
               </div>
             </Dropdown>
           )}
