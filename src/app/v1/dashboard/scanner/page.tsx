@@ -13,9 +13,10 @@ import {
   Alert,
   Grid,
 } from "antd";
-import { StarFilled } from "@ant-design/icons";
+import { StarFilled, CopyOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
 import styles from "./scanner.module.css";
+import {useCopyToClipboard} from "@/hooks/useCopyToClipboard";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -37,12 +38,16 @@ export default function ScannerPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const screens = useBreakpoint();
 
+  const { copy, contextHolder } = useCopyToClipboard();
+
   const columns = [
     {
       title: "Ticker",
       dataIndex: "ticker",
       key: "ticker",
-      render: (ticker: string) => <strong>{ticker}</strong>,
+      render: (ticker: string) => <strong>{ticker} 
+      <CopyOutlined onClick={() => copy(ticker)} 
+      style={{ cursor: "pointer" , color: "#555", marginLeft: "10px" }} /></strong>,
     },
     {
       title: "Pattern",
@@ -95,6 +100,7 @@ export default function ScannerPage() {
 
   return (
     <div style={{ padding: screens.xs ? 12 : 20 }}>
+      {contextHolder}
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <Title level={3}>Zone Scanner</Title>
 
@@ -178,7 +184,17 @@ export default function ScannerPage() {
 
         {/* Drawer for details */}
         <Drawer
-          title={`Zone Details: ${selectedZone?.ticker || ""}`}
+          title={
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span>Zone Details: {selectedZone?.ticker || ""}</span>
+              {selectedZone?.ticker && (
+                <CopyOutlined
+                  onClick={() => copy(selectedZone?.ticker)}
+                  style={{ cursor: "pointer", color: "#1890ff" }}
+                />
+              )}
+            </div>
+          }
           placement="right"
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
