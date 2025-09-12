@@ -24,7 +24,7 @@ export default function StatCard({
         borderRadius: 8,
         cursor: onClick ? "pointer" : "default",
       }}
-      bordered={false}
+
       loading={loading}
       onClick={onClick}
     >

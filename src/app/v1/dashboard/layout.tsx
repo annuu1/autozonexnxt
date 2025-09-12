@@ -185,6 +185,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               hidden,
             };
           })}
+          onClick={() => {
+            // auto collapse if on mobile
+            if (screens.xs) {
+              setCollapsed(true);
+            }
+          }}
         />
 
       </Sider>
@@ -226,7 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Dropdown>
           )} */}
           
-          {user && (
+          {user && !screens.xs && (
             <Dropdown
                 trigger={["click"]}
                 placement="bottomRight"

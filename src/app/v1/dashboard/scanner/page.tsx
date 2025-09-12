@@ -4,7 +4,6 @@ import {
   Select,
   Button,
   Table,
-  Card,
   Space,
   Tag,
   Typography,
@@ -12,12 +11,14 @@ import {
   Descriptions,
   Spin,
   Alert,
+  Grid,
 } from "antd";
 import { StarFilled } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
 import styles from "./scanner.module.css";
 
 const { Title } = Typography;
+const { useBreakpoint } = Grid;
 
 export default function ScannerPage() {
   const {
@@ -34,6 +35,7 @@ export default function ScannerPage() {
 
   const [selectedZone, setSelectedZone] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const screens = useBreakpoint();
 
   const columns = [
     {
@@ -92,16 +94,20 @@ export default function ScannerPage() {
   };
 
   return (
-    <Card style={{ margin: "20px" }}>
+    <div style={{ padding: screens.xs ? 12 : 20 }}>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <Title level={3}>Zone Scanner</Title>
 
-        {/* ✅ Filters now on top */}
-        <Space wrap>
+        {/* Filters */}
+        <Space
+          wrap
+          direction={screens.xs ? "vertical" : "horizontal"}
+          style={{ width: "100%" }}
+        >
           <Select
             value={timeframe}
             onChange={setTimeframe}
-            style={{ width: 150 }}
+            style={{ width: screens.xs ? "100%" : 150 }}
             options={[
               { value: "all", label: "All" },
               { value: "1wk", label: "1 Week" },
@@ -112,6 +118,7 @@ export default function ScannerPage() {
 
           <Button
             type={zoneFilter === "approaching" ? "primary" : "default"}
+            block={screens.xs}
             onClick={() =>
               setZoneFilter(zoneFilter === "approaching" ? null : "approaching")
             }
@@ -121,6 +128,7 @@ export default function ScannerPage() {
 
           <Button
             type={zoneFilter === "entered" ? "primary" : "default"}
+            block={screens.xs}
             onClick={() =>
               setZoneFilter(zoneFilter === "entered" ? null : "entered")
             }
@@ -130,6 +138,7 @@ export default function ScannerPage() {
 
           <Button
             type={teamFilter ? "primary" : "default"}
+            block={screens.xs}
             style={{
               backgroundColor: teamFilter ? "#fadb14" : "#fffbe6",
               borderColor: "#d4b106",
@@ -151,17 +160,20 @@ export default function ScannerPage() {
         ) : error ? (
           <Alert type="error" message="Failed to fetch zones" />
         ) : (
-          <Table
-            dataSource={filteredZones}
-            columns={columns}
-            rowKey="zone_id"
-            pagination={false}
-            bordered
-            rowClassName={styles.clickableRow}
-            onRow={(record) => ({
-              onClick: () => handleRowClick(record),
-            })}
-          />
+          <div style={{ overflowX: "auto" }}>
+            <Table
+              dataSource={filteredZones}
+              columns={columns}
+              rowKey="zone_id"
+              pagination={false}
+              bordered
+              rowClassName={styles.clickableRow}
+              onRow={(record) => ({
+                onClick: () => handleRowClick(record),
+              })}
+              style={{ minWidth: 600 }} // ✅ ensures scroll works on small screens
+            />
+          </div>
         )}
 
         {/* Drawer for details */}
@@ -170,7 +182,7 @@ export default function ScannerPage() {
           placement="right"
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
-          width={400}
+          width={screens.xs ? "100%" : 400}
         >
           {selectedZone && (
             <Descriptions column={1} bordered size="small">
@@ -183,6 +195,6 @@ export default function ScannerPage() {
           )}
         </Drawer>
       </Space>
-    </Card>
+    </div>
   );
 }

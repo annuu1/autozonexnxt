@@ -1,7 +1,15 @@
 "use client"
 
 import React from "react"
-import { Tabs, Table, Card, Typography, Divider, Spin, Alert } from "antd"
+import {
+  Tabs,
+  Table,
+  Card,
+  Typography,
+  Divider,
+  Spin,
+  Alert,
+} from "antd"
 import type { ColumnsType } from "antd/es/table"
 import { useReports } from "@/hooks/useReports"
 
@@ -54,7 +62,7 @@ function ReportsPage() {
 
   if (isLoading) {
     return (
-      <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ padding: 16, textAlign: "center" }}>
         <Spin size="large" />
       </div>
     )
@@ -62,7 +70,7 @@ function ReportsPage() {
 
   if (error) {
     return (
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: 16 }}>
         <Alert
           type="error"
           message="Error"
@@ -73,12 +81,32 @@ function ReportsPage() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={2}>📊 Demand Zone Reports</Title>
+    <div
+      style={{
+        padding: 16,
+        maxWidth: "100%",
+        overflowX: "hidden",
+      }}
+    >
+      <Title
+        level={3}
+        style={{
+          fontSize: "clamp(18px, 4vw, 24px)",
+          textAlign: "center",
+          marginBottom: 16,
+        }}
+      >
+        📊 Demand Zone Reports
+      </Title>
 
       {/* Today Section */}
-      <Card title="Today’s Demand Zones" style={{ marginBottom: 24 }}>
+      <Card
+        title="Today’s Demand Zones"
+        style={{ marginBottom: 24 }}
+        bodyStyle={{ padding: 12 }}
+      >
         <Tabs
+          tabPosition="top"
           items={[
             {
               key: "approaching",
@@ -89,6 +117,8 @@ function ReportsPage() {
                   columns={todayColumns.approaching}
                   rowKey="id"
                   pagination={false}
+                  scroll={{ x: true }}
+                  size="small"
                 />
               ),
             },
@@ -101,6 +131,8 @@ function ReportsPage() {
                   columns={todayColumns.entered}
                   rowKey="id"
                   pagination={false}
+                  scroll={{ x: true }}
+                  size="small"
                 />
               ),
             },
@@ -113,6 +145,8 @@ function ReportsPage() {
                   columns={todayColumns.breached}
                   rowKey="id"
                   pagination={false}
+                  scroll={{ x: true }}
+                  size="small"
                 />
               ),
             },
@@ -121,11 +155,20 @@ function ReportsPage() {
       </Card>
 
       {/* Daywise Section */}
-      <Card title="Daywise History">
+      <Card title="Daywise History" bodyStyle={{ padding: 12 }}>
         {Object.entries(data?.history || {}).map(([date, statuses]) => (
-          <div key={date} style={{ marginBottom: 32 }}>
-            <Divider orientation="left">{date}</Divider>
+          <div key={date} style={{ marginBottom: 24 }}>
+            <Divider
+              orientation="left"
+              style={{
+                fontSize: "clamp(14px, 3vw, 18px)",
+                margin: "12px 0",
+              }}
+            >
+              {date}
+            </Divider>
             <Tabs
+              tabPosition="top"
               items={Object.entries(statuses).map(([status, rows]) => ({
                 key: status,
                 label: status.charAt(0).toUpperCase() + status.slice(1),
@@ -135,6 +178,8 @@ function ReportsPage() {
                     columns={daywiseColumns[status]}
                     rowKey="id"
                     pagination={false}
+                    scroll={{ x: true }}
+                    size="small"
                   />
                 ),
               }))}
