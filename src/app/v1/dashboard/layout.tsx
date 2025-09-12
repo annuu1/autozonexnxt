@@ -4,6 +4,7 @@
 import { Layout, Menu, Grid, Spin, Dropdown, Card, Button, Avatar } from "antd";
 import {
   DashboardOutlined,
+  ScanOutlined,
   BarChartOutlined,
   FileTextOutlined,
   AppstoreOutlined,
@@ -34,6 +35,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/v1/dashboard", icon: <DashboardOutlined /> },
+  { label : "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined />},
   { label: "Trades", href: "/v1/dashboard/trades", icon: <BarChartOutlined /> },
   { label: "Reports", href: "/v1/dashboard/reports", icon: <FileTextOutlined /> },
   { label: "Zones", href: "/v1/dashboard/demand-zones", icon: <AppstoreOutlined /> },
