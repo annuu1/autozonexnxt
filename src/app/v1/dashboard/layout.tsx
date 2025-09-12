@@ -49,6 +49,7 @@ const routeFeatureMap: Record<string, keyof typeof features | null> = {
   "/v1/dashboard/reports": "zonesReport",
   "/v1/dashboard/demand-zones": "allZoneList",
   "/v1/dashboard/notifications": "notifications",
+  "/v1/dashboard/billing": null,
   "/v1/dashboard/settings": null,
   "/v1/dashboard/profile": null,
 };
