@@ -145,6 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onCollapse={(value) => setCollapsed(value)}
         breakpoint="lg"
         collapsedWidth={screens.xs ? 0 : 80}
+        trigger={null}
       >
         {/* Logo */}
         <div

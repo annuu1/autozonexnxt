@@ -1,17 +1,9 @@
-// app/v1/register/RegisterPageInner.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card, Form, Input, Button, Typography, Alert, Select } from "antd";
-import Link from "next/link";
-import useAuthStore from "@/store/useAuthStore"
-
-const PLAN_OPTIONS = [
-  { label: "Freemium", value: "freemium" },
-  { label: "Starter", value: "starter" },
-  { label: "Pro", value: "pro" },
-];
+import { Card, Form, Input, Button, Typography, Alert } from "antd";
+import useAuthStore from "@/store/useAuthStore";
 
 export default function RegisterPageInner() {
   const router = useRouter();
@@ -22,7 +14,7 @@ export default function RegisterPageInner() {
 
   const { setUser } = useAuthStore();
 
-  // If already logged in, redirect
+  // Redirect if already logged in
   useEffect(() => {
     let active = true;
     (async () => {
@@ -49,7 +41,7 @@ export default function RegisterPageInner() {
           name: values.name,
           email: values.email,
           password: values.password,
-          plan: values.plan,
+          plan: "freemium", // default plan, no dropdown
         }),
       });
 
@@ -58,11 +50,10 @@ export default function RegisterPageInner() {
         throw new Error(data?.error || "Registration failed");
       }
 
-      // ✅ fetch user profile after successful registration
-      const me = await fetch("/api/v1/auth/me", { cache: "no-store" })
+      const me = await fetch("/api/v1/auth/me", { cache: "no-store" });
       if (me.ok) {
-        const userData = await me.json()
-        setUser(userData) // store in Zustand
+        const userData = await me.json();
+        setUser(userData);
       }
 
       router.replace(from);
@@ -81,85 +72,142 @@ export default function RegisterPageInner() {
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
+        background: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+        backgroundSize: "400% 400%",
+        animation: "gradientBG 15s ease infinite",
       }}
     >
-      <Card style={{ width: 420 }}>
-        <Typography.Title
-          level={3}
-          style={{ textAlign: "center", marginBottom: 24 }}
+      <style>{`
+        @keyframes gradientBG {
+          0% {background-position:0% 50%}
+          50% {background-position:100% 50%}
+          100% {background-position:0% 50%}
+        }
+      `}</style>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 24,
+          maxWidth: 900,
+          width: "100%",
+        }}
+      >
+        {/* Left Card with Trading Theme / Graphic */}
+        <Card
+          style={{
+            flex: 1,
+            background: "rgba(255, 255, 255, 0.05)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 16,
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 500,
+            textAlign: "center",
+            fontWeight: "bold",
+            fontSize: 24,
+          }}
+          bordered={false}
         >
-          Create your account
-        </Typography.Title>
+          Welcome to <br /> AutoZone Trading
+        </Card>
 
-        {error && (
-          <Alert type="error" message={error} style={{ marginBottom: 16 }} />
-        )}
-
-        <Form layout="vertical" onFinish={onFinish}>
-          <Form.Item
-            label="Full name"
-            name="name"
-            rules={[{ required: true, message: "Please enter your name" }]}
+        {/* Right Card with Form */}
+        <Card
+          style={{
+            flex: 1,
+            background: "rgba(255, 255, 255, 0.05)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 16,
+            padding: 32,
+            minHeight: 500,
+          }}
+          bordered={false}
+        >
+          <Typography.Title
+            level={3}
+            style={{ textAlign: "center", marginBottom: 24, color: "#fff" }}
           >
-            <Input autoComplete="name" placeholder="Jane Doe" size="large" />
-          </Form.Item>
+            Create Your Account
+          </Typography.Title>
 
-          <Form.Item
-            label="Email"
-            name="email"
-            rules={[
-              { required: true, message: "Please enter your email" },
-              { type: "email", message: "Invalid email" },
-            ]}
-          >
-            <Input
-              autoComplete="email"
-              placeholder="you@example.com"
-              size="large"
-            />
-          </Form.Item>
+          {error && (
+            <Alert type="error" message={error} style={{ marginBottom: 16 }} />
+          )}
 
-          <Form.Item
-            label="Password"
-            name="password"
-            rules={[
-              { required: true, message: "Please enter your password" },
-              { min: 8, message: "Minimum 8 characters" },
-            ]}
-          >
-            <Input.Password
-              autoComplete="new-password"
-              placeholder="••••••••"
-              size="large"
-            />
-          </Form.Item>
-
-          <Form.Item label="Plan" name="plan" initialValue="freemium">
-            <Select options={PLAN_OPTIONS} size="large" />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              size="large"
-              loading={loading}
+          <Form layout="vertical" onFinish={onFinish}>
+            <Form.Item
+              label={<span style={{ color: "#ddd" }}>Full Name</span>}
+              name="name"
+              rules={[{ required: true, message: "Please enter your name" }]}
             >
-              Create account
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input
+                autoComplete="name"
+                placeholder="Jane Doe"
+                size="large"
+                style={{ borderRadius: 8 }}
+              />
+            </Form.Item>
 
-        <Typography.Paragraph
-          style={{ textAlign: "center", color: "#888", marginTop: 8 }}
-        >
-          Already have an account?{" "}
-          <Link href={`/v1/login?from=${encodeURIComponent(from)}`}>
-            Sign in
-          </Link>
-        </Typography.Paragraph>
-      </Card>
+            <Form.Item
+              label={<span style={{ color: "#ddd" }}>Email</span>}
+              name="email"
+              rules={[
+                { required: true, message: "Please enter your email" },
+                { type: "email", message: "Invalid email" },
+              ]}
+            >
+              <Input
+                autoComplete="email"
+                placeholder="you@example.com"
+                size="large"
+                style={{ borderRadius: 8 }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={<span style={{ color: "#ddd" }}>Password</span>}
+              name="password"
+              rules={[
+                { required: true, message: "Please enter your password" },
+                { min: 8, message: "Minimum 8 characters" },
+              ]}
+            >
+              <Input.Password
+                autoComplete="new-password"
+                placeholder="••••••••"
+                size="large"
+                style={{ borderRadius: 8 }}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                block
+                size="large"
+                loading={loading}
+                style={{ borderRadius: 8, background: "#00c6ff", borderColor: "#0072ff" }}
+              >
+                Create Account
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <Typography.Paragraph
+            style={{ textAlign: "center", color: "#ccc", marginTop: 8 }}
+          >
+            Already have an account?{" "}
+            <a href={`/v1/login?from=${encodeURIComponent(from)}`} style={{ color: "#00c6ff" }}>
+              Sign in
+            </a>
+          </Typography.Paragraph>
+        </Card>
+      </div>
     </div>
   );
 }

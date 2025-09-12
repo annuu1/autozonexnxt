@@ -140,7 +140,7 @@ export default function DashboardPage() {
         </Title>
 
         {/* Date selector + Quick Actions */}
-        <div style={{ marginBottom: 20, display: "flex", gap: 10 }}>
+        {/* <div style={{ marginBottom: 20, display: "flex", gap: 10 }}>
           <div>
             <span style={{ marginRight: 8 }}>Check outdated symbols as of:</span>
             <DatePicker
@@ -157,7 +157,7 @@ export default function DashboardPage() {
             </Button>
             <Button icon={<DownloadOutlined />}>Export</Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Role-based Cards */}
         <Row gutter={[16, 16]}>
