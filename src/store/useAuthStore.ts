@@ -5,6 +5,9 @@ interface Subscription {
   plan: string
   status: string
   startDate: string
+  // Optional fields for plan duration/expiry tracking
+  billingCycle?: "monthly" | "quarterly" | "yearly"
+  endDate?: string
 }
 
 export interface User {

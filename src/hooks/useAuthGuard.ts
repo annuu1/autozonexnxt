@@ -9,7 +9,13 @@ export type CurrentUser = {
   name: string;
   email: string;
   roles: string[];
-  subscription?: { plan: string; status: string };
+  subscription?: {
+    plan: string;
+    status: string;
+    startDate?: string;
+    billingCycle?: "monthly" | "quarterly" | "yearly";
+    endDate?: string;
+  };
 };
 
 export default function useAuthGuard() {

@@ -60,6 +60,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  // Subscription display helpers
+  const sub = user?.subscription;
+  let derivedEndDate: Date | null = null;
+  if (sub?.endDate) {
+    derivedEndDate = new Date(sub.endDate);
+  } else if (sub?.startDate && sub?.billingCycle) {
+    const start = new Date(sub.startDate);
+    const d = new Date(start);
+    if (sub.billingCycle === "monthly") d.setMonth(d.getMonth() + 1);
+    else if (sub.billingCycle === "quarterly") d.setMonth(d.getMonth() + 3);
+    else if (sub.billingCycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+    derivedEndDate = d;
+  }
+  const expiryText = derivedEndDate ? derivedEndDate.toLocaleDateString() : "—";
+  const cycleText = sub?.billingCycle ? sub.billingCycle : "—";
+
   const userCard = (
     <Card style={{ width: 240 }} bodyStyle={{ padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
@@ -72,6 +88,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div style={{ fontSize: 13, marginBottom: 12 }}>
         Role: <b>{user?.roles?.[0] || "user"}</b>
       </div>
+      {sub && (
+        <div style={{ fontSize: 12, color: "#555", marginBottom: 12, lineHeight: 1.5 }}>
+          <div>
+            Plan: <b style={{ textTransform: "capitalize" }}>{sub.plan || "freemium"}</b>
+          </div>
+          <div>
+            Status: <b style={{ textTransform: "capitalize" }}>{sub.status || "inactive"}</b>
+          </div>
+          <div>
+            Cycle: <b style={{ textTransform: "capitalize" }}>{cycleText}</b>
+          </div>
+          <div>
+            Expires: <b>{expiryText}</b>
+          </div>
+        </div>
+      )}
       <Button
         type="text"
         icon={<LogoutOutlined />}
