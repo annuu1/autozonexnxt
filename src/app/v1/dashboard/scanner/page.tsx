@@ -1,64 +1,46 @@
 "use client";
 import React, { useState } from "react";
-import { Select, Button, Table, Card, Space, Tag, Typography, Drawer, Descriptions } from "antd";
+import {
+  Select,
+  Button,
+  Table,
+  Card,
+  Space,
+  Tag,
+  Typography,
+  Drawer,
+  Descriptions,
+  Spin,
+  Alert,
+} from "antd";
 import { StarFilled } from "@ant-design/icons";
-import styles from "./scanner.module.css"; // <- we will create this CSS module
+import { useScanner } from "@/hooks/useScanner";
+import styles from "./scanner.module.css";
 
-const { Option } = Select;
 const { Title } = Typography;
 
 export default function ScannerPage() {
-  const [timeframe, setTimeframe] = useState("all");
-  const [zoneFilter, setZoneFilter] = useState(null);
-  const [teamFilter, setTeamFilter] = useState(false);
-  const [selectedZone, setSelectedZone] = useState(null);
+  const {
+    filteredZones,
+    timeframe,
+    setTimeframe,
+    zoneFilter,
+    setZoneFilter,
+    teamFilter,
+    setTeamFilter,
+    isLoading,
+    error,
+  } = useScanner();
+
+  const [selectedZone, setSelectedZone] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Static sample data
-  const zones = [
-    {
-      key: "1",
-      ticker: "AUBANK",
-      pattern: "RBR",
-      proximal_line: 768.6,
-      distal_line: 750.25,
-      timeframes: ["1wk", "1d"],
-      status: "approaching",
-      trade_score: 0,
-      rating: 9,
-      zone_id: "AUBANK-1wk-2025-06-16T00:00:00+05:30",
-      freshness: 0,
-      timestamp: "2025-06-02T00:00:00+05:30",
-    },
-    {
-      key: "2",
-      ticker: "RELIANCE",
-      pattern: "DBD",
-      proximal_line: 2540.5,
-      distal_line: 2501.25,
-      timeframes: ["1mo"],
-      status: "entered",
-      trade_score: 5,
-      rating: 7,
-      zone_id: "RELIANCE-1mo-2025-05-20T00:00:00+05:30",
-      freshness: 1,
-      timestamp: "2025-05-05T00:00:00+05:30",
-    },
-  ];
-
-  const filteredZones = zones.filter((zone) => {
-    if (timeframe !== "all" && !zone.timeframes.includes(timeframe)) return false;
-    if (zoneFilter && zone.status !== zoneFilter) return false;
-    if (teamFilter && zone.rating < 8) return false;
-    return true;
-  });
 
   const columns = [
     {
       title: "Ticker",
       dataIndex: "ticker",
       key: "ticker",
-      render: (ticker) => <strong>{ticker}</strong>,
+      render: (ticker: string) => <strong>{ticker}</strong>,
     },
     {
       title: "Pattern",
@@ -69,27 +51,28 @@ export default function ScannerPage() {
       title: "Proximal Line",
       dataIndex: "proximal_line",
       key: "proximal_line",
-      render: (value) => value.toFixed(2),
+      render: (value: number) => value?.toFixed(2),
     },
     {
       title: "Distal Line",
       dataIndex: "distal_line",
       key: "distal_line",
-      render: (value) => value.toFixed(2),
+      render: (value: number) => value?.toFixed(2),
     },
     {
       title: "Timeframes",
       dataIndex: "timeframes",
       key: "timeframes",
-      render: (frames) => frames.map((f) => <Tag key={f}>{f}</Tag>),
+      render: (frames: string[] = []) =>
+        (frames || []).map((f) => <Tag key={f}>{f}</Tag>),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
+      render: (status: string) => (
         <Tag color={status === "entered" ? "green" : "blue"}>
-          {status.toUpperCase()}
+          {status?.toUpperCase()}
         </Tag>
       ),
     },
@@ -97,13 +80,13 @@ export default function ScannerPage() {
       title: "Rating",
       dataIndex: "rating",
       key: "rating",
-      render: (rating) => (
+      render: (rating: number) => (
         <Tag color={rating >= 8 ? "gold" : "default"}>{rating}/10</Tag>
       ),
     },
   ];
 
-  const handleRowClick = (record) => {
+  const handleRowClick = (record: any) => {
     setSelectedZone(record);
     setDrawerOpen(true);
   };
@@ -113,14 +96,19 @@ export default function ScannerPage() {
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <Title level={3}>Zone Scanner</Title>
 
-        {/* Filters */}
+        {/* ✅ Filters now on top */}
         <Space wrap>
-          <Select value={timeframe} onChange={setTimeframe} style={{ width: 150 }}>
-            <Option value="all">All</Option>
-            <Option value="1wk">1 Week</Option>
-            <Option value="1mo">1 Month</Option>
-            <Option value="3mo">3 Months</Option>
-          </Select>
+          <Select
+            value={timeframe}
+            onChange={setTimeframe}
+            style={{ width: 150 }}
+            options={[
+              { value: "all", label: "All" },
+              { value: "1wk", label: "1 Week" },
+              { value: "1mo", label: "1 Month" },
+              { value: "3mo", label: "3 Months" },
+            ]}
+          />
 
           <Button
             type={zoneFilter === "approaching" ? "primary" : "default"}
@@ -157,19 +145,26 @@ export default function ScannerPage() {
           </Button>
         </Space>
 
-        {/* Results Table */}
-        <Table
-          dataSource={filteredZones}
-          columns={columns}
-          pagination={false}
-          bordered
-          rowClassName={styles.clickableRow}
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-          })}
-        />
+        {/* Table */}
+        {isLoading ? (
+          <Spin tip="Loading zones..." fullscreen />
+        ) : error ? (
+          <Alert type="error" message="Failed to fetch zones" />
+        ) : (
+          <Table
+            dataSource={filteredZones}
+            columns={columns}
+            rowKey="zone_id"
+            pagination={false}
+            bordered
+            rowClassName={styles.clickableRow}
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+            })}
+          />
+        )}
 
-        {/* Drawer for Zone Details */}
+        {/* Drawer for details */}
         <Drawer
           title={`Zone Details: ${selectedZone?.ticker || ""}`}
           placement="right"

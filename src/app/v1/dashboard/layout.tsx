@@ -166,21 +166,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </>}
         </div>
 
-        <Menu theme="dark" mode="inline" selectedKeys={[]}>
-          {navItems.map((item) => {
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[]}
+          items={navItems.map((item) => {
             const fkey = routeFeatureMap[item.href];
-            let disabled = false;
+            let hidden = false;
             if (fkey) {
               const { allowed } = useFeatureAccess(fkey, user);
-              disabled = !allowed;
+              hidden = !allowed;
             }
-            return (
-              <Menu.Item key={item.href} icon={item.icon} hidden={disabled}>
-                <Link href={item.href}>{item.label}</Link>
-              </Menu.Item>
-            );
+            return {
+              key: item.href,
+              icon: item.icon,
+              label: <Link href={item.href}>{item.label}</Link>,
+              hidden,
+            };
           })}
-        </Menu>
+        />
+
       </Sider>
 
       {/* Main Area */}
@@ -210,7 +215,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <h1 style={{ marginLeft: 16, fontSize: 18 }}>Dashboard</h1>
           </div>
 
-          {user && (
+          {/* {user && (
             <Dropdown overlay={userCard} trigger={["click"]} placement="bottomRight" arrow>
               <div style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 8 }}>
                 <Avatar size="small" icon={<UserOutlined />} />
@@ -218,7 +223,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <PlanBadge plan={user?.subscription?.plan || "freemium"} />
               </div>
             </Dropdown>
-          )}
+          )} */}
+          
+          {user && (
+            <Dropdown
+                trigger={["click"]}
+                placement="bottomRight"
+                arrow
+                menu={{
+                  items: [
+                    {
+                      key: "user-card",
+                      label: userCard, // the custom card you already built
+                    },
+                  ],
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    gap: 8,
+                  }}
+                >
+                  <Avatar size="small" icon={<UserOutlined />} />
+                  <span>{user.name}</span>
+                  <PlanBadge plan={user?.subscription?.plan || "freemium"} />
+                </div>
+              </Dropdown>
+            )}
         </Header>
 
         <Content
