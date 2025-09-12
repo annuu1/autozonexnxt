@@ -6,13 +6,13 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header / Navbar */}
       <header className="flex justify-between items-center px-8 py-6 bg-white shadow-sm">
-        <div className="text-2xl font-bold text-blue-600">MyApp</div>
+        <div className="text-2xl font-bold text-blue-600">AutoZoneX</div>
         <nav className="space-x-6">
           <Link href="#features" className="text-gray-700 hover:text-blue-600">
             Features
           </Link>
-          <Link href="#pricing" className="text-gray-700 hover:text-blue-600">
-            Pricing
+          <Link href="#about" className="text-gray-700 hover:text-blue-600">
+            About
           </Link>
           <Link href="#contact" className="text-gray-700 hover:text-blue-600">
             Contact
@@ -21,7 +21,7 @@ export default function Home() {
             href="/v1/dashboard"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
           >
-            Get Started
+            Dashboard
           </Link>
         </nav>
       </header>
@@ -30,21 +30,23 @@ export default function Home() {
       <section className="flex flex-col md:flex-row items-center justify-between px-8 py-20 max-w-7xl mx-auto">
         <div className="max-w-xl text-center md:text-left">
           <h1 className="text-5xl font-extrabold text-gray-900 mb-6">
-            Build Modern <span className="text-blue-600">Web Apps</span> Faster
+            Smarter <span className="text-blue-600">Stock Analysis</span> with
+            Demand & Supply Zones
           </h1>
           <p className="text-lg text-gray-600 mb-8">
-            A responsive, elegant UI component library built with Tailwind CSS
-            and Next.js. Drop it into your projects and launch quickly.
+            AutoZoneX helps traders identify institutional demand & supply zones,
+            track multi-timeframe setups, and get instant alerts — all in one
+            dashboard.
           </p>
           <div className="space-x-4">
             <Link
               href="/v1/dashboard"
               className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
             >
-              Get Started
+              Launch Dashboard
             </Link>
             <Link
-              href="/v1/dashboard/features"
+              href="#features"
               className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
             >
               Learn More
@@ -55,7 +57,7 @@ export default function Home() {
         <div className="mt-12 md:mt-0 md:ml-8">
           <Image
             src="/hero.png"
-            alt="Hero Illustration"
+            alt="Stock Market Illustration"
             width={500}
             height={400}
             className="rounded-xl shadow-lg"
@@ -67,25 +69,45 @@ export default function Home() {
       <section id="features" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-8">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Why Choose <span className="text-blue-600">MyApp?</span>
+            Why Traders Choose{" "}
+            <span className="text-blue-600">AutoZoneX</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-md transition">
-              <h3 className="text-xl font-semibold mb-3">⚡ Fast Development</h3>
+              <h3 className="text-xl font-semibold mb-3">📊 Zone Detection</h3>
               <p className="text-gray-600">
-                Ship projects quickly with prebuilt components and utilities.
+                Identify demand & supply zones with precise candle-based rules.
               </p>
             </div>
             <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-md transition">
-              <h3 className="text-xl font-semibold mb-3">🎨 Modern Design</h3>
+              <h3 className="text-xl font-semibold mb-3">⏳ Multi-Timeframe</h3>
               <p className="text-gray-600">
-                Clean and responsive UI built with Tailwind CSS.
+                Top-down analysis from weekly to intraday, with parent-child
+                zone tracking.
               </p>
             </div>
             <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-md transition">
-              <h3 className="text-xl font-semibold mb-3">🔒 Secure</h3>
+              <h3 className="text-xl font-semibold mb-3">🔔 Trade Alerts</h3>
               <p className="text-gray-600">
-                Built-in best practices for performance and security.
+                Get notified when price approaches or enters your zone setups.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-md transition">
+              <h3 className="text-xl font-semibold mb-3">👤 Role-Based Access</h3>
+              <p className="text-gray-600">
+                Admin, Manager, Agent, or Trader — features adapt to your role.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-md transition">
+              <h3 className="text-xl font-semibold mb-3">📝 Trade Journal</h3>
+              <p className="text-gray-600">
+                Log personal notes, strategy alignment, and track performance.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-lg shadow hover:shadow-md transition">
+              <h3 className="text-xl font-semibold mb-3">☁ Cloud Sync</h3>
+              <p className="text-gray-600">
+                Access your analysis and zones anywhere, securely.
               </p>
             </div>
           </div>
@@ -93,22 +115,19 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section
-        id="pricing"
-        className="py-20 bg-blue-600 text-center text-white"
-      >
+      <section id="about" className="py-20 bg-blue-600 text-center text-white">
         <h2 className="text-4xl font-bold mb-6">
-          Ready to Build Something Amazing?
+          Trade Smarter, Not Harder
         </h2>
-        <p className="text-lg mb-8">
-          Get started today and accelerate your workflow with Next.js + Tailwind
-          CSS.
+        <p className="text-lg mb-8 max-w-2xl mx-auto">
+          AutoZoneX empowers you with structured demand-supply trading — no more
+          guesswork, just rules and alerts that keep you ahead.
         </p>
         <Link
-          href="#"
+          href="/v1/dashboard"
           className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100"
         >
-          Get Started for Free
+          Open Dashboard
         </Link>
       </section>
 
@@ -117,7 +136,10 @@ export default function Home() {
         id="contact"
         className="bg-gray-900 text-gray-400 text-center py-6 mt-auto"
       >
-        <p>© {new Date().getFullYear()} MyApp. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} AutoZoneX. All rights reserved. | Contact:
+          support@autozonex.com
+        </p>
       </footer>
     </div>
   );
