@@ -9,10 +9,10 @@ export type FeatureConfig = {
 export const features = {
   // Define feature access based on minimum plan required
   // Plans: freemium < starter < pro
-  marketSummary: { enabled: true, minPlan: "starter" as const },
+  marketSummary: { enabled: true,comingSoon: true, minPlan: "starter" as const },
   zonesNearDayLow: { enabled: true, minPlan: "freemium" as const },
   advancedAnalytics: { enabled: false, comingSoon: true, minPlan: "pro" as const },
-  alerts: { enabled: true, minPlan: "starter" as const },
+  alerts: { enabled: true, comingSoon: true,   minPlan: "starter" as const },
   notifications: { enabled: false, comingSoon: true, minPlan: "starter" as const },
   trades: { enabled: true, minPlan: "pro" as const },
   zonesReport: { enabled: true, minPlan: "freemium" as const },
