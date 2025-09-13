@@ -6,6 +6,7 @@ const ReactionSchema = new Schema(
     type: { type: String, required: true }, // "zone" | "trade" | "alert"
     userId: { type: String, required: true },
     reaction: { type: String, enum: ["👍", "👎", "🚀"], required: true },
+    teamPick: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

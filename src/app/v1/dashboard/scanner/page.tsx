@@ -94,7 +94,12 @@ export default function ScannerPage() {
       title: "Actions",
       key: "actions",
       render: (_: any, row: any) => (
-        <Reactions itemId={row._id} type="zone" teamPickEnabled />
+        <Reactions
+        itemId={row._id}
+        type="zone"
+        allItemIds={filteredZones.map((zone: any) => zone._id)}
+        teamPickEnabled
+      />
       )
     }
   ];
