@@ -2,10 +2,32 @@
 
 import { Card, Divider, Switch, Typography, Button, Space, Select, Form, Input } from "antd"
 import { LockOutlined, BellOutlined, GlobalOutlined } from "@ant-design/icons"
+import useAuthStore from "@/store/useAuthStore" // adjust path if needed
+import { useEffect } from "react"
 
 const { Title, Text } = Typography
 
 export default function SettingsPage() {
+  const { user, setUser, logout } = useAuthStore()
+
+  const [form] = Form.useForm()
+
+  // Pre-fill the form with store values when user is available
+  useEffect(() => {
+    if (user) {
+      form.setFieldsValue({
+        name: user.name,
+        email: user.email,
+      })
+    }
+  }, [user, form])
+
+  const handleSaveAccount = (values: { name: string; email: string }) => {
+    if (!user) return
+    setUser({ ...user, ...values })
+    alert("Account details updated")
+  }
+
   return (
     <div style={{ maxWidth: 800, margin: "2rem auto" }}>
       <Title level={2}>Settings</Title>
@@ -13,18 +35,23 @@ export default function SettingsPage() {
       {/* Account Section */}
       <Card style={{ marginBottom: "2rem" }}>
         <Title level={4}>Account</Title>
-        <Form layout="vertical" style={{ marginTop: "1rem" }}>
-          <Form.Item label="Name">
-            <Input placeholder="Enter your name" defaultValue="Anurag Rajput" />
+        <Form
+          form={form}
+          layout="vertical"
+          style={{ marginTop: "1rem" }}
+          onFinish={handleSaveAccount}
+        >
+          <Form.Item name="name" label="Name">
+            <Input placeholder="Enter your name" />
           </Form.Item>
-          <Form.Item label="Email">
-            <Input placeholder="Enter your email" defaultValue="abanuraj223@gmail.com" />
+          <Form.Item name="email" label="Email">
+            <Input placeholder="Enter your email" />
           </Form.Item>
           <Space>
-            <Button type="primary" onClick={() => alert("Save account clicked")}>
+            <Button type="primary" htmlType="submit">
               Save Changes
             </Button>
-            <Button danger onClick={() => alert("Deactivate account clicked")}>
+            <Button danger onClick={logout}>
               Deactivate Account
             </Button>
           </Space>
