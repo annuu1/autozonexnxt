@@ -20,6 +20,8 @@ import styles from "./scanner.module.css";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
 
+import TeamsPickModal from "@/components/scanner/TeamsPickModal";
+
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
@@ -45,6 +47,10 @@ export default function ScannerPage() {
   const { copy, contextHolder } = useCopyToClipboard();
 
   const paginatedZones = filteredZones.slice((page - 1) * pageSize, page * pageSize);
+
+  const [teamsPickOpen, setTeamsPickOpen] = useState(false);
+
+  const teamZones = filteredZones.filter((z: any) => z.isTeamPick); 
 
   const columns = [
     {
@@ -166,22 +172,21 @@ export default function ScannerPage() {
           </Button>
 
           <Button
-            type={teamFilter ? "primary" : "default"}
+            type="default"
             block={screens.xs}
             style={{
-              backgroundColor: teamFilter ? "#fadb14" : "#fffbe6",
+              backgroundColor: "#fffbe6",
               borderColor: "#d4b106",
               fontWeight: "bold",
-              boxShadow: teamFilter
-                ? "0px 0px 10px rgba(250, 219, 20, 0.8)"
-                : "none",
             }}
             icon={<StarFilled style={{ color: "#faad14" }} />}
-            onClick={() => setTeamFilter(!teamFilter)}
+            onClick={() => setTeamsPickOpen(true)}
           >
             Team’s Pick
           </Button>
         </Space>
+
+        <TeamsPickModal open={teamsPickOpen} onClose={() => setTeamsPickOpen(false)} />
 
         {/* Data */}
         {isLoading ? (
@@ -196,7 +201,7 @@ export default function ScannerPage() {
                 <div
                   key={zone._id}
                   className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
-                  onClick={() => handleRowClick(zone)}
+                  
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
