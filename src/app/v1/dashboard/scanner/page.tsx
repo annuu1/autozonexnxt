@@ -12,11 +12,12 @@ import {
   Spin,
   Alert,
   Grid,
+  Pagination,
 } from "antd";
 import { StarFilled, CopyOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
 import styles from "./scanner.module.css";
-import {useCopyToClipboard} from "@/hooks/useCopyToClipboard";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
 
 const { Title } = Typography;
@@ -37,24 +38,35 @@ export default function ScannerPage() {
 
   const [selectedZone, setSelectedZone] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const screens = useBreakpoint();
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
+  const screens = useBreakpoint();
   const { copy, contextHolder } = useCopyToClipboard();
+
+  const paginatedZones = filteredZones.slice((page - 1) * pageSize, page * pageSize);
 
   const columns = [
     {
       title: "Ticker",
       dataIndex: "ticker",
       key: "ticker",
-      onCell: (record:any) => ({
+      onCell: (record: any) => ({
         onClick: () => handleRowClick(record),
         style: { cursor: "pointer" },
       }),
-      render: (ticker: string) => <strong>{ticker} 
-      <CopyOutlined onClick={(e) => {
-        e.stopPropagation();
-        copy(ticker)}} 
-      style={{ cursor: "pointer" , color: "#555", marginLeft: "10px" }} /></strong>,
+      render: (ticker: string) => (
+        <strong>
+          {ticker}
+          <CopyOutlined
+            onClick={(e) => {
+              e.stopPropagation();
+              copy(ticker);
+            }}
+            style={{ cursor: "pointer", color: "#555", marginLeft: "10px" }}
+          />
+        </strong>
+      ),
     },
     {
       title: "Pattern",
@@ -95,13 +107,13 @@ export default function ScannerPage() {
       key: "actions",
       render: (_: any, row: any) => (
         <Reactions
-        itemId={row._id}
-        type="zone"
-        allItemIds={filteredZones.map((zone: any) => zone._id)}
-        teamPickEnabled
-      />
-      )
-    }
+          itemId={row._id}
+          type="zone"
+          allItemIds={filteredZones.map((zone: any) => zone._id)}
+          teamPickEnabled
+        />
+      ),
+    },
   ];
 
   const handleRowClick = (record: any) => {
@@ -171,12 +183,75 @@ export default function ScannerPage() {
           </Button>
         </Space>
 
-        {/* Table */}
+        {/* Data */}
         {isLoading ? (
           <Spin tip="Loading zones..." fullscreen />
         ) : error ? (
           <Alert type="error" message="Failed to fetch zones" />
+        ) : screens.xs ? (
+          // ✅ Mobile view → Cards
+          <>
+            <div className="space-y-3">
+              {paginatedZones.map((zone) => (
+                <div
+                  key={zone._id}
+                  className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
+                  onClick={() => handleRowClick(zone)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <strong>{zone.ticker}</strong>
+                      <CopyOutlined
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copy(zone.ticker);
+                        }}
+                        style={{ cursor: "pointer", color: "#555" }}
+                      />
+                    </div>
+                    <Tag color={zone.status === "entered" ? "green" : "blue"}>
+                      {zone.status?.toUpperCase()}
+                    </Tag>
+                  </div>
+
+                  <div className="mt-2 text-sm text-gray-600">
+                    <div>Pattern: {zone.pattern}</div>
+                    <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
+                    <div>Distal: {zone.distal_line?.toFixed(2)}</div>
+                    <div>
+                      Timeframes:{" "}
+                      {(zone.timeframes || []).map((f: string) => (
+                        <Tag key={f}>{f}</Tag>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-2">
+                    <Reactions
+                      itemId={zone._id}
+                      type="zone"
+                      allItemIds={filteredZones.map((z: any) => z._id)}
+                      teamPickEnabled
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex justify-center mt-4">
+              <Pagination
+                current={page}
+                pageSize={pageSize}
+                total={filteredZones.length}
+                onChange={(p) => setPage(p)}
+                size="small"
+              />
+            </div>
+          </>
         ) : (
+          // ✅ Desktop view → Table
           <div style={{ overflowX: "auto" }}>
             <Table
               dataSource={filteredZones}
@@ -185,7 +260,7 @@ export default function ScannerPage() {
               pagination={false}
               bordered
               rowClassName={styles.clickableRow}
-              style={{ minWidth: 600 }} // ✅ ensures scroll works on small screens
+              style={{ minWidth: 600 }}
             />
           </div>
         )}
