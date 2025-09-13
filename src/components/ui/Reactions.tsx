@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Tooltip, message } from "antd";
 import {
   LikeOutlined,
@@ -12,6 +12,7 @@ import {
 import useAuthStore from "@/store/useAuthStore";
 
 type ReactionType = "👍" | "👎" | "🚀";
+type AllowedRoles = "admin" | "manager" | "agent";
 
 const reactionOptions: { type: ReactionType; icon: React.ReactNode }[] = [
   { type: "👍", icon: <LikeOutlined /> },
@@ -41,22 +42,6 @@ export default function Reactions({
     null
   );
   const [teamPickLoading, setTeamPickLoading] = useState(false);
-
-  // 🔹 Fetch reactions on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`/api/v1/reactions/${itemId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setUserReaction(data.userReaction);
-        setCounts(data.counts);
-        setTeamPick(data.teamPick);
-      } catch (err) {
-        console.error("Failed to load reactions", err);
-      }
-    })();
-  }, [itemId]);
 
   // 🔹 Handle reaction click
   const handleReaction = async (reaction: ReactionType) => {
@@ -104,6 +89,12 @@ export default function Reactions({
     }
   };
 
+  // 🔹 Check if user has privilege
+  const canTeamPick =
+    teamPickEnabled &&
+    user?.roles &&
+    (["admin", "manager", "agent"] as AllowedRoles[]).includes(user.roles[0]);
+
   return (
     <div className="flex items-center gap-3">
       {/* Reactions */}
@@ -124,7 +115,7 @@ export default function Reactions({
       ))}
 
       {/* Team’s Pick */}
-      {teamPickEnabled && (
+      {canTeamPick && (
         <Tooltip title="Mark as Team’s Pick">
           <Button
             type={teamPick ? "primary" : "dashed"}
