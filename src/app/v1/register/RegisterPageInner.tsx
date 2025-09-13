@@ -41,7 +41,7 @@ export default function RegisterPageInner() {
           name: values.name,
           email: values.email,
           password: values.password,
-          plan: "freemium", // default plan, no dropdown
+          plan: "freemium", // default plan
         }),
       });
 
@@ -83,18 +83,25 @@ export default function RegisterPageInner() {
           50% {background-position:100% 50%}
           100% {background-position:0% 50%}
         }
+
+        /* ✅ Responsive styles */
+        .register-container {
+          display: flex;
+          flex-direction: row;
+          gap: 24px;
+          max-width: 900px;
+          width: 100%;
+        }
+
+        @media (max-width: 768px) {
+          .register-container {
+            flex-direction: column; /* stack vertically on tablets/phones */
+          }
+        }
       `}</style>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: 24,
-          maxWidth: 900,
-          width: "100%",
-        }}
-      >
-        {/* Left Card with Trading Theme / Graphic */}
+      <div className="register-container">
+        {/* Left Card */}
         <Card
           style={{
             flex: 1,
@@ -105,7 +112,7 @@ export default function RegisterPageInner() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            minHeight: 500,
+            minHeight: 300, // reduced for smaller screens
             textAlign: "center",
             fontWeight: "bold",
             fontSize: 24,
@@ -115,7 +122,7 @@ export default function RegisterPageInner() {
           Welcome to <br /> AutoZone Trading
         </Card>
 
-        {/* Right Card with Form */}
+        {/* Right Card (Form) */}
         <Card
           style={{
             flex: 1,
@@ -123,7 +130,7 @@ export default function RegisterPageInner() {
             backdropFilter: "blur(10px)",
             borderRadius: 16,
             padding: 32,
-            minHeight: 500,
+            minHeight: 400,
           }}
           bordered={false}
         >
@@ -191,7 +198,11 @@ export default function RegisterPageInner() {
                 block
                 size="large"
                 loading={loading}
-                style={{ borderRadius: 8, background: "#00c6ff", borderColor: "#0072ff" }}
+                style={{
+                  borderRadius: 8,
+                  background: "#00c6ff",
+                  borderColor: "#0072ff",
+                }}
               >
                 Create Account
               </Button>
@@ -202,7 +213,10 @@ export default function RegisterPageInner() {
             style={{ textAlign: "center", color: "#ccc", marginTop: 8 }}
           >
             Already have an account?{" "}
-            <a href={`/v1/login?from=${encodeURIComponent(from)}`} style={{ color: "#00c6ff" }}>
+            <a
+              href={`/v1/login?from=${encodeURIComponent(from)}`}
+              style={{ color: "#00c6ff" }}
+            >
               Sign in
             </a>
           </Typography.Paragraph>
