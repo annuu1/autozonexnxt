@@ -17,6 +17,7 @@ import { StarFilled, CopyOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
 import styles from "./scanner.module.css";
 import {useCopyToClipboard} from "@/hooks/useCopyToClipboard";
+import Reactions from "@/components/ui/Reactions";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -45,8 +46,14 @@ export default function ScannerPage() {
       title: "Ticker",
       dataIndex: "ticker",
       key: "ticker",
+      onCell: (record:any) => ({
+        onClick: () => handleRowClick(record),
+        style: { cursor: "pointer" },
+      }),
       render: (ticker: string) => <strong>{ticker} 
-      <CopyOutlined onClick={() => copy(ticker)} 
+      <CopyOutlined onClick={(e) => {
+        e.stopPropagation();
+        copy(ticker)}} 
       style={{ cursor: "pointer" , color: "#555", marginLeft: "10px" }} /></strong>,
     },
     {
@@ -84,13 +91,12 @@ export default function ScannerPage() {
       ),
     },
     {
-      title: "Rating",
-      dataIndex: "rating",
-      key: "rating",
-      render: (rating: number) => (
-        <Tag color={rating >= 8 ? "gold" : "default"}>{rating}/10</Tag>
-      ),
-    },
+      title: "Actions",
+      key: "actions",
+      render: (_: any, row: any) => (
+        <Reactions itemId={row._id} type="zone" teamPickEnabled />
+      )
+    }
   ];
 
   const handleRowClick = (record: any) => {
@@ -174,9 +180,6 @@ export default function ScannerPage() {
               pagination={false}
               bordered
               rowClassName={styles.clickableRow}
-              onRow={(record) => ({
-                onClick: () => handleRowClick(record),
-              })}
               style={{ minWidth: 600 }} // ✅ ensures scroll works on small screens
             />
           </div>
