@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Tooltip, message } from "antd";
 import {
   LikeOutlined,
@@ -42,6 +42,22 @@ export default function Reactions({
     null
   );
   const [teamPickLoading, setTeamPickLoading] = useState(false);
+
+    // 🔹 Fetch reactions on mount
+    useEffect(() => {
+      (async () => {
+        try {
+          const res = await fetch(`/api/v1/reactions/${itemId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          setUserReaction(data.userReaction);
+          setCounts(data.counts);
+          setTeamPick(data.teamPick);
+        } catch (err) {
+          console.error("Failed to load reactions", err);
+        }
+      })();
+    }, [itemId]);
 
   // 🔹 Handle reaction click
   const handleReaction = async (reaction: ReactionType) => {
