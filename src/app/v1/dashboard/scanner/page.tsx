@@ -13,6 +13,7 @@ import {
   Alert,
   Grid,
   Pagination,
+  message,
 } from "antd";
 import { StarFilled, CopyOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
@@ -21,6 +22,8 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
 
 import TeamsPickModal from "@/components/scanner/TeamsPickModal";
+
+import useAuthStore from "@/store/useAuthStore";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -51,6 +54,11 @@ export default function ScannerPage() {
   const [teamsPickOpen, setTeamsPickOpen] = useState(false);
 
   const teamZones = filteredZones.filter((z: any) => z.isTeamPick); 
+
+  const { user } = useAuthStore();
+
+  const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
+
 
   const columns = [
     {
@@ -126,6 +134,28 @@ export default function ScannerPage() {
     setSelectedZone(record);
     setDrawerOpen(true);
   };
+
+  const handleDelete = async (zoneId: string) => {
+    try {
+      const res = await fetch(`/api/v1/dashboard/zone/${zoneId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to delete zone");
+      }
+  
+      // ✅ Success
+      setDrawerOpen(false);
+    } catch (err) {
+      console.error("Failed to delete zone", err);
+    }
+  };
+  
 
   return (
     <div style={{ padding: screens.xs ? 12 : 20 }}>
@@ -287,6 +317,13 @@ export default function ScannerPage() {
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
           width={screens.xs ? "100%" : 400}
+          extra={
+            selectedZone && canDelete && (
+              <Button danger onClick={() => handleDelete(selectedZone.zone_id)}>
+                Delete
+              </Button>
+            )
+          }
         >
           {selectedZone && (
             <Descriptions column={1} bordered size="small">
