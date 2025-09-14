@@ -130,6 +130,7 @@ export default function ZonesModal({
                   </div>
                   <div>Proximal: {zone.proximal_line.toFixed(2)}</div>
                   <div>Distal: {zone.distal_line.toFixed(2)}</div>
+                  <div>Timeframes: {zone?.zone_id.split("-")[1]}</div>
                   <div>Diff: {getDiffTag(zone.percentDiff * 100)}</div>
                 </div>
               ))}
