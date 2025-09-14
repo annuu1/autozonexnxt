@@ -14,6 +14,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   LogoutOutlined,
+  AuditOutlined,
+  ProfileOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useState } from "react";
@@ -23,6 +25,7 @@ import { useRouter } from "next/navigation";
 import PlanBadge from "@/components/common/PlanBadge";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { features } from "@/config/features";
+import { Stick } from "next/font/google";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -38,11 +41,14 @@ const navItems: NavItem[] = [
   { label : "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined />},
   { label: "Trades", href: "/v1/dashboard/trades", icon: <BarChartOutlined /> },
   { label: "Reports", href: "/v1/dashboard/reports", icon: <FileTextOutlined /> },
+  { label: "Users", href: "/v1/dashboard/users", icon: <UserOutlined /> },
+  { label: "Activity Log", href: "/v1/dashboard/activity-logs", icon: <AuditOutlined /> },
   { label: "Zones", href: "/v1/dashboard/demand-zones", icon: <AppstoreOutlined /> },
   { label: "Notifications", href: "/v1/dashboard/notifications", icon: <BellOutlined /> },
   { label: "Settings", href: "/v1/dashboard/settings", icon: <SettingOutlined /> },
-  { label: "Profile", href: "/v1/dashboard/profile", icon: <UserOutlined /> },
+  { label: "Profile", href: "/v1/dashboard/profile", icon: <ProfileOutlined /> },
 ];
+
 
 // Map routes to feature keys for access control
 const routeFeatureMap: Record<string, keyof typeof features | null> = {
@@ -51,6 +57,8 @@ const routeFeatureMap: Record<string, keyof typeof features | null> = {
   "/v1/dashboard/reports": "zonesReport",
   "/v1/dashboard/demand-zones": "allZoneList",
   "/v1/dashboard/notifications": "notifications",
+  "/v1/dashboard/users": "users",
+  "/v1/dashboard/activity-logs": "activityLog",
   "/v1/dashboard/billing": null,
   "/v1/dashboard/settings": null,
   "/v1/dashboard/profile": null,
@@ -159,6 +167,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             fontWeight: "bold",
             fontSize: collapsed ? 20 : 22,
             letterSpacing: 1,
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
           }}
         >
           {collapsed ? <span style={{ fontSize: 24 }}>📈</span> : <>
@@ -191,6 +202,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               setCollapsed(true);
             }
           }}
+          style={{ position: "sticky", top: 64, zIndex: 1 }}
         />
 
       </Sider>
@@ -205,6 +217,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             alignItems: "center",
             justifyContent: "space-between",
             borderBottom: "1px solid #f0f0f0",
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>

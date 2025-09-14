@@ -7,7 +7,8 @@ type FeatureReason =
   | "comingSoon"
   | "upgrade"
   | "disabled"
-  | "expired";
+  | "expired"
+  | "forbiddenRole";
 
 export const useFeatureAccess = (
   featureKey: keyof typeof features,
@@ -46,6 +47,14 @@ export const useFeatureAccess = (
   if ((planRank[userPlan] ?? 0) < (planRank[minPlan] ?? 0)) {
     return { allowed: false, reason: "upgrade" };
   }
+
+    // ✅ Role-based check
+    const allowedRoles: readonly string[] = feature.allowedRoles || ["user"]; // default
+    const userRoles: string[] = user?.roles || ["user"];
+    const hasRole = userRoles.some((r) => allowedRoles.includes(r));
+    if (!hasRole) {
+      return { allowed: false, reason: "forbiddenRole" };
+    }
 
   if (!feature.enabled) return { allowed: false, reason: "disabled" };
 

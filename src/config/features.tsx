@@ -4,19 +4,64 @@ export type FeatureConfig = {
   enabled: boolean;
   minPlan: Plan;
   comingSoon?: boolean;
+  allowedRoles?: readonly string[];
 };
 
 export const features = {
-  // Define feature access based on minimum plan required
-  // Plans: freemium < starter < pro
-  marketSummary: { enabled: true,comingSoon: true, minPlan: "starter" as const },
-  zonesNearDayLow: { enabled: true, minPlan: "freemium" as const },
-  advancedAnalytics: { enabled: false, comingSoon: true, minPlan: "pro" as const },
-  alerts: { enabled: true, comingSoon: true,   minPlan: "starter" as const },
-  notifications: { enabled: false, comingSoon: true, minPlan: "starter" as const },
-  trades: { enabled: true, minPlan: "pro" as const },
-  zonesReport: { enabled: true, minPlan: "freemium" as const },
-  allZoneList: { enabled: true, minPlan: "pro" as const },
+  marketSummary: { 
+    enabled: true,
+    comingSoon: true,
+    minPlan: "starter" as const,
+    allowedRoles: ["admin", "manager", "agent", "user"], 
+  },
+  zonesNearDayLow: { 
+    enabled: true,
+    minPlan: "freemium" as const,
+    allowedRoles: ["admin", "manager", "agent", "user"], 
+  },
+  advancedAnalytics: { 
+    enabled: false,
+    comingSoon: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
+  },
+  alerts: { 
+    enabled: true,
+    comingSoon: true,
+    minPlan: "starter" as const,
+    allowedRoles: ["admin", "manager", "agent", "user"], 
+  },
+  notifications: { 
+    enabled: false,
+    comingSoon: true,
+    minPlan: "starter" as const,
+    allowedRoles: ["admin", "manager", "user"], 
+  },
+  trades: { 
+    enabled: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
+  },
+  zonesReport: { 
+    enabled: true,
+    minPlan: "freemium" as const,
+    allowedRoles: ["admin", "manager", "user"], 
+  },
+  allZoneList: { 
+    enabled: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
+  },
+  users: {
+    enabled: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
+  },
+  activityLog:{
+    enabled: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
+  }
 } as const;
 
 export type FeatureKey = keyof typeof features;
