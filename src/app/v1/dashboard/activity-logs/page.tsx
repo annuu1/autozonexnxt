@@ -1,7 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Table, Tag, Space, Typography, Select, Pagination, Spin, message } from "antd";
+import { useEffect, useState, useMemo } from "react";
+import {
+  Table,
+  Tag,
+  Space,
+  Typography,
+  Select,
+  Pagination,
+  Spin,
+  message,
+} from "antd";
 
 const { Title } = Typography;
 
@@ -15,6 +24,7 @@ export default function ActivityLogsPage() {
   const [filters, setFilters] = useState({
     userId: "",
     action: "",
+    role: "",
   });
 
   const fetchLogs = async (pageNum = page, pageSize = limit) => {
@@ -46,7 +56,36 @@ export default function ActivityLogsPage() {
 
   useEffect(() => {
     fetchLogs();
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.action, filters.userId]); // don't include role because it's frontend-only
+
+  // Build role options dynamically from logs
+  const roleOptions = useMemo(() => {
+    const rolesSet = new Set<string>();
+    logs.forEach((log) => {
+      (log.user?.roles || []).forEach((role: string) => rolesSet.add(role));
+    });
+    return Array.from(rolesSet).map((role) => ({
+      label: role.charAt(0).toUpperCase() + role.slice(1),
+      value: role,
+    }));
+  }, [logs]);
+
+  // Apply frontend-only filtering for role
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      let match = true;
+
+      if (filters.role) {
+        const roles = log.user?.roles || [];
+        if (!roles.includes(filters.role)) {
+          match = false;
+        }
+      }
+
+      return match;
+    });
+  }, [logs, filters.role]);
 
   const columns = [
     {
@@ -56,9 +95,15 @@ export default function ActivityLogsPage() {
       render: (user: any) =>
         user ? (
           <Space direction="vertical" size={0}>
-            <span><b>{user.name}</b> ({user.email || "-"})</span>
+            <span>
+              <b>{user.name}</b> ({user.email || "-"})
+            </span>
             <Tag color="blue">{user.roles?.join(", ") || "No Role"}</Tag>
-            {user.subscription && <Tag color="green">{user.subscription.plan} ({user.subscription.status})</Tag>}
+            {user.subscription && (
+              <Tag color="green">
+                {user.subscription.plan} ({user.subscription.status})
+              </Tag>
+            )}
           </Space>
         ) : (
           <Tag color="red">Guest User</Tag>
@@ -105,25 +150,36 @@ export default function ActivityLogsPage() {
       <Title level={3}>Activity Logs</Title>
 
       {/* Filters */}
-      <div className="mb-4 flex gap-4">
+      <div className="mb-4 flex gap-4 flex-wrap">
         <Select
           placeholder="Filter by Action"
           style={{ width: 200 }}
           allowClear
-          onChange={(val) => setFilters((f) => ({ ...f, action: val || "" }))}
+          onChange={(val) =>
+            setFilters((f) => ({ ...f, action: val || "" }))
+          }
           options={[
             { label: "Login", value: "LOGIN" },
             { label: "Logout", value: "LOGOUT" },
             { label: "Page Access", value: "ACCESS_PAGE" },
           ]}
         />
-        {/* Optional: Add dynamic user dropdown here */}
+
+        <Select
+          placeholder="Filter by Role"
+          style={{ width: 200 }}
+          allowClear
+          onChange={(val) =>
+            setFilters((f) => ({ ...f, role: val || "" }))
+          }
+          options={roleOptions}
+        />
       </div>
 
       <Spin spinning={loading}>
         <Table
           columns={columns}
-          dataSource={logs}
+          dataSource={filteredLogs}
           rowKey={(record) => record._id}
           pagination={false}
         />

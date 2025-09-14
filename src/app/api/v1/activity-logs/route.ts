@@ -14,11 +14,27 @@ export async function POST(req: Request) {
 
     const log = await ActivityLog.create(body);
 
+    // After inserting, check total count
+    const total = await ActivityLog.countDocuments();
+
+    if (total > 3000) {
+      // delete the oldest 2000 records
+      await ActivityLog.find({})
+        .sort({ createdAt: 1 }) // oldest first
+        .limit(2000)
+        .then((oldLogs) => {
+          const ids = oldLogs.map((l) => l._id);
+          return ActivityLog.deleteMany({ _id: { $in: ids } });
+        });
+    }
+
     return NextResponse.json(log, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// get activity logs
 export async function GET(req: Request) {
   try {
     await dbConnect();
