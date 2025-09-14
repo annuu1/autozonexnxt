@@ -3,14 +3,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyJwt } from "@/lib/auth-edge";
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("token")?.value;
 
     // decode JWT to extract userId
     let userId = "guest";
     if (token) {
-      const decoded = verifyJwt<{ id: string }>(token);
+      const decoded = await verifyJwt<{ id: string }>(token); // <- await here
       if (decoded?.id) {
         userId = decoded.id;
       }

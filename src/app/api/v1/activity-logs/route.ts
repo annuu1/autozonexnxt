@@ -2,6 +2,9 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import ActivityLog from "@/models/ActivityLog";
+import { logActivity } from "@/lib/logActivity";
+import User from "@/models/User";
+import { Types } from "mongoose";
 
 // CREATE activity log
 export async function POST(req: Request) {
@@ -16,23 +19,73 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-// GET all activity logs (with filters)
 export async function GET(req: Request) {
   try {
     await dbConnect();
+
     const { searchParams } = new URL(req.url);
 
     const userId = searchParams.get("userId");
     const action = searchParams.get("action");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
     const filter: any = {};
     if (userId) filter.userId = userId;
     if (action) filter.action = action;
 
-    const logs = await ActivityLog.find(filter).sort({ createdAt: -1 }).limit(100);
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json(logs);
+    // Get logs without populate first
+    const rawLogs = await ActivityLog.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Map logs with user details
+    const logs = await Promise.all(
+      rawLogs.map(async (log) => {
+        let userDetails: any = null;
+    
+        if (log.userId && log.userId.toLowerCase() !== "guest") {
+          try {
+            // Convert string ID to ObjectId
+            const user = await User.findById(new Types.ObjectId(log.userId))
+              .select("name email roles subscription")
+              .lean();
+            if (user) userDetails = user;
+          } catch {
+            // invalid ObjectId or user not found
+            userDetails = null;
+          }
+        } else if (typeof log.userId === "string" && log.userId.toLowerCase() === "guest") {
+          userDetails = {
+            name: "Guest User",
+            email: null,
+            roles: ["guest"],
+            subscription: null,
+          };
+        }
+    
+        return {
+          ...log,
+          user: userDetails,
+        };
+      })
+    );
+
+    const total = await ActivityLog.countDocuments(filter);
+
+    return NextResponse.json({
+      data: logs,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

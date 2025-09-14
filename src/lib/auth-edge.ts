@@ -1,11 +1,12 @@
 // lib/auth-edge.ts
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export function verifyJwt<T = any>(token: string): T | null {
+export async function verifyJwt<T = any>(token: string): Promise<T | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as T;
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload as T;
   } catch {
     return null;
   }
