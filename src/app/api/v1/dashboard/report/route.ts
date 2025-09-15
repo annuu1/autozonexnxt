@@ -6,7 +6,8 @@ import { requireAuth } from "@/lib/auth";
 
 function formatApproaching(doc: any) {
   return {
-    id: doc.zone_id,
+    _id: doc._id,
+    zone_id: doc.zone_id,
     range: `${doc.distal_line.toFixed(2)}–${doc.proximal_line.toFixed(2)}`,
     time: doc.zone_alert_time
       ? new Date(doc.zone_alert_time).toLocaleTimeString("en-IN", {
@@ -20,7 +21,8 @@ function formatApproaching(doc: any) {
 
 function formatEntered(doc: any) {
   return {
-    id: doc.zone_id,
+    _id: doc._id,
+    zone_id: doc.zone_id,
     range: `${doc.distal_line.toFixed(2)}–${doc.proximal_line.toFixed(2)}`,
     time: doc.zone_entry_time
       ? new Date(doc.zone_entry_time).toLocaleTimeString("en-IN", {
@@ -34,7 +36,8 @@ function formatEntered(doc: any) {
 
 function formatBreached(doc: any) {
   return {
-    id: doc.zone_id,
+    _id: doc._id,
+    zone_id: doc.zone_id,
     range: `${doc.distal_line.toFixed(2)}–${doc.proximal_line.toFixed(2)}`,
     time: doc.zone_breach_time
       ? new Date(doc.zone_breach_time).toLocaleTimeString("en-IN", {

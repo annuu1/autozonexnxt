@@ -1,71 +1,137 @@
-"use client"
+"use client";
 
-import React from "react"
-import {
-  Tabs,
-  Table,
-  Card,
-  Typography,
-  Divider,
-  Spin,
-  Alert,
-} from "antd"
-import type { ColumnsType } from "antd/es/table"
-import { useReports } from "@/hooks/useReports"
+import React, { useEffect, useState } from "react";
+import { Card, Typography, Spin, Alert, Divider, Tabs, Tag } from "antd";
+import { useReports } from "@/hooks/useReports";
+import Reactions from "@/components/ui/Reactions";
 
-const { Title } = Typography
+const { Title } = Typography;
 
-const todayColumns: Record<string, ColumnsType<any>> = {
-  approaching: [
-    { title: "Zone ID", dataIndex: "id" },
-    { title: "Price Range", dataIndex: "range" },
-    { title: "Time Detected", dataIndex: "time" },
-    { title: "Strength", dataIndex: "strength" },
-  ],
-  entered: [
-    { title: "Zone ID", dataIndex: "id" },
-    { title: "Price Range", dataIndex: "range" },
-    { title: "Entry Time", dataIndex: "time" },
-    { title: "Holding?", dataIndex: "holding" },
-  ],
-  breached: [
-    { title: "Zone ID", dataIndex: "id" },
-    { title: "Price Range", dataIndex: "range" },
-    { title: "Breach Time", dataIndex: "time" },
-    { title: "Reaction", dataIndex: "reaction" },
-  ],
+// ✅ Parse zone_id into symbol, timeframe, date
+function parseZoneId(zone_id: string) {
+  if (!zone_id) return { symbol: "Unknown", timeframe: "Unknown", date: "Unknown" };
+
+  // Regex to match: SYMBOL-TIMEFRAME-YYYY-MM-DDTHH:mm:ss+TZ
+  const match = zone_id.match(/^(.+?)-([^-]+)-(\d{4}-\d{2}-\d{2})/);
+
+  if (!match) {
+    console.warn("Could not parse zone_id:", zone_id);
+    return { symbol: "Unknown", timeframe: "Unknown", date: "Unknown" };
+  }
+
+  const [, symbol, timeframe, rawDate] = match;
+
+  // ✅ Format date nicely
+  const dateObj = new Date(rawDate);
+  const formattedDate = dateObj.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  return { symbol, timeframe, date: formattedDate };
 }
 
-const daywiseColumns: Record<string, ColumnsType<any>> = {
-  approaching: [
-    { title: "Zone ID", dataIndex: "id" },
-    { title: "Price Range", dataIndex: "range" },
-    { title: "Time Detected", dataIndex: "time" },
-    { title: "Notes", dataIndex: "notes" },
-  ],
-  entered: [
-    { title: "Zone ID", dataIndex: "id" },
-    { title: "Price Range", dataIndex: "range" },
-    { title: "Entry Time", dataIndex: "time" },
-    { title: "Notes", dataIndex: "notes" },
-  ],
-  breached: [
-    { title: "Zone ID", dataIndex: "id" },
-    { title: "Price Range", dataIndex: "range" },
-    { title: "Entry Time", dataIndex: "entry" },
-    { title: "Breach Time", dataIndex: "time" },
-  ],
+function ZoneCard({
+  zone,
+  allItemIds,
+  showReactions = false,
+}: {
+  zone: any;
+  allItemIds: string[];
+  showReactions?: boolean;
+}) {
+  const { symbol, timeframe, date } = parseZoneId(zone.zone_id);
+
+  return (
+    <div
+      key={zone._id}
+      className="p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition"
+      style={{
+        transition: "transform 0.15s ease-in-out, box-shadow 0.15s",
+        minWidth: 250,
+        maxWidth: 350,
+        margin: "0 auto",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <strong style={{ fontSize: 16 }}>{symbol}</strong>
+        <span style={{ fontSize: 12, color: "#555" }}>{zone.time}</span>
+      </div>
+
+      {/* Timeframe + Date */}
+      <div className="mt-2 text-sm text-gray-600">
+        <Tag color={timeframe === "1wk" ? "green" : timeframe === "1mo" ? "blue" : "orange"}>
+          {timeframe}
+        </Tag>
+        <Tag>{date}</Tag>
+      </div>
+
+      {/* Range */}
+      <div className="mt-1 text-sm text-gray-700">
+        Range: <strong>{zone.range}</strong>
+      </div>
+
+      {/* Conditional Reactions */}
+      {showReactions && (
+        <div className="mt-3">
+          <Reactions
+            itemId={zone._id} // ✅ use real doc id
+            type="zone"
+            allItemIds={allItemIds}
+            teamPickEnabled
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ZoneSection({
+  title,
+  data,
+  showReactions = false,
+}: {
+  title: string;
+  data: any[];
+  showReactions?: boolean;
+}) {
+  if (!data || data.length === 0) return null;
+  const allIds = data.map((z) => z._id); // ✅ use _id for allItemIds
+
+  return (
+    <>
+      <Divider orientation="left" style={{ fontSize: 14, margin: "12px 0" }}>
+        {title}
+      </Divider>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {data.map((zone) => (
+          <ZoneCard key={zone._id} zone={zone} allItemIds={allIds} showReactions={showReactions} />
+        ))}
+      </div>
+    </>
+  );
 }
 
 function ReportsPage() {
-  const { data, isLoading, error } = useReports()
+  const { data, isLoading, error } = useReports();
+  const [showHistoryReactions, setShowHistoryReactions] = useState(false);
+
+  // Lazy-enable reactions for history after page load
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHistoryReactions(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (isLoading) {
     return (
       <div style={{ padding: 16, textAlign: "center" }}>
         <Spin size="large" />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -77,17 +143,11 @@ function ReportsPage() {
           description={(error as Error).message}
         />
       </div>
-    )
+    );
   }
 
   return (
-    <div
-      style={{
-        padding: 16,
-        maxWidth: "100%",
-        overflowX: "hidden",
-      }}
-    >
+    <div style={{ padding: 16, maxWidth: "100%", overflowX: "hidden" }}>
       <Title
         level={3}
         style={{
@@ -100,11 +160,7 @@ function ReportsPage() {
       </Title>
 
       {/* Today Section */}
-      <Card
-        title="Today’s Demand Zones"
-        style={{ marginBottom: 24 }}
-        bodyStyle={{ padding: 12 }}
-      >
+      <Card title="Today’s Demand Zones" style={{ marginBottom: 24 }}>
         <Tabs
           tabPosition="top"
           items={[
@@ -112,13 +168,10 @@ function ReportsPage() {
               key: "approaching",
               label: "Approaching",
               children: (
-                <Table
-                  dataSource={data?.today.approaching}
-                  columns={todayColumns.approaching}
-                  rowKey="id"
-                  pagination={false}
-                  scroll={{ x: true }}
-                  size="small"
+                <ZoneSection
+                  title="Approaching Zones"
+                  data={data?.today.approaching || []}
+                  showReactions={true}
                 />
               ),
             },
@@ -126,13 +179,10 @@ function ReportsPage() {
               key: "entered",
               label: "Entered",
               children: (
-                <Table
-                  dataSource={data?.today.entered}
-                  columns={todayColumns.entered}
-                  rowKey="id"
-                  pagination={false}
-                  scroll={{ x: true }}
-                  size="small"
+                <ZoneSection
+                  title="Entered Zones"
+                  data={data?.today.entered || []}
+                  showReactions={true}
                 />
               ),
             },
@@ -140,13 +190,10 @@ function ReportsPage() {
               key: "breached",
               label: "Breached",
               children: (
-                <Table
-                  dataSource={data?.today.breached}
-                  columns={todayColumns.breached}
-                  rowKey="id"
-                  pagination={false}
-                  scroll={{ x: true }}
-                  size="small"
+                <ZoneSection
+                  title="Breached Zones"
+                  data={data?.today.breached || []}
+                  showReactions={true}
                 />
               ),
             },
@@ -155,31 +202,20 @@ function ReportsPage() {
       </Card>
 
       {/* Daywise Section */}
-      <Card title="Daywise History" bodyStyle={{ padding: 12 }}>
+      <Card title="Daywise History">
         {Object.entries(data?.history || {}).map(([date, statuses]) => (
           <div key={date} style={{ marginBottom: 24 }}>
-            <Divider
-              orientation="left"
-              style={{
-                fontSize: "clamp(14px, 3vw, 18px)",
-                margin: "12px 0",
-              }}
-            >
-              {date}
-            </Divider>
+            <Divider orientation="left">{date}</Divider>
             <Tabs
               tabPosition="top"
               items={Object.entries(statuses).map(([status, rows]) => ({
                 key: status,
                 label: status.charAt(0).toUpperCase() + status.slice(1),
                 children: (
-                  <Table
-                    dataSource={rows}
-                    columns={daywiseColumns[status]}
-                    rowKey="id"
-                    pagination={false}
-                    scroll={{ x: true }}
-                    size="small"
+                  <ZoneSection
+                    title={`${status.charAt(0).toUpperCase() + status.slice(1)} Zones`}
+                    data={rows as any[]}
+                    showReactions={showHistoryReactions}
                   />
                 ),
               }))}
@@ -188,7 +224,7 @@ function ReportsPage() {
         ))}
       </Card>
     </div>
-  )
+  );
 }
 
-export default ReportsPage
+export default ReportsPage;
