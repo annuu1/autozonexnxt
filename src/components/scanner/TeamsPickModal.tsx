@@ -1,11 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Modal, Tag, Pagination, Spin, Alert, Grid } from "antd";
+import { Modal, Tag, Pagination, Spin, Alert, Grid, Space } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
 
 const { useBreakpoint } = Grid;
+
+// Helper function to get color for timeframe tags
+const getTimeframeColor = (timeframe: string) => {
+  switch (timeframe) {
+    case "1wk":
+      return "cyan";
+    case "1mo":
+      return "purple";
+    case "3mo":
+      return "orange";
+    case "1d":
+      return "blue";
+    default:
+      return "default";
+  }
+};
 
 export default function TeamsPickModal({
   open,
@@ -38,7 +54,7 @@ export default function TeamsPickModal({
         })
         .then((data) => {
           setZones(data || []);
-          setPage(1); // reset to first page when opening modal
+          setPage(1);
         })
         .catch((err) => {
           setError(err.message);
@@ -78,7 +94,6 @@ export default function TeamsPickModal({
               }}
             >
               {paginatedZones?.map((zone) => {
-                // ✅ Extract date from zone.zone_id
                 const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
                 const formattedDate = match
                   ? new Date(match[0]).toLocaleDateString("en-US", {
@@ -99,6 +114,12 @@ export default function TeamsPickModal({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <strong>{zone.ticker}</strong>
+                        {/* MOVED & UPDATED: Timeframes with colors */}
+                        <Space size={4}>
+                            {(zone.timeframes || []).map((f: string) => (
+                              <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>{f}</Tag>
+                            ))}
+                        </Space>
                         <CopyOutlined
                           onClick={() => copy(zone.ticker)}
                           style={{ cursor: "pointer", color: "#555" }}
@@ -110,16 +131,19 @@ export default function TeamsPickModal({
                     </div>
 
                     <div className="mt-2 text-sm text-gray-600">
-                      <div>Pattern: {zone.pattern}</div>
                       {formattedDate && <div>Date: {formattedDate}</div>}
+                      <div>Pattern: {zone.pattern}</div>
                       <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
                       <div>Distal: {zone.distal_line?.toFixed(2)}</div>
-                      <div>
-                        Timeframes:{" "}
-                        {(zone.timeframes || []).map((f: string) => (
-                          <Tag key={f}>{f}</Tag>
-                        ))}
-                      </div>
+                       {/* NEW: Display percentDiff */}
+                       {zone.status === 'approaching' && zone.percentDiff !== undefined && (
+                          <div>
+                            Approach:{" "}
+                            <span style={{ fontWeight: "bold", color: "#d46b08" }}>
+                              {(zone.percentDiff * 100).toFixed(2)}%
+                            </span>
+                          </div>
+                       )}
                     </div>
 
                     <div className="mt-2">
