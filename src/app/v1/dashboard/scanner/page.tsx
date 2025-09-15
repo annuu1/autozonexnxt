@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import {
   Select,
   Button,
-  Table,
   Space,
   Tag,
   Typography,
@@ -13,16 +12,12 @@ import {
   Alert,
   Grid,
   Pagination,
-  message,
 } from "antd";
 import { StarFilled, CopyOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
-import styles from "./scanner.module.css";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
-
 import TeamsPickModal from "@/components/scanner/TeamsPickModal";
-
 import useAuthStore from "@/store/useAuthStore";
 
 const { Title } = Typography;
@@ -35,8 +30,6 @@ export default function ScannerPage() {
     setTimeframe,
     zoneFilter,
     setZoneFilter,
-    teamFilter,
-    setTeamFilter,
     isLoading,
     error,
   } = useScanner();
@@ -44,94 +37,18 @@ export default function ScannerPage() {
   const [selectedZone, setSelectedZone] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = 16;
 
   const screens = useBreakpoint();
   const { copy, contextHolder } = useCopyToClipboard();
 
   const paginatedZones = filteredZones.slice((page - 1) * pageSize, page * pageSize);
-
   const [teamsPickOpen, setTeamsPickOpen] = useState(false);
-
-  const teamZones = filteredZones.filter((z: any) => z.isTeamPick); 
-
   const { user } = useAuthStore();
-
   const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
 
-
-  const columns = [
-    {
-      title: "Ticker",
-      dataIndex: "ticker",
-      key: "ticker",
-      onCell: (record: any) => ({
-        onClick: () => handleRowClick(record),
-        style: { cursor: "pointer" },
-      }),
-      render: (ticker: string) => (
-        <strong>
-          {ticker}
-          <CopyOutlined
-            onClick={(e) => {
-              e.stopPropagation();
-              copy(ticker);
-            }}
-            style={{ cursor: "pointer", color: "#555", marginLeft: "10px" }}
-          />
-        </strong>
-      ),
-    },
-    {
-      title: "Pattern",
-      dataIndex: "pattern",
-      key: "pattern",
-    },
-    {
-      title: "Proximal Line",
-      dataIndex: "proximal_line",
-      key: "proximal_line",
-      render: (value: number) => value?.toFixed(2),
-    },
-    {
-      title: "Distal Line",
-      dataIndex: "distal_line",
-      key: "distal_line",
-      render: (value: number) => value?.toFixed(2),
-    },
-    {
-      title: "Timeframes",
-      dataIndex: "timeframes",
-      key: "timeframes",
-      render: (frames: string[] = []) =>
-        (frames || []).map((f) => <Tag key={f}>{f}</Tag>),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => (
-        <Tag color={status === "entered" ? "green" : "blue"}>
-          {status?.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: any, row: any) => (
-        <Reactions
-          itemId={row._id}
-          type="zone"
-          allItemIds={filteredZones.map((zone: any) => zone._id)}
-          teamPickEnabled
-        />
-      ),
-    },
-  ];
-
-  const handleRowClick = (record: any) => {
-    setSelectedZone(record);
+  const handleCardClick = (zone: any) => {
+    setSelectedZone(zone);
     setDrawerOpen(true);
   };
 
@@ -139,23 +56,19 @@ export default function ScannerPage() {
     try {
       const res = await fetch(`/api/v1/dashboard/zone/${zoneId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-  
+
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Failed to delete zone");
       }
-  
-      // ✅ Success
+
       setDrawerOpen(false);
     } catch (err) {
       console.error("Failed to delete zone", err);
     }
   };
-  
 
   return (
     <div style={{ padding: screens.xs ? 12 : 20 }}>
@@ -223,55 +136,78 @@ export default function ScannerPage() {
           <Spin tip="Loading zones..." fullscreen />
         ) : error ? (
           <Alert type="error" message="Failed to fetch zones" />
-        ) : screens.xs ? (
-          // ✅ Mobile view → Cards
+        ) : filteredZones.length === 0 ? (
+          <Alert type="info" message="No zones available" />
+        ) : (
           <>
-            <div className="space-y-3">
-              {paginatedZones.map((zone) => (
-                <div
-                  key={zone._id}
-                  className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
-                  
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <strong>{zone.ticker}</strong>
-                      <CopyOutlined
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          copy(zone.ticker);
-                        }}
-                        style={{ cursor: "pointer", color: "#555" }}
+            {/* ✅ Grid of Cards for both Desktop + Mobile */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: screens.xs
+                  ? "1fr"
+                  : "repeat(auto-fill, minmax(300px, 1fr))",
+                gap: "16px",
+              }}
+            >
+              {paginatedZones.map((zone) => {
+                const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
+                const formattedDate = match
+                  ? new Date(match[0]).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : null;
+
+                return (
+                  <div
+                    key={zone._id}
+                    className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
+                    style={{
+                      transition: "transform 0.15s ease-in-out, box-shadow 0.15s",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <strong onClick={() => handleCardClick(zone)}>{zone.ticker}</strong>
+                        <CopyOutlined
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copy(zone.ticker);
+                          }}
+                          style={{ cursor: "pointer", color: "#555" }}
+                        />
+                      </div>
+                      <Tag color={zone.status === "entered" ? "green" : "blue"}>
+                        {zone.status?.toUpperCase()}
+                      </Tag>
+                    </div>
+
+                    <div className="mt-2 text-sm text-gray-600">
+                      {formattedDate && <div>Date: {formattedDate}</div>}
+                      <div>Pattern: {zone.pattern}</div>
+                      <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
+                      <div>Distal: {zone.distal_line?.toFixed(2)}</div>
+                      <div>
+                        Timeframes:{" "}
+                        {(zone.timeframes || []).map((f: string) => (
+                          <Tag key={f}>{f}</Tag>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      <Reactions
+                        itemId={zone._id}
+                        type="zone"
+                        allItemIds={filteredZones.map((z: any) => z._id)}
+                        teamPickEnabled
                       />
                     </div>
-                    <Tag color={zone.status === "entered" ? "green" : "blue"}>
-                      {zone.status?.toUpperCase()}
-                    </Tag>
                   </div>
-
-                  <div className="mt-2 text-sm text-gray-600">
-                    <div>Pattern: {zone.pattern}</div>
-                    <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
-                    <div>Distal: {zone.distal_line?.toFixed(2)}</div>
-                    <div>
-                      Timeframes:{" "}
-                      {(zone.timeframes || []).map((f: string) => (
-                        <Tag key={f}>{f}</Tag>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="mt-2">
-                    <Reactions
-                      itemId={zone._id}
-                      type="zone"
-                      allItemIds={filteredZones.map((z: any) => z._id)}
-                      teamPickEnabled
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Pagination */}
@@ -285,19 +221,6 @@ export default function ScannerPage() {
               />
             </div>
           </>
-        ) : (
-          // ✅ Desktop view → Table
-          <div style={{ overflowX: "auto" }}>
-            <Table
-              dataSource={filteredZones}
-              columns={columns}
-              rowKey="zone_id"
-              pagination={false}
-              bordered
-              rowClassName={styles.clickableRow}
-              style={{ minWidth: 600 }}
-            />
-          </div>
         )}
 
         {/* Drawer for details */}
