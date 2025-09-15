@@ -83,7 +83,7 @@ export async function GET(req: Request) {
       },
     },
     {
-      $sort: { freshness: -1 },
+      $sort: { distanceFromProximal: 1},
     },
   ]);
 

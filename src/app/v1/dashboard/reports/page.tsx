@@ -43,6 +43,39 @@ function ZoneCard({
 }) {
   const { symbol, timeframe, date } = parseZoneId(zone.zone_id);
 
+  function parseUtcTimeToLocal(zone:any) {
+    // Extract the date part from zone_id (e.g., "2025-05-12")
+    const isoDateMatch = zone.zone_id.match(/\d{4}-\d{2}-\d{2}/);
+    const datePart = isoDateMatch ? isoDateMatch[0] : null;
+  
+    if (!datePart || !zone.time) return zone.time; // fallback
+  
+    // Combine date and time, assume UTC
+    // Format time to 24-hour for Date parse, helper:
+    const time24h = (() => {
+      const [time, modifier] = zone.time.toLowerCase().split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+  
+      if (modifier === 'pm' && hours < 12) hours += 12;
+      if (modifier === 'am' && hours === 12) hours = 0;
+  
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    })();
+  
+    // Construct full UTC datetime string
+    const utcDateTimeStr = `${datePart}T${time24h}Z`; // Z means UTC
+  
+    const dateObj = new Date(utcDateTimeStr);
+  
+    // Convert to user's local time string (12hr format)
+    return dateObj.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  
+
   return (
     <div
       key={zone._id}
@@ -59,7 +92,7 @@ function ZoneCard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <strong style={{ fontSize: 16 }}>{symbol}</strong>
-        <span style={{ fontSize: 12, color: "#555" }}>{zone.time}</span>
+        <span style={{ fontSize: 12, color: "#555" }}>{parseUtcTimeToLocal(zone)}</span>
       </div>
 
       {/* Timeframe + Date */}

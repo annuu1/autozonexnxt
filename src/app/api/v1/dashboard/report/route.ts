@@ -11,8 +11,10 @@ function formatApproaching(doc: any) {
     range: `${doc.distal_line.toFixed(2)}–${doc.proximal_line.toFixed(2)}`,
     time: doc.zone_alert_time
       ? new Date(doc.zone_alert_time).toLocaleTimeString("en-IN", {
+          timeZone: "UTC",
           hour: "2-digit",
           minute: "2-digit",
+          hour12: true, // Recommended for consistency
         })
       : null,
     strength: doc.trade_score >= 7 ? "Strong" : "Medium",
@@ -26,13 +28,16 @@ function formatEntered(doc: any) {
     range: `${doc.distal_line.toFixed(2)}–${doc.proximal_line.toFixed(2)}`,
     time: doc.zone_entry_time
       ? new Date(doc.zone_entry_time).toLocaleTimeString("en-IN", {
+          timeZone: "UTC",
           hour: "2-digit",
           minute: "2-digit",
+          hour12: true
         })
       : null,
     holding: doc.zone_breach_time ? "No" : "Yes",
   };
 }
+
 
 function formatBreached(doc: any) {
   return {
@@ -41,8 +46,10 @@ function formatBreached(doc: any) {
     range: `${doc.distal_line.toFixed(2)}–${doc.proximal_line.toFixed(2)}`,
     time: doc.zone_breach_time
       ? new Date(doc.zone_breach_time).toLocaleTimeString("en-IN", {
+          timeZone: "UTC",
           hour: "2-digit",
           minute: "2-digit",
+          hour12: true
         })
       : null,
     reaction: "Failed", // placeholder
@@ -110,6 +117,7 @@ export async function GET(req: Request) {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      timeZone: "UTC",
     });
 
     if (!daywiseData[dateKey]) {

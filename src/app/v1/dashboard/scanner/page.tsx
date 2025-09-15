@@ -23,6 +23,22 @@ import useAuthStore from "@/store/useAuthStore";
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
+// Helper function to get color for timeframe tags
+const getTimeframeColor = (timeframe: string) => {
+  switch (timeframe) {
+    case "1wk":
+      return "cyan";
+    case "1mo":
+      return "purple";
+    case "3mo":
+      return "orange";
+    case "1d":
+      return "blue";
+    default:
+      return "default";
+  }
+};
+
 export default function ScannerPage() {
   const {
     filteredZones,
@@ -171,6 +187,12 @@ export default function ScannerPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <strong onClick={() => handleCardClick(zone)}>{zone.ticker}</strong>
+                        {/* MOVED & UPDATED: Timeframes with colors */}
+                        <Space size={4}>
+                            {(zone.timeframes || []).map((f: string) => (
+                              <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>{f}</Tag>
+                            ))}
+                        </Space>
                         <CopyOutlined
                           onClick={(e) => {
                             e.stopPropagation();
@@ -190,10 +212,10 @@ export default function ScannerPage() {
                       <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
                       <div>Distal: {zone.distal_line?.toFixed(2)}</div>
                       <div>
-                        Timeframes:{" "}
-                        {(zone.timeframes || []).map((f: string) => (
-                          <Tag key={f}>{f}</Tag>
-                        ))}
+                        Approach:{" "}
+                        <span style={{ fontWeight: "bold", color: "#d46b08" }}>
+                          {(zone.percentDiff).toFixed(3)}%
+                        </span>
                       </div>
                     </div>
 
