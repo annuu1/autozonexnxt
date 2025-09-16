@@ -1,13 +1,36 @@
 "use client"
 
-import { Card, Descriptions, Button, Space, Tag, Typography } from "antd"
-import { EditOutlined, ReloadOutlined } from "@ant-design/icons"
+import { useState } from "react"
+import {
+  Card,
+  Descriptions,
+  Button,
+  Space,
+  Tag,
+  Typography,
+  Modal,
+  Form,
+  Input,
+  Tabs,
+  message,
+  notification,
+} from "antd"
+import { EditOutlined, ReloadOutlined, LockOutlined } from "@ant-design/icons"
 import useAuthStore from "@/store/useAuthStore"
 
 const { Title } = Typography
 
 export default function ProfilePage() {
-  const { user, logout } = useAuthStore()
+  const { user, logout, setUser } = useAuthStore()
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [form] = Form.useForm()
+  const [passwordForm] = Form.useForm()
+
+  // ⚡ AntD v5: context holders for toast notifications
+  const [messageApi, contextHolder] = message.useMessage()
+  const [notificationApi, notificationContextHolder] = notification.useNotification()
 
   if (!user) {
     return (
@@ -20,49 +43,151 @@ export default function ProfilePage() {
     )
   }
 
+  // ✅ Update Profile
+  const handleUpdateProfile = async (values: any) => {
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/v1/users/${user._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to update profile")
+
+      setUser(data)
+      messageApi.success("Profile updated successfully!")
+      form.resetFields()
+      setIsEditModalOpen(false)
+    } catch (error: any) {
+      messageApi.error(error.message || "Something went wrong")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ✅ Change Password
+  const handleChangePassword = async (values: any) => {
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/v1/users/${user._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        // show inline field error
+        passwordForm.setFields([
+          {
+            name: "currentPassword",
+            errors: [data.error || "Invalid current password"],
+          },
+        ])
+        throw new Error(data.error || "Failed to change password")
+      }
+
+      messageApi.success("Password changed successfully!")
+      passwordForm.resetFields()
+      setIsPasswordModalOpen(false)
+    } catch (error: any) {
+      if (!error.message.includes("Invalid")) {
+        messageApi.error(error.message || "Something went wrong")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div style={{ maxWidth: 700, margin: "2rem auto" }}>
+    <div style={{ maxWidth: 800, margin: "2rem auto" }}>
+      {/* ⚡ Render context holders for toast notifications */}
+      {contextHolder}
+      {notificationContextHolder}
+
       <Card
-        title={<Title level={3} style={{ marginBottom: 0 }}>Profile</Title>}
+        title={<Title level={3} style={{ marginBottom: 0 }}>User Dashboard</Title>}
         actions={[
-          <Button type="link" icon={<EditOutlined />} key="edit">
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            key="edit"
+            onClick={() => setIsEditModalOpen(true)}
+          >
             Edit Profile
           </Button>,
-          <Button type="link" icon={<ReloadOutlined />} key="refresh">
+          <Button
+            type="link"
+            icon={<LockOutlined />}
+            key="password"
+            onClick={() => setIsPasswordModalOpen(true)}
+          >
+            Change Password
+          </Button>,
+          <Button
+            type="link"
+            icon={<ReloadOutlined />}
+            key="refresh"
+            onClick={() => window.location.reload()}
+          >
             Refresh
           </Button>,
         ]}
       >
-        <Descriptions bordered column={1} size="middle">
-          <Descriptions.Item label="Name">{user.name}</Descriptions.Item>
-          <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-          <Descriptions.Item label="Roles">
-            {user.roles.map((role) => (
-              <Tag key={role} color={role === "admin" ? "red" : "blue"}>
-                {role}
-              </Tag>
-            ))}
-          </Descriptions.Item>
-          <Descriptions.Item label="Subscription">
-            {user.subscription ? (
-              <>
-                <b>Plan:</b> {user.subscription.plan} <br />
-                <b>Status:</b>{" "}
-                <Tag color={user.subscription.status === "active" ? "green" : "volcano"}>
-                  {user.subscription.status}
-                </Tag>
-                <br />
-                <b>Start Date:</b>{" "}
-                {new Date(user.subscription.startDate).toLocaleDateString()}
-              </>
-            ) : (
-              "No active subscription"
-            )}
-          </Descriptions.Item>
-        </Descriptions>
+        <Tabs
+          defaultActiveKey="profile"
+          items={[
+            {
+              key: "profile",
+              label: "Profile Info",
+              children: (
+                <Descriptions bordered column={1} size="middle">
+                  <Descriptions.Item label="Name">{user.name}</Descriptions.Item>
+                  <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                  <Descriptions.Item label="Roles">
+                    {user.roles.map((role: string) => (
+                      <Tag key={role} color={role === "admin" ? "red" : "blue"}>
+                        {role}
+                      </Tag>
+                    ))}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Subscription">
+                    {user.subscription ? (
+                      <>
+                        <b>Plan:</b> {user.subscription.plan} <br />
+                        <b>Status:</b>{" "}
+                        <Tag
+                          color={
+                            user.subscription.status === "active"
+                              ? "green"
+                              : "volcano"
+                          }
+                        >
+                          {user.subscription.status}
+                        </Tag>
+                        <br />
+                        <b>Start Date:</b>{" "}
+                        {new Date(
+                          user.subscription.startDate
+                        ).toLocaleDateString()}
+                      </>
+                    ) : (
+                      "No active subscription"
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
+              ),
+            },
+          ]}
+        />
 
         <Space style={{ marginTop: "1.5rem" }}>
-          <Button type="primary" onClick={() => alert("Update profile will be implemented later")}>
+          <Button type="primary" onClick={() => setIsEditModalOpen(true)}>
             Update Profile
           </Button>
           <Button danger onClick={logout}>
@@ -70,6 +195,119 @@ export default function ProfilePage() {
           </Button>
         </Space>
       </Card>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        title="Update Profile"
+        open={isEditModalOpen}
+        onCancel={() => {
+          setIsEditModalOpen(false)
+          form.resetFields()
+        }}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ name: user.name, email: user.email }}
+          onFinish={handleUpdateProfile}
+        >
+          <Form.Item
+            label="Name"
+            name="name"
+            rules={[{ required: true, message: "Please enter your name" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, type: "email", message: "Please enter a valid email" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+              >
+                Save Changes
+              </Button>
+              <Button onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        title="Change Password"
+        open={isPasswordModalOpen}
+        onCancel={() => {
+          setIsPasswordModalOpen(false)
+          passwordForm.resetFields()
+        }}
+        footer={null}
+      >
+        <Form
+          form={passwordForm}
+          layout="vertical"
+          onFinish={handleChangePassword}
+        >
+          <Form.Item
+            label="Current Password"
+            name="currentPassword"
+            rules={[{ required: true, message: "Enter current password" }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            label="New Password"
+            name="newPassword"
+            rules={[{ required: true, message: "Enter new password" }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={["newPassword"]}
+            rules={[
+              { required: true, message: "Confirm your password" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(
+                    new Error("Passwords do not match")
+                  )
+                },
+              }),
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+              >
+                Change Password
+              </Button>
+              <Button onClick={() => setIsPasswordModalOpen(false)}>
+                Cancel
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

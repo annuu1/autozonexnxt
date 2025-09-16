@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
   { label: "Activity Log", href: "/v1/dashboard/activity-logs", icon: <AuditOutlined /> },
   { label: "Zones", href: "/v1/dashboard/demand-zones", icon: <AppstoreOutlined /> },
   { label: "Notifications", href: "/v1/dashboard/notifications", icon: <BellOutlined /> },
-  { label: "Settings", href: "/v1/dashboard/settings", icon: <SettingOutlined /> },
+  // { label: "Settings", href: "/v1/dashboard/settings", icon: <SettingOutlined /> },
   { label: "Profile", href: "/v1/dashboard/profile", icon: <ProfileOutlined /> },
 ];
 
