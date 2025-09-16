@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const statusFilter = searchParams.get("status") || "approaching"; // default
   const timeframeFilter = searchParams.get("timeframe") || "all";
+  const searchTerm = searchParams.get("search") || "";
 
   const zones = await DemandZone.aggregate([
     {
@@ -79,6 +80,9 @@ export async function GET(req: Request) {
         status: statusFilter, // "approaching" or "entered"
         ...(timeframeFilter !== "all" && {
           $expr: { $eq: [{ $arrayElemAt: ["$timeframes", 0] }, timeframeFilter] },
+        }),
+        ...(searchTerm && {
+          ticker: { $regex: searchTerm, $options: "i" }, // <-- case-insensitive match
         }),
       },
     },

@@ -12,6 +12,7 @@ import {
   Alert,
   Grid,
   Pagination,
+  Input,
 } from "antd";
 import { StarFilled, CopyOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
@@ -48,6 +49,8 @@ export default function ScannerPage() {
     setZoneFilter,
     isLoading,
     error,
+    search,
+    setSearch,
   } = useScanner();
 
   const [selectedZone, setSelectedZone] = useState<any>(null);
@@ -62,6 +65,8 @@ export default function ScannerPage() {
   const [teamsPickOpen, setTeamsPickOpen] = useState(false);
   const { user } = useAuthStore();
   const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
+
+  const [searchTerm, setSearchTerm] = useState(search);
 
   const handleCardClick = (zone: any) => {
     setSelectedZone(zone);
@@ -108,6 +113,15 @@ export default function ScannerPage() {
               { value: "1mo", label: "1 Month" },
               { value: "3mo", label: "3 Months" },
             ]}
+          />
+          <Input.Search
+            placeholder="Search by ticker"
+            // value={searchTerm}
+            // onChange={(e) => setSearchTerm(e.target.value)}
+            defaultValue={search}
+            onSearch={(value) => setSearch(value)}
+            style={{ width: screens.xs ? "100%" : 200 }}
+            allowClear
           />
 
           <Button

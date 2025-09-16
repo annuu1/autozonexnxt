@@ -44,18 +44,23 @@ export function useScanner() {
   const [timeframe, setTimeframe] = useState<string>("all"); // default = all
   const [zoneFilter, setZoneFilter] = useState<"approaching" | "entered">("approaching"); // default
   const [teamFilter, setTeamFilter] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
 
   // fetch zones from API with filters
   const { data: zones = fallbackZones, isLoading, error } = useQuery<Zone[]>({
-    queryKey: ["scanner", user?.id, timeframe, zoneFilter],
+    queryKey: ["scanner", user?.id, timeframe, zoneFilter, search || ""],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/v1/scanner?status=${zoneFilter}&timeframe=${timeframe}`,
-        {
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
+      const params = new URLSearchParams({
+        status: zoneFilter || "approaching",
+        timeframe: timeframe || "all",
+      });
+
+      if (search) params.append("search", search);
+
+      const res = await fetch(`/api/v1/scanner?${params.toString()}`, {
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch zones");
       return res.json();
     },
@@ -81,5 +86,7 @@ export function useScanner() {
     setZoneFilter,
     teamFilter,
     setTeamFilter,
+    search,
+    setSearch,
   };
 }
