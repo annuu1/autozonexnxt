@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       ];
     }
 
-    const users = await User.find(query).limit(50);
+    const users = await User.find(query).limit(500);
 
     return NextResponse.json(users);
   } catch (error: any) {
