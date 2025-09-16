@@ -9,36 +9,41 @@ export default function ServiceWorkerRegister() {
     if (typeof window === 'undefined') return
     if (process.env.NODE_ENV !== 'production') return
     if (!('serviceWorker' in navigator)) return
-    
+
     const register = async () => {
       try {
-        // Register immediately on load
         const reg = await navigator.serviceWorker.register(SW_PATH, { scope: '/' })
-        // Listen for updates
+
+        // Immediately activate a waiting SW
         if (reg.waiting) {
           reg.waiting.postMessage({ type: 'SKIP_WAITING' })
         }
+
+        // Handle new SW found
         reg.addEventListener('updatefound', () => {
           const sw = reg.installing
           if (!sw) return
           sw.addEventListener('statechange', () => {
             if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-              // New content available
-              console.info('[PWA] New version is available. It will activate on next load.')
+              console.info('[PWA] New version installed, activating now...')
+              sw.postMessage({ type: 'SKIP_WAITING' })
             }
           })
         })
-        // Refresh the page when the new SW takes control
+
+        // Reload when the new SW activates
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.info('[PWA] Controller changed. Reloading...')
+          console.info('[PWA] Updated service worker took control, reloading...')
           window.location.reload()
         })
+
+        // Periodically check for updates
+        setInterval(() => reg.update(), 60 * 60 * 1000) // every 1h
       } catch (err) {
         console.warn('[PWA] Service worker registration failed', err)
       }
     }
 
-    // Defer registration until the app is idle
     if ('requestIdleCallback' in window) {
       ;(window as any).requestIdleCallback(register)
     } else {
