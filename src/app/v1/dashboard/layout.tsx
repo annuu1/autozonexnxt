@@ -27,6 +27,8 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { features } from "@/config/features";
 import { Stick } from "next/font/google";
 
+import Image from "next/image";
+
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
 
@@ -172,10 +174,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             zIndex: 1,
           }}
         >
-          {collapsed ? <span style={{ fontSize: 24 }}>📈</span> : <>
-            <span style={{ marginRight: 8, fontSize: 24 }}>📈</span>
-            AutoZone
-          </>}
+          {collapsed ? (
+            <Image
+              src="/brand_logo.png"
+              alt="AutoZone Logo"
+              width={40}
+              height={40}
+              style={{ objectFit: "contain" }}
+            />
+          ) : (
+            <>
+              <Image
+                src="/brand_logo.png"
+                alt="AutoZone Logo"
+                width={40}
+                height={40}
+                style={{ marginRight: 8, objectFit: "contain" }}
+              />
+              AutoZone
+            </>
+          )}
         </div>
 
         <Menu
