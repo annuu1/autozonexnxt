@@ -29,6 +29,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import ZonesModal from "@/components/dashboard/ZonesModal";
 import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 import AsidePanel from "@/components/dashboard/AsidePanel";
+import NewUpdates from "@/components/dashboard/NewUpdates";
 
 // Hooks
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -322,13 +323,7 @@ export default function DashboardPage() {
         </Row>
 
         {/* Table below cards */}
-        <Card title="📋 Recent Symbols" style={{ marginTop: 24 }}>
-          <Table
-            columns={columns}
-            dataSource={dataSource}
-            pagination={false}
-          />
-        </Card>
+        <NewUpdates />        
       </Col>
 
       {/* Aside Section */}
