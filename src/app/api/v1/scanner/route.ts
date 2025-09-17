@@ -65,6 +65,8 @@ export async function GET(req: Request) {
         last_price: "$symbol.last_price",
         percentDiff: 1,
         timeframes: 1,
+        zone_alert_sent: { $ifNull: ["$zone_alert_sent", false] },
+        zone_entry_sent: { $ifNull: ["$zone_entry_sent", false] },
         status: {
           $cond: [
             "$isEntered",

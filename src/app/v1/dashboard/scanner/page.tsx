@@ -91,6 +91,16 @@ export default function ScannerPage() {
     }
   };
 
+  const getStatusColor = (zone: any) => {
+    if (zone.status === "approaching") {
+      return zone.zone_entry_sent ? "gold" : "blue";
+    }
+    if (zone.status === "entered") {
+      return zone.zone_entry_sent ? "red" : "green";
+    }
+    return "default";
+  };
+
   return (
     <div style={{ padding: screens.xs ? 12 : 20 }}>
       {contextHolder}
@@ -198,15 +208,18 @@ export default function ScannerPage() {
                       transition: "transform 0.15s ease-in-out, box-shadow 0.15s",
                     }}
                   >
-                    <div className="flex items-center justify-between">
+                   <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <strong onClick={() => handleCardClick(zone)}>{zone.ticker}</strong>
-                        {/* MOVED & UPDATED: Timeframes with colors */}
+
                         <Space size={4}>
-                            {(zone.timeframes || []).map((f: string) => (
-                              <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>{f}</Tag>
-                            ))}
+                          {(zone.timeframes || []).map((f: string) => (
+                            <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>
+                              {f}
+                            </Tag>
+                          ))}
                         </Space>
+
                         <CopyOutlined
                           onClick={(e) => {
                             e.stopPropagation();
@@ -215,7 +228,7 @@ export default function ScannerPage() {
                           style={{ cursor: "pointer", color: "#555" }}
                         />
                       </div>
-                      <Tag color={zone.status === "entered" ? "green" : "blue"}>
+                      <Tag color={zone.status === "entered" ? "green" : "blue"} style={{ borderColor: zone.zone_alert_sent && zone.zone_entry_sent ? "#a3c6ff" : "blue" }}>
                         {zone.status?.toUpperCase()}
                       </Tag>
                     </div>
