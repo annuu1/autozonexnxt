@@ -25,7 +25,9 @@ export async function POST(req: Request) {
     }
 
     user.lastLogin = new Date();
-    await user.save();
+    if (!user.mobile) {
+      user.mobile = "";
+    }
 
     const token = signJwt({ id: user._id.toString() });
     const res = NextResponse.json(
@@ -33,6 +35,7 @@ export async function POST(req: Request) {
         id: user._id,
         name: user.name,
         email: user.email,
+        mobile: user.mobile,
         roles: user.roles,
         subscription: user.subscription,
       },

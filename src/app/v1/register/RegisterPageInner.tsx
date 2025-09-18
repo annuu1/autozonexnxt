@@ -9,6 +9,7 @@ export default function RegisterPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const from = useMemo(() => params.get("from") || "/v1/dashboard", [params]);
+  const invite = useMemo(() => params.get("invite") || "", [params]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +41,9 @@ export default function RegisterPageInner() {
         body: JSON.stringify({
           name: values.name,
           email: values.email,
+          mobile: values.mobile,
           password: values.password,
+          referralCode: values.inviteCode,
           plan: "freemium", // default plan
         }),
       });
@@ -145,7 +148,7 @@ export default function RegisterPageInner() {
             <Alert type="error" message={error} style={{ marginBottom: 16 }} />
           )}
 
-          <Form layout="vertical" onFinish={onFinish}>
+          <Form layout="vertical" onFinish={onFinish} initialValues={{ inviteCode: invite }}>
             <Form.Item
               label={<span style={{ color: "#ddd" }}>Full Name</span>}
               name="name"
@@ -170,6 +173,33 @@ export default function RegisterPageInner() {
               <Input
                 autoComplete="email"
                 placeholder="you@example.com"
+                size="large"
+                style={{ borderRadius: 8 }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={<span style={{ color: "#ddd" }}>Mobile Number</span>}
+              name="mobile"
+              rules={[
+                { required: true, message: "Please enter your mobile number" },
+                { pattern: /^\d{10}$/, message: "Invalid mobile number (10 digits required)" },
+              ]}
+            >
+              <Input
+                autoComplete="tel"
+                placeholder="1234567890"
+                size="large"
+                style={{ borderRadius: 8 }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={<span style={{ color: "#ddd" }}>Invite Code (optional)</span>}
+              name="inviteCode"
+            >
+              <Input
+                placeholder="Enter invite code"
                 size="large"
                 style={{ borderRadius: 8 }}
               />
@@ -214,7 +244,7 @@ export default function RegisterPageInner() {
           >
             Already have an account?{" "}
             <a
-              href={`/v1/login?from=${encodeURIComponent(from)}`}
+              href={`/v1/login?from=${encodeURIComponent(from)}${invite ? `&invite=${invite}` : ''}`}
               style={{ color: "#00c6ff" }}
             >
               Sign in

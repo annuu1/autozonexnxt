@@ -17,14 +17,27 @@ const UserSchema = new Schema(
       trim: true,
     },
 
+    mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+
     passwordHash: {
       type: String,
       required: true, // hashed password (bcrypt/argon2)
     },
 
+    invitedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     roles: {
       type: [String],
-      enum: ["user", "agent", "manager", "admin"],
+      enum: ["user", "agent", "manager", "admin", "associate"],
       default: ["user"],
     },
 
