@@ -28,6 +28,7 @@ import { features } from "@/config/features";
 import { Stick } from "next/font/google";
 
 import Image from "next/image";
+import Sidebar from "@/components/dashboard/Sidebar";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -149,81 +150,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <Layout style={{ minHeight: "100vh" }}>
       {/* Sidebar */}
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        breakpoint="lg"
-        collapsedWidth={screens.xs ? 0 : 80}
-        trigger={null}
-      >
-        {/* Logo */}
-        <div
-          style={{
-            height: 64,
-            margin: 16,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: collapsed ? "center" : "flex-start",
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: collapsed ? 20 : 22,
-            letterSpacing: 1,
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-          }}
-        >
-          {collapsed ? (
-            <Image
-              src="/brand_logo.png"
-              alt="AutoZone Logo"
-              width={40}
-              height={40}
-              style={{ objectFit: "contain" }}
-            />
-          ) : (
-            <>
-              <Image
-                src="/brand_logo.png"
-                alt="AutoZone Logo"
-                width={40}
-                height={40}
-                style={{ marginRight: 8, objectFit: "contain" }}
-              />
-              AutoZone
-            </>
-          )}
-        </div>
-
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[]}
-          items={navItems.map((item) => {
-            const fkey = routeFeatureMap[item.href];
-            let hidden = false;
-            if (fkey) {
-              const { allowed } = useFeatureAccess(fkey, user);
-              hidden = !allowed;
-            }
-            return {
-              key: item.href,
-              icon: item.icon,
-              label: <Link href={item.href}>{item.label}</Link>,
-              hidden,
-            };
-          })}
-          onClick={() => {
-            // auto collapse if on mobile
-            if (screens.xs) {
-              setCollapsed(true);
-            }
-          }}
-          style={{ position: "sticky", top: 64, zIndex: 1 }}
-        />
-
-      </Sider>
+      <Sidebar navItems={navItems} routeFeatureMap={routeFeatureMap} user={user}
+       collapsed={collapsed} setCollapsed={setCollapsed} />
 
       {/* Main Area */}
       <Layout>
