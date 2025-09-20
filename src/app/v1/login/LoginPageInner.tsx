@@ -110,11 +110,14 @@ export default function LoginPageInner() {
             </Form.Item>
 
             <Form.Item
-              label="Password"
+              label={
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ marginRight: "5px" }}>Password</span>
+                  <Link href="/v1/forgot-password">Forgot Password?</Link>
+                </div>
+              }
               name="password"
-              rules={[
-                { required: true, message: "Please enter your password" },
-              ]}
+              rules={[{ required: true, message: "Please enter your password" }]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
