@@ -7,7 +7,7 @@ import { requireAuth } from "@/lib/auth";
 // GET all users (optionally filter by role or search)
 export async function GET(req: Request) {
   // Only admin or manager can list users
-  const auth = await requireAuth(req, { rolesAllowed: ["admin", "manager"] });
+  const auth = await requireAuth(req, { rolesAllowed: ["admin", "manager", "associate"] });
   if (!("ok" in auth) || !auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -18,6 +18,9 @@ export async function GET(req: Request) {
     const role = searchParams.get("role");
     const search = searchParams.get("search");
 
+    const userId = auth.user?._id;
+    const userRoles = auth.user?.roles || [];
+
     let query: any = {};
     if (role) query.roles = role;
     if (search) {
@@ -26,6 +29,15 @@ export async function GET(req: Request) {
         { email: { $regex: search, $options: "i" } },
       ];
     }
+
+    // Role-based access
+    if (userRoles.includes("associate")) {
+      // Associates can only see users they invited
+      query.invitedBy = userId;
+    } else if (!userRoles.includes("admin") && !userRoles.includes("manager")) {
+      // Just a safety check: no other roles can list users
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
 
     const users = await User.find(query).limit(500);
 

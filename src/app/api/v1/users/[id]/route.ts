@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
+import { requireAuth } from "@/lib/auth";
 
 // GET user by ID
 export async function GET(
@@ -11,6 +12,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAuth(req, { rolesAllowed: ["admin","manager","associate","user"] });
+    if (!("ok" in auth) || !auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
     await dbConnect();
     const user = await User.findById(params.id);
 
@@ -29,6 +34,12 @@ export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+
+  const auth = await requireAuth(req, { rolesAllowed: ["admin"] });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { id } = await context.params
     await dbConnect();
@@ -60,6 +71,12 @@ export async function DELETE(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+
+  const auth = await requireAuth(req, { rolesAllowed: ["admin"] });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { id } = await context.params
     await dbConnect();
@@ -80,6 +97,12 @@ export async function PATCH(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+
+  const auth = await requireAuth(req, { rolesAllowed: ["admin","manager","associate","user"] });
+  if (!("ok" in auth) || !auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { id } = await context.params
     await dbConnect()

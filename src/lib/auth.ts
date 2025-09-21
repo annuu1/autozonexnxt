@@ -10,7 +10,7 @@ if (!JWT_SECRET) {
   console.warn("JWT_SECRET not set. Please add JWT_SECRET to your environment.");
 }
 
-export type Role = "user" | "agent" | "manager" | "admin";
+export type Role = "user" | "agent" | "manager" | "admin" | "associate";
 export type Plan = "freemium" | "starter" | "pro";
 
 const PLAN_LEVEL: Record<Plan, number> = {
