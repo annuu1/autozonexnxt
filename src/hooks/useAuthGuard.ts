@@ -13,7 +13,7 @@ export type CurrentUser = {
     plan: string;
     status: string;
     startDate?: string;
-    billingCycle?: "monthly" | "quarterly" | "yearly";
+    billingCycle?: "weekly" | "monthly" | "quarterly" | "yearly";
     endDate?: string;
   };
 };

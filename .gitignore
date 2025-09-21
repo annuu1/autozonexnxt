@@ -3,3 +3,4 @@ node_modules
 *.local
 # Local Netlify folder
 .netlify
+users_update.js
