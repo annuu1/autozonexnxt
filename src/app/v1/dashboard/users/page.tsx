@@ -101,6 +101,7 @@ const UsersPage: React.FC = () => {
   const columns: ColumnsType<User> = [
     { title: "Name", dataIndex: "name", key: "name", render: (text) => <b>{text}</b> },
     { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Mobile", dataIndex: "mobile", key: "mobile" },
     {
       title: "Roles",
       dataIndex: "roles",
@@ -183,6 +184,8 @@ const UsersPage: React.FC = () => {
           <Form.Item name="roles" label="Roles">
             <Select mode="multiple">
               <Option value="user">User</Option>
+              <Option value="associate">Associate</Option>
+              <Option value="manager">Manager</Option>
               <Option value="admin">Admin</Option>
             </Select>
           </Form.Item>

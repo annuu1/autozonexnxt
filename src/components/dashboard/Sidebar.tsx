@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { features } from "@/config/features";
+import { useRoleAccess } from "@/hooks/hasRoleAccess";
 
 const { Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -36,7 +37,7 @@ export default function Sidebar({
   const filteredNavItems = navItems.filter((item) => {
     const fkey = routeFeatureMap[item.href];
     if (!fkey) return true;
-    const { allowed } = useFeatureAccess(fkey, user);
+    const { allowed } = useRoleAccess(fkey, user);
     return allowed;
   });
 
