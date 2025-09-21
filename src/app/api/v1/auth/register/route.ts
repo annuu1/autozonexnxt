@@ -5,6 +5,7 @@ import User from "@/models/User";
 import InviteCode from "@/models/InviteCode";
 import { hashPassword, signJwt, setAuthCookie } from "@/lib/auth";
 import { nanoid } from "nanoid";
+import mongoose from "mongoose";
 
 async function generateUniqueCode(length = 8) {
   let code;
@@ -41,7 +42,11 @@ export async function POST(req: Request) {
       if (!invite) {
         return NextResponse.json({ error: "Invalid referral code" }, { status: 400 });
       }
-      invitedBy = invite.owner;
+      invitedBy = invite.owner instanceof mongoose.Types.ObjectId 
+  ? invite.owner 
+  : invite.owner?._id;
+      
+  invitedBy = new mongoose.Types.ObjectId(invitedBy);
     }
 
     const passwordHash = await hashPassword(password);

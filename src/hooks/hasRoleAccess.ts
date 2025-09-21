@@ -7,11 +7,12 @@ export function useRoleAccess(featureKey: keyof typeof features | null, user: an
     // Example mapping: which roles can access which features
     const roleFeatureMap: Record<string, string[]> = {
       trades: ["admin", "trader"],
-      zonesReport: ["admin", "manager"],
-      allZoneList: ["admin", "manager"],
-      notifications: ["admin", "user"],
-      users: ["admin"],
+      zonesReport: ["admin", "manager", "user","associate"],
+      allZoneList: ["admin"],
+      notifications: ["admin"],
+      users: ["admin", "associate"],
       activityLog: ["admin"],
+      scanner: ["admin", "manager", "user", "associate"],
     };
   
     const allowedRoles = roleFeatureMap[featureKey] || [];

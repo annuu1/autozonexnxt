@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
 // Map routes to feature keys for access control
 const routeFeatureMap: Record<string, keyof typeof features | null> = {
   "/v1/dashboard": null,
+  "/v1/dashboard/scanner": "scanner",
   "/v1/dashboard/trades": "trades",
   "/v1/dashboard/reports": "zonesReport",
   "/v1/dashboard/demand-zones": "allZoneList",

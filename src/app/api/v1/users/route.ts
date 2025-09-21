@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { requireAuth } from "@/lib/auth";
+import mongoose from "mongoose";
 
 // GET all users (optionally filter by role or search)
 export async function GET(req: Request) {
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
     const role = searchParams.get("role");
     const search = searchParams.get("search");
 
-    const userId = auth.user?._id;
+    const userId = new mongoose.Types.ObjectId(auth.user._id);
     const userRoles = auth.user?.roles || [];
 
     let query: any = {};
