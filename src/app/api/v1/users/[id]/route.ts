@@ -48,11 +48,16 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const { name, email } = await req.json();
+    const { name, email, roles, isVerified, subscription } = await req.json();
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { name, email },
+      { name, email, roles, isVerified, subscription: {
+        plan: subscription.plan,
+        status: subscription.status,
+        startDate: subscription.startDate,
+        billingCycle: subscription.billingCycle,
+      } },
       { new: true, runValidators: true }
     );
 

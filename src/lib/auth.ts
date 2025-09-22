@@ -121,12 +121,9 @@ export async function requireAuth(
 
     // Expiry check using derivedEndDate
     if (derivedEndDate && derivedEndDate < new Date()) {
-      console.log("Subscription expired")
       return { ok: false, error: "Subscription expired" };
     }
   }
-
-  console.log("Subscription valid")
 
   return { ok: true, user } as const;
 }

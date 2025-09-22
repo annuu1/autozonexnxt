@@ -47,7 +47,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async (values: any) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/v1/users/${user._id}`, {
+      const res = await fetch(`/api/v1/users/${user.id||user._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -71,7 +71,7 @@ export default function ProfilePage() {
   const handleChangePassword = async (values: any) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/v1/users/${user._id}`, {
+      const res = await fetch(`/api/v1/users/${user.id||user._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

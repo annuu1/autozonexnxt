@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Table, Tag, Space, Button, Popconfirm, message, Modal, Form, Input, Select, Switch } from "antd";
+import { Table, Tag, Space, Button, Popconfirm, message, Modal, Form, Input, Select, Switch, DatePicker } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import moment from "moment-timezone";
 
 interface Subscription {
   plan: string;
   status: string;
-  cycle: string;
+  billingCycle: string;
   startDate: string;
 }
 
@@ -69,6 +70,8 @@ const UsersPage: React.FC = () => {
       isVerified: user.isVerified,
       plan: user.subscription?.plan,
       status: user.subscription?.status,
+      startDate: user.subscription?.startDate ? moment(user.subscription.startDate) : null,
+      billingCycle: user.subscription?.billingCycle || "",
     });
     setIsModalOpen(true);
   };
@@ -86,6 +89,8 @@ const UsersPage: React.FC = () => {
             ...editingUser?.subscription,
             plan: values.plan,
             status: values.status,
+            startDate: values.startDate?.toISOString(),
+            billingCycle: values.billingCycle,
           },
         }),
       });
@@ -205,6 +210,24 @@ const UsersPage: React.FC = () => {
               <Option value="inactive">Inactive</Option>
             </Select>
           </Form.Item>
+            {/* ⚡ New Subscription Start Date */}
+            <Form.Item
+            name="startDate"
+            label="Subscription Start Date"
+            rules={[{ required: true }]}
+          >
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
+
+            {/* ⚡ New Billing Cycle */}
+            <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
+              <Select>
+                <Option value="weekly">Weekly</Option>
+                <Option value="monthly">Monthly</Option>
+                <Option value="quarterly">Quarterly</Option>
+                <Option value="yearly">Yearly</Option>
+              </Select>
+            </Form.Item>
         </Form>
       </Modal>
     </>
