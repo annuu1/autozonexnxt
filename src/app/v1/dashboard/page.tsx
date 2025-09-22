@@ -351,7 +351,7 @@ export default function DashboardPage() {
       <ZonesModal
         open={zonesVisible}
         onClose={() => setZonesVisible(false)}
-        zones={zonesData}
+        zones={zonesData||[]}
         loading={zonesLoading}
         onTickerClick={handleTickerClick}
       />

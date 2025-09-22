@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
+import { requireAuth } from "@/lib/auth";
 
-export async function GET() {
-  await dbConnect();
+export async function GET(req: Request) {
 
-  const zones = await DemandZone.aggregate([
+    // 🔹 Require authentication
+    const auth = await requireAuth(req, {
+      rolesAllowed: ["user", "agent", "manager", "admin"],
+    });
+    if (!("ok" in auth) || !auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    await dbConnect();
+
+    const zones = await DemandZone.aggregate([
     {
       $lookup: {
         from: "symbols",

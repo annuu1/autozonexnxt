@@ -55,7 +55,7 @@ export default function Sidebar({
         // close sidebar on mobile after selecting
         if (screens.xs) setCollapsed(true);
       }}
-      style={{ marginTop: 8 }}
+      style={{ marginTop: 8, position: "sticky", top: 64, zIndex: 1 }}
     />
   );
 
@@ -117,6 +117,9 @@ export default function Sidebar({
           fontWeight: "bold",
           fontSize: collapsed ? 20 : 22,
           letterSpacing: 1,
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
         }}
       >
         {collapsed ? (

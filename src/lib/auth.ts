@@ -87,6 +87,47 @@ export async function requireAuth(
     }
   }
 
+  // Compute derived end date for subscription
+  let derivedEndDate: Date | null = null;
+  if (user.subscription) {
+    const sub = user.subscription;
+
+    if (sub.endDate) {
+      derivedEndDate = new Date(sub.endDate);
+    } else if (sub.startDate && sub.billingCycle) {
+      const start = new Date(sub.startDate);
+      const d = new Date(start);
+      switch (sub.billingCycle) {
+        case "weekly":
+          d.setDate(d.getDate() + 7);
+          break;
+        case "monthly":
+          d.setMonth(d.getMonth() + 1);
+          break;
+        case "quarterly":
+          d.setMonth(d.getMonth() + 3);
+          break;
+        case "yearly":
+          d.setFullYear(d.getFullYear() + 1);
+          break;
+      }
+      derivedEndDate = d;
+    }
+
+    // Subscription status check
+    if (sub.status !== "active") {
+      return { ok: false, error: "Subscription inactive" };
+    }
+
+    // Expiry check using derivedEndDate
+    if (derivedEndDate && derivedEndDate < new Date()) {
+      console.log("Subscription expired")
+      return { ok: false, error: "Subscription expired" };
+    }
+  }
+
+  console.log("Subscription valid")
+
   return { ok: true, user } as const;
 }
 

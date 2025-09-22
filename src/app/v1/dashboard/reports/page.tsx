@@ -132,7 +132,7 @@ function ZoneSection({
   data: any[];
   showReactions?: boolean;
 }) {
-  if (!data || data.length === 0) return null;
+  if (!data || data.length === 0) return [];
   const allIds = data.map((z) => z._id); // ✅ use _id for allItemIds
 
   return (
@@ -167,7 +167,7 @@ function ReportsPage() {
     );
   }
 
-  if (error) {
+  if (error || !data) {
     return (
       <div style={{ padding: 16 }}>
         <Alert
@@ -203,7 +203,7 @@ function ReportsPage() {
               children: (
                 <ZoneSection
                   title="Approaching Zones"
-                  data={data?.today.approaching || []}
+                  data={data?.today?.approaching || []}
                   showReactions={true}
                 />
               ),
@@ -214,7 +214,7 @@ function ReportsPage() {
               children: (
                 <ZoneSection
                   title="Entered Zones"
-                  data={data?.today.entered || []}
+                  data={data?.today?.entered || []}
                   showReactions={true}
                 />
               ),
@@ -225,7 +225,7 @@ function ReportsPage() {
               children: (
                 <ZoneSection
                   title="Breached Zones"
-                  data={data?.today.breached || []}
+                  data={data?.today?.breached || []}
                   showReactions={true}
                 />
               ),

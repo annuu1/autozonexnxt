@@ -31,7 +31,8 @@ export default function ZonesModal({
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  const paginatedZones = zones?.slice((page - 1) * pageSize, page * pageSize);
+  const safeZones = Array.isArray(zones) ? zones : [];
+  const paginatedZones = safeZones.slice((page - 1) * pageSize, page * pageSize);
 
   // 📋 Copy function with feedback
   const handleCopy = (ticker: string) => {
@@ -147,7 +148,7 @@ export default function ZonesModal({
           </>
         ) : (
           <Table
-            dataSource={zones}
+            dataSource={Array.isArray(zones) ? zones : []}
             columns={zoneColumns}
             rowKey="_id"
             loading={loading}

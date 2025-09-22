@@ -1,7 +1,7 @@
 // app/v1/dashboard/layout.tsx
 "use client";
 
-import { Layout, Menu, Grid, Spin, Dropdown, Card, Button, Avatar } from "antd";
+import { Layout, Menu, Grid, Spin, Dropdown, Card, Button, Avatar, Modal } from "antd";
 import {
   DashboardOutlined,
   ScanOutlined,
@@ -29,6 +29,7 @@ import { Stick } from "next/font/google";
 
 import Image from "next/image";
 import Sidebar from "@/components/dashboard/Sidebar";
+import { usePathname } from "next/navigation";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -41,7 +42,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/v1/dashboard", icon: <DashboardOutlined /> },
-  { label : "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined />},
+  { label: "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined /> },
   { label: "Trades", href: "/v1/dashboard/trades", icon: <BarChartOutlined /> },
   { label: "Reports", href: "/v1/dashboard/reports", icon: <FileTextOutlined /> },
   { label: "Users", href: "/v1/dashboard/users", icon: <UserOutlined /> },
@@ -75,6 +76,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
 
+  const pathname = usePathname();
+
   // handle logout click
   const handleLogout = async () => {
     await logout();
@@ -98,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const start = new Date(sub.startDate);
     const d = new Date(start);
     if (sub.billingCycle === "weekly") d.setDate(d.getDate() + 7);
-    else if(sub.billingCycle === "monthly") d.setMonth(d.getMonth() + 1);
+    else if (sub.billingCycle === "monthly") d.setMonth(d.getMonth() + 1);
     else if (sub.billingCycle === "quarterly") d.setMonth(d.getMonth() + 3);
     else if (sub.billingCycle === "yearly") d.setFullYear(d.getFullYear() + 1);
     derivedEndDate = d;
@@ -149,11 +152,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </Card>
   );
 
+  const isExpired =
+    sub?.status !== "active" || (derivedEndDate && derivedEndDate < new Date());
+
+    const shouldBlock = isExpired && pathname !== "/v1/dashboard/profile" && pathname !== "/v1/dashboard/billing";
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       {/* Sidebar */}
       <Sidebar navItems={navItems} routeFeatureMap={routeFeatureMap} user={user}
-       collapsed={collapsed} setCollapsed={setCollapsed} />
+        collapsed={collapsed} setCollapsed={setCollapsed} />
 
       {/* Main Area */}
       <Layout>
@@ -194,35 +202,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </Dropdown>
           )} */}
-          
+
           {user && !screens.xs && (
             <Dropdown
-                trigger={["click"]}
-                placement="bottomRight"
-                arrow
-                menu={{
-                  items: [
-                    {
-                      key: "user-card",
-                      label: userCard, // the custom card you already built
-                    },
-                  ],
+              trigger={["click"]}
+              placement="bottomRight"
+              arrow
+              menu={{
+                items: [
+                  {
+                    key: "user-card",
+                    label: userCard,
+                  },
+                ],
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  gap: 8,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    gap: 8,
-                  }}
-                >
-                  <Avatar size="small" icon={<UserOutlined />} />
-                  <span>{user.name}</span>
-                  <PlanBadge plan={user?.subscription?.plan || "freemium"} />
-                </div>
-              </Dropdown>
-            )}
+                <Avatar size="small" icon={<UserOutlined />} />
+                <span>{user.name}</span>
+                <PlanBadge plan={user?.subscription?.plan || "freemium"} />
+              </div>
+            </Dropdown>
+          )}
         </Header>
 
         <Content
@@ -232,9 +240,53 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             background: "#fff",
             borderRadius: 8,
             minHeight: "calc(100vh - 112px)", // adjust for header
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          {children}
+          {/* Blurred children only if expired */}
+          <div
+            style={{
+              filter: shouldBlock ? "blur(6px)" : "none",
+              pointerEvents: shouldBlock ? "none" : "auto",
+              userSelect: shouldBlock ? "none" : "auto",
+              overflow: "hidden",
+            }}
+          >
+            {children}
+          </div>
+
+          {/* Show popup only if expired */}
+          {shouldBlock && (
+            <div
+              style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                background: "#fff",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                padding: 24,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                zIndex: 1000,
+                minWidth: 300,
+                textAlign: "center",
+              }}
+            >
+              <h3 style={{ marginBottom: 12 }}>Subscription Expired</h3>
+              <p style={{ marginBottom: 16 }}>
+                Your subscription has expired. Please renew to continue using the dashboard.
+              </p>
+              <Button
+                type="primary"
+                size="large"
+                onClick={() => router.push("/v1/dashboard/billing")}
+              >
+                Renew Subscription
+              </Button>
+            </div>
+          )}
         </Content>
       </Layout>
     </Layout>
