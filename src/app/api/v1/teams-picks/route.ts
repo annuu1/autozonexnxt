@@ -54,7 +54,17 @@ export async function GET(req: Request) {
 
     const zones = await DemandZone.find({ _id: { $in: itemIds } }).lean();
 
-    return NextResponse.json(zones);
+    const result = zones.map((zone) => {
+      const pick = teamPicks.find(
+        (p) => p.itemId.toString() === zone._id.toString()
+      );
+      return {
+        ...zone,
+        teamPick: pick ? { createdAt: pick.addDate, ...pick } : null,
+      };
+    });
+
+    return NextResponse.json(result);
   } catch (err) {
     console.error("Error fetching team picks:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

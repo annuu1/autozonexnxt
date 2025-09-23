@@ -234,7 +234,7 @@ export default function ScannerPage() {
                     </div>
 
                     <div className="mt-2 text-sm text-gray-600">
-                      {formattedDate && <div>Date: {formattedDate}</div>}
+                      {formattedDate && <div>Legout: {formattedDate}</div>}
                       <div>Pattern: {zone.pattern}</div>
                       <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
                       <div>Distal: {zone.distal_line?.toFixed(2)}</div>

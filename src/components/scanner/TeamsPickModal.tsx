@@ -65,6 +65,33 @@ export default function TeamsPickModal({
     }
   }, [open]);
 
+  // Reusable formatter
+  function formatDate(dateString?: string): string | null {
+    if (!dateString) return null;
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "2-digit",
+    }).format(new Date(dateString));
+  }
+
+  // Reusable key-value display component
+  function InfoRow({
+    label,
+    value,
+  }: {
+    label: string;
+    value?: string | number | null;
+  }) {
+    if (value === null || value === undefined) return null;
+    return (
+      <div>
+        <span className="font-medium">{label}: </span>
+        <span>{value}</span>
+      </div>
+    );
+  }
+
   return (
     <>
       {contextHolder}
@@ -108,17 +135,24 @@ export default function TeamsPickModal({
                     key={zone._id}
                     className="p-3 border rounded-md bg-white shadow-sm"
                     style={{
-                      transition: "transform 0.15s ease-in-out, box-shadow 0.15s",
+                      transition:
+                        "transform 0.15s ease-in-out, box-shadow 0.15s",
                     }}
                   >
+                    {/* Header */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <strong>{zone.ticker}</strong>
-                        {/* MOVED & UPDATED: Timeframes with colors */}
                         <Space size={4}>
-                            {(zone.timeframes || []).map((f: string) => (
-                              <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>{f}</Tag>
-                            ))}
+                          {(zone.timeframes || []).map((f: string) => (
+                            <Tag
+                              key={f}
+                              color={getTimeframeColor(f)}
+                              style={{ margin: 0 }}
+                            >
+                              {f}
+                            </Tag>
+                          ))}
                         </Space>
                         <CopyOutlined
                           onClick={() => copy(zone.ticker)}
@@ -130,22 +164,38 @@ export default function TeamsPickModal({
                       </Tag>
                     </div>
 
-                    <div className="mt-2 text-sm text-gray-600">
-                      {formattedDate && <div>Date: {formattedDate}</div>}
-                      <div>Pattern: {zone.pattern}</div>
-                      <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
-                      <div>Distal: {zone.distal_line?.toFixed(2)}</div>
-                       {/* NEW: Display percentDiff */}
-                       {zone.status === 'approaching' && zone.percentDiff !== undefined && (
-                          <div>
-                            Approach:{" "}
-                            <span style={{ fontWeight: "bold", color: "#d46b08" }}>
-                              {(zone.percentDiff * 100).toFixed(2)}%
-                            </span>
-                          </div>
-                       )}
+                    {/* Body */}
+                    <div className="mt-2 text-sm text-gray-600 space-y-1">
+                      <InfoRow
+                        label="Added At"
+                        value={formatDate(zone.teamPick?.createdAt)}
+                      />
+                      <InfoRow label="Legout" value={formattedDate} />
+                      <InfoRow label="Pattern" value={zone.pattern} />
+                      <InfoRow
+                        label="Proximal"
+                        value={zone.proximal_line?.toFixed(2)}
+                      />
+                      <InfoRow
+                        label="Distal"
+                        value={zone.distal_line?.toFixed(2)}
+                      />
+                      {zone.status === "approaching" &&
+                        zone.percentDiff !== undefined && (
+                          <InfoRow
+                            label="Approach"
+                            value={
+                              <span
+                                style={{ fontWeight: "bold", color: "#d46b08" }}
+                              >
+                                {(zone.percentDiff * 100).toFixed(2)}%
+                              </span>
+                            }
+                          />
+                        )}
                     </div>
 
+                    {/* Footer */}
                     <div className="mt-2">
                       <Reactions
                         itemId={zone._id}
