@@ -49,11 +49,16 @@ export function getTokenFromRequest(req: Request): string | null {
 export async function getUserFromRequest(req: Request) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
-  const decoded = verifyJwt<{ id: string }>(token);
+  const decoded = verifyJwt<{ id: string; sid?: string }>(token);
   if (!decoded?.id) return null;
   await dbConnect();
-  const user = await User.findById(decoded.id).lean();
-  return user;
+  const user = await User.findById(decoded.id).lean<any>();
+  if (!user) return null;
+  // Enforce single-device session: JWT sid must match user's current sessionId
+  if ((user as any).sessionId && decoded.sid && (user as any).sessionId === decoded.sid) {
+    return user;
+  }
+  return null;
 }
 
 export type RequireAuthOptions = {

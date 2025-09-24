@@ -74,6 +74,13 @@ const UserSchema = new Schema(
     lastLogin: {
       type: Date,
     },
+    
+    // Single active session tracking
+    sessionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

@@ -20,10 +20,16 @@ export default function Home() {
             Contact
           </Link>
           <Link
-            href="/v1/dashboard"
+            href="/v1/login"
             className="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 text-white rounded-lg shadow-lg backdrop-blur-sm transition"
           >
-            Dashboard
+            Login
+          </Link>
+          <Link
+            href="/v1/register"
+            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg shadow-lg backdrop-blur-sm transition"
+          >
+            Signup
           </Link>
         </nav>
       </header>
@@ -43,7 +49,7 @@ export default function Home() {
           </p>
           <div className="space-x-4">
             <Link
-              href="/v1/dashboard"
+              href="/v1/login"
               className="px-6 py-3 bg-blue-500/80 hover:bg-blue-500 text-white rounded-lg shadow-lg backdrop-blur-sm transition"
             >
               Launch Dashboard
@@ -129,10 +135,10 @@ export default function Home() {
           guesswork, just rules and alerts that keep you ahead.
         </p>
         <Link
-          href="/v1/dashboard"
+          href="/v1/login"
           className="px-8 py-4 bg-white/90 text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-white transition"
         >
-          Open Dashboard
+          Login
         </Link>
       </section>
 

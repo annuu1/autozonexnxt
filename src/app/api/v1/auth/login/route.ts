@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { verifyPassword, signJwt, setAuthCookie } from "@/lib/auth";
+import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -26,10 +27,14 @@ export async function POST(req: Request) {
 
     user.lastLogin = new Date();
     if (!user.mobile) {
-      user.mobile = "";
+      user.mobile = "0000000000";
     }
+    // Generate new sessionId to enforce single-device login
+    const sessionId = randomUUID();
+    user.sessionId = sessionId;
+    await user.save();
 
-    const token = signJwt({ id: user._id.toString() });
+    const token = signJwt({ id: user._id.toString(), sid: sessionId });
     const res = NextResponse.json(
       {
         id: user._id,
