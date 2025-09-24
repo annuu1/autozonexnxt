@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card, Form, Input, Button, Typography, Alert } from "antd";
+import { Card, Form, Input, Button, Typography, Alert, Modal } from "antd";
 import useAuthStore from "@/store/useAuthStore";
 
 export default function RegisterPageInner() {
@@ -129,12 +129,29 @@ export default function RegisterPageInner() {
         throw new Error(data?.error || "Registration failed");
       }
 
-      const me = await fetch("/api/v1/auth/me", { cache: "no-store" });
-      if (me.ok) {
-        const userData = await me.json();
-        setUser(userData);
-      }
-      router.replace(from);
+      Modal.success({
+      title: "Registration Successful 🎉",
+      content: "Your account has been created successfully. Please wait while we log you in...",
+      okText: "Continue",
+      onOk: async () => {
+        // ✅ Fetch user details after user acknowledges success
+        const me = await fetch("/api/v1/auth/me", { cache: "no-store" });
+        if (me.ok) {
+          const userData = await me.json();
+          setUser(userData);
+        }
+
+        // ✅ Redirect after fetching user
+        router.replace(from);
+      },
+    });
+
+      // const me = await fetch("/api/v1/auth/me", { cache: "no-store" });
+      // if (me.ok) {
+      //   const userData = await me.json();
+      //   setUser(userData);
+      // }
+      // router.replace(from);
     } catch (e: any) {
       setError(e?.message || "Registration failed");
     } finally {
