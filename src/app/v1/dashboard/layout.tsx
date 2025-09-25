@@ -163,13 +163,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (derivedEndDate) {
     const diffTime = derivedEndDate.getTime() - today.getTime();
     daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    isExpiringSoon = daysLeft > 0 && daysLeft <= 4; // show warning if ≤ 4 days
+    isExpiringSoon = daysLeft > 0 && daysLeft <= 2; // show warning if ≤ 2 days
   }
 
   const isExpired =
     sub?.status !== "active" || (derivedEndDate && derivedEndDate < new Date());
 
-    const shouldBlock = isExpired && pathname !== "/v1/dashboard/profile" && pathname !== "/v1/dashboard/billing";
+    const shouldBlock = isExpired && pathname !== "/v1/dashboard/profile" 
+    && pathname !== "/v1/dashboard/billing" && pathname !== "/v1/dashboard";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -296,7 +297,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <h3 style={{ marginBottom: 12 }}>Subscription Expired</h3>
               <p style={{ marginBottom: 16 }}>
-                Your subscription has expired. Please renew to continue using the dashboard.
+              No active subscription found. Join or renew to dive into Autozonex’s premium demand-supply tools!
               </p>
               <Button
                 type="primary"

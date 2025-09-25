@@ -36,6 +36,7 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useZones } from "@/hooks/useZones";
 import { useInvalidSymbols } from "@/hooks/useInvalidSymbols";
 import useAuthStore from "@/store/useAuthStore";
+import useAuthGuard from "@/hooks/useAuthGuard";
 
 const { Title } = Typography;
 
@@ -49,6 +50,8 @@ export default function DashboardPage() {
   const [editingSymbol, setEditingSymbol] = useState<string>("");
 
   const [selectedDate, setSelectedDate] = useState<string>("");
+
+  const { user, loading } = useAuthGuard();
 
   const {
     data: stats,
@@ -70,8 +73,6 @@ export default function DashboardPage() {
     updateSymbol,
     deleteSymbol,
   } = useInvalidSymbols();
-
-  const { user } = useAuthStore();
 
   useEffect(() => {
     refetch();
@@ -297,7 +298,7 @@ export default function DashboardPage() {
                   value={stats?.zonesNearDayLow ?? 0}
                   icon={<AimOutlined style={{ fontSize: 32, color: "#fff" }} />}
                   gradient="linear-gradient(135deg, #00b09b, #96c93d)"
-                  onClick={openZones}
+                  // onClick={openZones}
                 />
               </Col>
               <Col xs={24} sm={12} md={8}>
@@ -323,7 +324,7 @@ export default function DashboardPage() {
         </Row>
 
         {/* Table below cards */}
-        <NewUpdates />        
+        <NewUpdates user={user} />        
       </Col>
 
       {/* Aside Section */}

@@ -16,6 +16,7 @@ export type CurrentUser = {
     billingCycle?: "weekly" | "monthly" | "quarterly" | "yearly";
     endDate?: string;
   };
+  invitedBy?: any;
 };
 
 export default function useAuthGuard() {

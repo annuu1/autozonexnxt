@@ -1,7 +1,7 @@
 import react from "react";
 import { Card, Button, message } from "antd";
 
-export default function NewUpdates() {
+export default function NewUpdates(user: any) {
     return (
         <Card title="🔥 Hot News & Updates" style={{ marginTop: 24 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -25,7 +25,7 @@ export default function NewUpdates() {
               <Button
                 type="primary"
                 size="large"
-                href="https://t.me/stock_zone_alerts"
+                href={user.invitedBy !== null ? `https://t.me/+9nlMFvHoC5gyZDQ1` : "https://t.me/stock_zone_alerts"}
                 target="_blank"
                 style={{
                   background: "#fff",

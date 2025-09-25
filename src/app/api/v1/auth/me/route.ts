@@ -13,5 +13,6 @@ export async function GET(req: Request) {
     email: user.email,
     roles: user.roles,
     subscription: user.subscription,
+    invitedBy: user.invitedBy || null,
   });
 }
