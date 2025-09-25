@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Table, Tag, Space, Button, Popconfirm, message, Modal, Form, Input, Select, Switch, DatePicker } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import moment from "moment-timezone";
+import { useRoleAccess } from "@/hooks/hasRoleAccess";
+import useAuthStore from "@/store/useAuthStore";
 
 interface Subscription {
   plan: string;
@@ -16,12 +18,14 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  mobile: string;
   roles: string[];
   isVerified: boolean;
   subscription: Subscription;
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
+  invitedBy?: { _id: string; name: string; email: string };
 }
 
 const { Option } = Select;
@@ -33,14 +37,38 @@ const UsersPage: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
 
+  // New search/filter states
+  const [search, setSearch] = useState("");
+  const [invitedBy, setInvitedBy] = useState<string | undefined>(undefined);
+
+  // Current logged in user (for actions visibility)
+  const { user: currentUser } = useAuthStore();
+
+  const { allowed: canManageUsers } = useRoleAccess("userActions", currentUser);
+
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [search, invitedBy]);
+
+  // const fetchCurrentUser = async () => {
+  //   try {
+  //     const res = await fetch("/api/v1/auth/me");
+  //     if (!res.ok) return;
+  //     const data = await res.json();
+  //     useAuthStore.setState({ user: data.user });
+  //   } catch {
+  //     // ignore
+  //   }
+  // };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/users", { cache: "no-store" });
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (invitedBy) params.append("invitedBy", invitedBy);
+
+      const res = await fetch(`/api/v1/users?${params.toString()}`, { cache: "no-store" });
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : data.users || []);
     } catch {
@@ -108,6 +136,12 @@ const UsersPage: React.FC = () => {
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Mobile", dataIndex: "mobile", key: "mobile" },
     {
+      title: "Invited By",
+      dataIndex: "invitedBy",
+      key: "invitedBy",
+      render: (invitedBy) => invitedBy ? `${invitedBy.name} (${invitedBy.email})` : "—",
+    },
+    {
       title: "Roles",
       dataIndex: "roles",
       key: "roles",
@@ -141,7 +175,11 @@ const UsersPage: React.FC = () => {
       key: "lastLogin",
       render: (date) => (date ? new Date(date).toLocaleString() : "Never"),
     },
-    {
+  ];
+  
+  // ✅ Only append "Actions" if role is allowed
+  if (canManageUsers) {
+    columns.push({
       title: "Actions",
       key: "actions",
       render: (_, record) => (
@@ -159,11 +197,59 @@ const UsersPage: React.FC = () => {
           </Popconfirm>
         </Space>
       ),
-    },
-  ];
+    });
+  }
+  
+
+  // Only show Actions column for admins
+  if (!canManageUsers) {
+    columns.push({
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Space>
+          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+          <Popconfirm
+            title="Are you sure delete this user?"
+            onConfirm={() => handleDelete(record._id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="link" danger>
+              Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    });
+  }
 
   return (
     <>
+      {/* Search + Filter */}
+      <Space style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Search by name, email, or mobile"
+          allowClear
+          onSearch={(val) => setSearch(val)}
+          style={{ width: 250 }}
+        />
+        <Select
+          placeholder="Filter by Invited By"
+          allowClear
+          style={{ width: 200 }}
+          onChange={(val) => setInvitedBy(val)}
+        >
+          {users
+            .filter((u) => u.invitedBy)
+            .map((u) => (
+              <Option key={u.invitedBy!._id} value={u.invitedBy!._id}>
+                {u.invitedBy!.name}
+              </Option>
+            ))}
+        </Select>
+      </Space>
+
       <Table
         columns={columns}
         dataSource={users}
@@ -172,6 +258,7 @@ const UsersPage: React.FC = () => {
         pagination={{ pageSize: 10 }}
       />
 
+      {/* Edit Modal (unchanged) */}
       <Modal
         title="Edit User"
         open={isModalOpen}

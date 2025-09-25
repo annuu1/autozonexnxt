@@ -67,6 +67,11 @@ export const features = {
     enabled: true,
     minPlan: "pro" as const,
     allowedRoles: ["admin"], 
+  },
+  userActions:{
+    enabled: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
   }
 } as const;
 

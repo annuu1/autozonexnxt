@@ -18,6 +18,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const role = searchParams.get("role");
     const search = searchParams.get("search");
+    const invitedBy = searchParams.get("invitedBy");
 
     const userId = new mongoose.Types.ObjectId(auth.user._id);
     const userRoles = auth.user?.roles || [];
@@ -28,6 +29,7 @@ export async function GET(req: Request) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
+        { mobile: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -38,9 +40,11 @@ export async function GET(req: Request) {
     } else if (!userRoles.includes("admin") && !userRoles.includes("manager")) {
       // Just a safety check: no other roles can list users
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+    }
 
-    const users = await User.find(query).limit(500);
+    const users = await User.find(query)
+    .populate("invitedBy", "name email")
+    .limit(500);
 
     return NextResponse.json(users);
   } catch (error: any) {
