@@ -44,6 +44,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/v1/dashboard", icon: <DashboardOutlined /> },
+  { label: "New Zones", href: "/v1/dashboard/latest-zones", icon: <AppstoreOutlined /> },
   { label: "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined /> },
   { label: "Trades", href: "/v1/dashboard/trades", icon: <BarChartOutlined /> },
   { label: "Reports", href: "/v1/dashboard/reports", icon: <FileTextOutlined /> },
@@ -59,6 +60,7 @@ const navItems: NavItem[] = [
 // Map routes to feature keys for access control
 const routeFeatureMap: Record<string, keyof typeof features | null> = {
   "/v1/dashboard": null,
+  "/v1/dashboard/latest-zones": "latestZones",
   "/v1/dashboard/scanner": "scanner",
   "/v1/dashboard/trades": "trades",
   "/v1/dashboard/reports": "zonesReport",
@@ -295,9 +297,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 textAlign: "center",
               }}
             >
-              <h3 style={{ marginBottom: 12 }}>Subscription Expired</h3>
+              <h3 style={{ marginBottom: 12 }}>No active subscription found</h3>
               <p style={{ marginBottom: 16 }}>
-              No active subscription found. Join or renew to dive into Autozonex’s premium demand-supply tools!
+              Join or renew to dive into Autozonex’s premium demand-supply tools!
               </p>
               <Button
                 type="primary"

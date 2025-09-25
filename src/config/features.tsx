@@ -25,6 +25,12 @@ export const features = {
     minPlan: "pro" as const,
     allowedRoles: ["admin"], 
   },
+  latestZones: { 
+    enabled: true,
+    comingSoon: true,
+    minPlan: "starter" as const,
+    allowedRoles: ["admin","manager","user","associate"], 
+  },
   scanner: { 
     enabled: true,
     comingSoon: true,

@@ -14,10 +14,14 @@ export function useRoleAccess(featureKey: keyof typeof features | null, user: an
       userActions: ["admin"],
       activityLog: ["admin"],
       scanner: ["admin", "manager", "user", "associate"],
+      latestZones: ["admin", "manager", "user", "associate"],
     };
   
     const allowedRoles = roleFeatureMap[featureKey] || [];
-    const allowed = user?.roles?.some((r: string) => allowedRoles.includes(r));
+    let allowed = user?.roles?.some((r: string) => allowedRoles.includes(r));
+    if (featureKey === "latestZones" && user.subscription?.plan === "freemium") {
+      allowed = false;
+    }
   
     return { allowed };
   }

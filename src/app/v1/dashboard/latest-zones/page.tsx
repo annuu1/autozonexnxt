@@ -16,7 +16,7 @@ import {
 } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import useAuthStore from "@/store/useAuthStore";
+import useAuthGuard from "@/hooks/useAuthGuard";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -47,7 +47,7 @@ export default function LatestZonesPage() {
 
   const screens = useBreakpoint();
   const { copy, contextHolder } = useCopyToClipboard();
-  const { user } = useAuthStore();
+  const { user } = useAuthGuard();
   const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
 
   useEffect(() => {
@@ -69,8 +69,10 @@ export default function LatestZonesPage() {
         setLoading(false);
       }
     };
-    fetchZones();
-  }, [selectedTimeframe]);
+    if(user?.subscription?.plan !== "freemium" && user?.subscription?.status === "active"){
+      fetchZones();
+    }
+  }, [selectedTimeframe, user]);
 
   const handleCardClick = (zone: any) => {
     setSelectedZone(zone);
