@@ -16,6 +16,7 @@ import {
   LogoutOutlined,
   AuditOutlined,
   ProfileOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useState } from "react";
@@ -30,6 +31,7 @@ import { Stick } from "next/font/google";
 import Image from "next/image";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { usePathname } from "next/navigation";
+import ExpiringSoonBanner from "@/components/common/ExpiringSoonBanner";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -75,6 +77,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, loading } = useAuthGuard();
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+
+  const [showExpiryBanner, setShowExpiryBanner] = useState(true);
 
   const pathname = usePathname();
 
@@ -152,6 +156,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </Card>
   );
 
+  // Expiry logic
+  const today = new Date();
+  let isExpiringSoon = false;
+  let daysLeft: number | null = null;
+  if (derivedEndDate) {
+    const diffTime = derivedEndDate.getTime() - today.getTime();
+    daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    isExpiringSoon = daysLeft > 0 && daysLeft <= 4; // show warning if ≤ 4 days
+  }
+
   const isExpired =
     sub?.status !== "active" || (derivedEndDate && derivedEndDate < new Date());
 
@@ -192,6 +206,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
             <h1 style={{ marginLeft: 16, fontSize: 18 }}>Dashboard</h1>
           </div>
+
+             {/* Expiring soon banner */}
+             {isExpiringSoon && (
+                  <ExpiringSoonBanner derivedEndDate={derivedEndDate} daysLeft={daysLeft} />
+                )}
+
 
           {/* {user && (
             <Dropdown overlay={userCard} trigger={["click"]} placement="bottomRight" arrow>

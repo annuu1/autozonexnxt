@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
               type="primary"
               icon={<TeamOutlined />}
               size="large"
-              href="https://t.me/avninaina"
+              href="https://t.me/AnuragX_sys"
               target="_blank"
               style={{ marginBottom: 16 }}
             >

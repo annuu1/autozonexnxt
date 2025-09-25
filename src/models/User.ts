@@ -54,7 +54,7 @@ const UserSchema = new Schema(
       },
       status: {
         type: String,
-        enum: ["active", "expired", "canceled"],
+        enum: ["active", "expired", "canceled", "inactive"],
         default: "active",
       },
       startDate: { type: Date },
