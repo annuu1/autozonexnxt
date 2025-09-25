@@ -181,22 +181,63 @@ export default function RegisterPageInner() {
       `}</style>
 
       <div className="register-container">
-        <Card style={{
-          flex: 1,
-          background: "rgba(255,255,255,0.05)",
-          backdropFilter: "blur(10px)",
-          borderRadius: 16,
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: 300,
-          textAlign: "center",
-          fontWeight: "bold",
-          fontSize: 24,
-        }} bordered={false}>
-          Welcome to <br /> AutoZone Trading
-        </Card>
+      <Card
+  style={{
+    flex: 1,
+    background: "rgba(255,255,255,0.05)",
+    backdropFilter: "blur(10px)",
+    borderRadius: 16,
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 400,
+    textAlign: "center",
+    padding: 24,
+  }}
+  bordered={false}
+>
+  <Typography.Title level={3} style={{ color: "#fff", marginBottom: 16 }}>
+    Welcome to AutoZoneX Trading 🚀
+  </Typography.Title>
+  <Typography.Paragraph style={{ color: "#ddd", fontSize: 15, marginBottom: 24 }}>
+    Create your account and start exploring powerful trading tools.  
+  </Typography.Paragraph>
+
+  <div
+    style={{
+      background: "rgba(255,255,255,0.08)",
+      padding: 16,
+      borderRadius: 12,
+      marginTop: "auto",
+    }}
+  >
+    <Typography.Text style={{ color: "#ccc", fontSize: 14, display: "block", marginBottom: 12 }}>
+      Having issues while registering?  
+    </Typography.Text>
+
+    <Button
+      type="primary"
+      href="https://t.me/anuragX_sys"
+      target="_blank"
+      block
+      style={{
+        background: "linear-gradient(135deg, #00c6ff, #0072ff)",
+        border: "none",
+        borderRadius: 8,
+        fontWeight: 600,
+      }}
+    >
+      Contact Support on Telegram
+    </Button>
+
+    <Typography.Text style={{ color: "#aaa", fontSize: 12, display: "block", marginTop: 12 }}>
+      We’ll help you with manual registration if needed.
+    </Typography.Text>
+  </div>
+</Card>
+
 
         <Card style={{
           flex: 1,
