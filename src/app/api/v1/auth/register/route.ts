@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       passwordHash,
       invitedBy,
       roles: Array.isArray(roles) && roles.length ? roles : ["user"],
-      subscription: plan ? { plan, status: "active", startDate: new Date() } : undefined,
+      subscription: plan ? { plan, status: "inactive", startDate: new Date() } : undefined,
     });
 
     // Generate referral code for new user if they have the "associate" role
