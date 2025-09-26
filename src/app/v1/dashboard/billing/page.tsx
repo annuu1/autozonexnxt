@@ -132,10 +132,10 @@ export default function BillingPage() {
             Subscribe Now
           </Button>
 
-          <h2>Or fill form below</h2>
+          {/* <h2>Or fill form below</h2> */}
 
           {/* Embedded Google Form */}
-          <iframe
+          {/* <iframe
             src="https://docs.google.com/forms/d/e/1FAIpQLSfeZT-lIVkh7Iixrys-gB5X94r1ew6nR3yjnNnc3enYdc1Kzg/viewform?embedded=true"
             width="100%"
             height="1521"
@@ -146,7 +146,7 @@ export default function BillingPage() {
             style={{ maxWidth: "640px", marginTop: "1rem" }}
           >
             Loading…
-          </iframe>
+          </iframe> */}
           {/* Placeholder for future QR code */}
           {/* <img src="/path-to-qr-code.jpg" alt="QR Code for Payment" style={{ maxWidth: "200px", marginTop: "1rem" }} /> */}
         </Space>
