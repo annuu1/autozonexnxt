@@ -17,8 +17,8 @@ export default function NewUpdates(user: any) {
                 boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
               }}
             >
-              <h3 style={{ margin: 0 }}>🚀 Join Our Telegram Community</h3>
-              <p style={{ margin: "8px 0" }}>
+              {/* <h3 style={{ margin: 0 }}>🚀 Join Our Telegram Community</h3> */}
+              {/* <p style={{ margin: "8px 0" }}>
                 Get <strong>LIVE stock zone alerts</strong> for QIT, MIT & WIT, plus
                 exclusive <strong>trade discussions</strong> to spot more market opportunities!
               </p>
@@ -35,7 +35,7 @@ export default function NewUpdates(user: any) {
                 }}
               >
                 🔗 Join Telegram Now
-              </Button>
+              </Button> */}
             </div>
         
             {/* Subscription Info */}
