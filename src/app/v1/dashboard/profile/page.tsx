@@ -181,7 +181,7 @@ export default function ProfilePage() {
                     )}
                   </Descriptions.Item>
 
-                  <Descriptions.Item label="Invited By">{user.invitedBy.name}</Descriptions.Item>
+                  <Descriptions.Item label="Invited By">{user?.invitedBy?.name | '-'}</Descriptions.Item>
                 </Descriptions>
               ),
             },
