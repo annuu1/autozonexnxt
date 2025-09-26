@@ -151,7 +151,7 @@ export default function RegisterPageInner() {
       alignItems: "center",
       justifyContent: "center",
       padding: 16,
-      background: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+      background: "#f6fffa",
       backgroundSize: "400% 400%",
       animation: "gradientBG 15s ease infinite",
     }}>
@@ -161,7 +161,23 @@ export default function RegisterPageInner() {
           50% {background-position:100% 50%}
           100% {background-position:0% 50%}
         }
+          .ant-input[disabled],
+          .ant-input-disabled,
+          .ant-input-password-disabled {
+            background-color: #f1f1f1 !important; /* soft light gray */
+            color: #555 !important;              /* readable text */
+            cursor: not-allowed !important;
+            opacity: 1 !important;               /* remove AntD fade */
+          }
+            
         .register-container { display: flex; flex-direction: row; gap: 24px; max-width: 900px; width: 100%; }
+
+        .ant-btn[disabled] {
+          background-color: #e0e0e0 !important;
+          color: #888 !important;
+          cursor: not-allowed !important;
+          border: none !important;
+          opacity: 1 !important; /* keep visible */
         @media (max-width: 768px) { .register-container { flex-direction: column; } }
       `}</style>
 
@@ -169,10 +185,10 @@ export default function RegisterPageInner() {
       <Card
   style={{
     flex: 1,
-    background: "rgba(255,255,255,0.05)",
+    background: "#75f3b2",
     backdropFilter: "blur(10px)",
     borderRadius: 16,
-    color: "#fff",
+    color: "#111",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -180,25 +196,26 @@ export default function RegisterPageInner() {
     minHeight: 400,
     textAlign: "center",
     padding: 24,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
   }}
   bordered={false}
 >
-  <Typography.Title level={3} style={{ color: "#fff", marginBottom: 16 }}>
+  <Typography.Title level={3} style={{ color: "#111", marginBottom: 16 }}>
     Welcome to AutoZoneX Trading 🚀
   </Typography.Title>
-  <Typography.Paragraph style={{ color: "#ddd", fontSize: 15, marginBottom: 24 }}>
+  <Typography.Paragraph style={{ color: "#555", fontSize: 15, marginBottom: 24 }}>
     Create your account and start exploring powerful trading tools.  
   </Typography.Paragraph>
 
   <div
     style={{
-      background: "rgba(255,255,255,0.08)",
+      background: "#f9fffa",
       padding: 16,
       borderRadius: 12,
       marginTop: "auto",
     }}
   >
-    <Typography.Text style={{ color: "#ccc", fontSize: 14, display: "block", marginBottom: 12 }}>
+    <Typography.Text style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 12 }}>
       Having issues while registering?  
     </Typography.Text>
 
@@ -208,7 +225,7 @@ export default function RegisterPageInner() {
       target="_blank"
       block
       style={{
-        background: "linear-gradient(135deg, #00c6ff, #0072ff)",
+        background: "linear-gradient(135deg, #00c853, #64dd17)",
         border: "none",
         borderRadius: 8,
         fontWeight: 600,
@@ -217,7 +234,7 @@ export default function RegisterPageInner() {
       Contact Support on Telegram
     </Button>
 
-    <Typography.Text style={{ color: "#aaa", fontSize: 12, display: "block", marginTop: 12 }}>
+    <Typography.Text style={{ color: "#888", fontSize: 12, display: "block", marginTop: 12 }}>
       We’ll help you with manual registration if needed.
     </Typography.Text>
   </div>
@@ -226,13 +243,14 @@ export default function RegisterPageInner() {
 
         <Card style={{
           flex: 1,
-          background: "rgba(255,255,255,0.05)",
+          background: "#75f3b2",
           backdropFilter: "blur(10px)",
           borderRadius: 16,
           padding: 32,
           minHeight: 400,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
         }} bordered={false}>
-          <Typography.Title level={3} style={{ textAlign: "center", marginBottom: 24, color: "#fff" }}>
+          <Typography.Title level={3} style={{ textAlign: "center", marginBottom: 24, color: "#111" }}>
             Create Your Account
           </Typography.Title>
 
@@ -245,12 +263,12 @@ export default function RegisterPageInner() {
             initialValues={{ inviteCode: invite }}
             onFieldsChange={onFieldsChange}
           >
-            <Form.Item label={<span style={{ color: "#ddd" }}>Full Name</span>} name="name"
+            <Form.Item label={<span style={{ color: "#555" }}>Full Name</span>} name="name"
               rules={[{ required: true, message: "Please enter your name" }]}>
               <Input autoComplete="name" placeholder="Jane Doe" size="large" style={{ borderRadius: 8 }} disabled={!otpVerified && otpSent} />
             </Form.Item>
 
-            <Form.Item label={<span style={{ color: "#ddd" }}>Mobile Number</span>} name="mobile"
+            <Form.Item label={<span style={{ color: "#555" }}>Mobile Number</span>} name="mobile"
               rules={[
                 { required: true, message: "Please enter your mobile number" },
                 { pattern: /^\d{10}$/, message: "Invalid mobile number (10 digits required)" },
@@ -259,7 +277,7 @@ export default function RegisterPageInner() {
             </Form.Item>
 
             {/* Email field moved below mobile */}
-            <Form.Item label={<span style={{ color: "#ddd" }}>Email</span>} name="email"
+            <Form.Item label={<span style={{ color: "#555" }}>Email</span>} name="email"
               rules={[{ required: true, message: "Please enter your email" }, { type: "email", message: "Invalid email" }]}>
               <Input autoComplete="email" placeholder="you@example.com" size="large" style={{ borderRadius: 8 }} disabled={otpSent} />
             </Form.Item>
@@ -282,7 +300,7 @@ export default function RegisterPageInner() {
 
             {otpSent && !otpVerified && (
               <>
-                <Form.Item label={<span style={{ color: "#ddd" }}>Enter OTP</span>} required>
+                <Form.Item label={<span style={{ color: "#555" }}>Enter OTP</span>} required>
                   <Input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter OTP" size="large" style={{ borderRadius: 8 }} />
                 </Form.Item>
 
@@ -308,7 +326,7 @@ export default function RegisterPageInner() {
               </>
             )}
 
-            <Form.Item label={<span style={{ color: "#ddd" }}>Password</span>} name="password"
+            <Form.Item label={<span style={{ color: "#555" }}>Password</span>} name="password"
               rules={[
                 { required: true, message: "Please enter your password" },
                 { min: 8, message: "Minimum 8 characters" },
@@ -316,7 +334,7 @@ export default function RegisterPageInner() {
               <Input.Password autoComplete="new-password" placeholder="••••••••" size="large" style={{ borderRadius: 8 }} disabled={!otpVerified} />
             </Form.Item>
 
-            <Form.Item label={<span style={{ color: "#ddd" }}>Invite Code (optional)</span>} name="inviteCode">
+            <Form.Item label={<span style={{ color: "#555" }}>Invite Code (optional)</span>} name="inviteCode">
               <Input placeholder="Enter invite code" size="large" style={{ borderRadius: 8 }} disabled={!otpVerified} />
             </Form.Item>
 
@@ -327,9 +345,9 @@ export default function RegisterPageInner() {
             </Form.Item>
           </Form>
 
-          <Typography.Paragraph style={{ textAlign: "center", color: "#ccc", marginTop: 8 }}>
+          <Typography.Paragraph style={{ textAlign: "center", color: "#666", marginTop: 8 }}>
             Already have an account?{" "}
-            <a href={`/v1/login?from=${encodeURIComponent(from)}${invite ? `&invite=${invite}` : ''}`} style={{ color: "#00c6ff" }}>
+            <a href={`/v1/login?from=${encodeURIComponent(from)}${invite ? `&invite=${invite}` : ''}`} style={{ color: "#00c853" }}>
               Sign in
             </a>
           </Typography.Paragraph>
