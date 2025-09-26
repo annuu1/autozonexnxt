@@ -36,7 +36,7 @@ export default function RegisterPageInner() {
         if (res.ok && active) {
           router.replace(from);
         }
-      } catch {}
+      } catch { }
     })();
     return () => {
       active = false;
@@ -156,89 +156,103 @@ export default function RegisterPageInner() {
       animation: "gradientBG 15s ease infinite",
     }}>
       <style>{`
-        @keyframes gradientBG {
-          0% {background-position:0% 50%}
-          50% {background-position:100% 50%}
-          100% {background-position:0% 50%}
-        }
-          .ant-input[disabled],
-          .ant-input-disabled,
-          .ant-input-password-disabled {
-            background-color: #f1f1f1 !important; /* soft light gray */
-            color: #555 !important;              /* readable text */
-            cursor: not-allowed !important;
-            opacity: 1 !important;               /* remove AntD fade */
-          }
-            
-        .register-container { display: flex; flex-direction: row; gap: 24px; max-width: 900px; width: 100%; }
+  @keyframes gradientBG {
+    0% {background-position:0% 50%}
+    50% {background-position:100% 50%}
+    100% {background-position:0% 50%}
+  }
 
-        .ant-btn[disabled] {
-          background-color: #e0e0e0 !important;
-          color: #888 !important;
-          cursor: not-allowed !important;
-          border: none !important;
-          opacity: 1 !important; /* keep visible */
-        @media (max-width: 768px) { .register-container { flex-direction: column; } }
-      `}</style>
+  .ant-input[disabled],
+  .ant-input-disabled,
+  .ant-input-password-disabled {
+    background-color: #f1f1f1 !important; /* soft light gray */
+    color: #555 !important;              /* readable text */
+    cursor: not-allowed !important;
+    opacity: 1 !important;               /* remove AntD fade */
+  }
+
+  .ant-btn[disabled] {
+    background-color: #e0e0e0 !important;
+    color: #888 !important;
+    cursor: not-allowed !important;
+    border: none !important;
+    opacity: 1 !important; /* keep visible */
+  }
+
+  .register-container { 
+    display: flex; 
+    flex-direction: row; 
+    gap: 24px; 
+    max-width: 900px; 
+    width: 100%; 
+  }
+
+  @media (max-width: 768px) { 
+    .register-container { 
+      flex-direction: column; 
+    } 
+  }
+`}</style>
+
 
       <div className="register-container">
-      <Card
-  style={{
-    flex: 1,
-    background: "#75f3b2",
-    backdropFilter: "blur(10px)",
-    borderRadius: 16,
-    color: "#111",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 400,
-    textAlign: "center",
-    padding: 24,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
-  }}
-  bordered={false}
->
-  <Typography.Title level={3} style={{ color: "#111", marginBottom: 16 }}>
-    Welcome to AutoZoneX Trading 🚀
-  </Typography.Title>
-  <Typography.Paragraph style={{ color: "#555", fontSize: 15, marginBottom: 24 }}>
-    Create your account and start exploring powerful trading tools.  
-  </Typography.Paragraph>
+        <Card
+          style={{
+            flex: 1,
+            background: "#75f3b2",
+            backdropFilter: "blur(10px)",
+            borderRadius: 16,
+            color: "#111",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 400,
+            textAlign: "center",
+            padding: 24,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+          }}
+          bordered={false}
+        >
+          <Typography.Title level={3} style={{ color: "#111", marginBottom: 16 }}>
+            Welcome to AutoZoneX Trading 🚀
+          </Typography.Title>
+          <Typography.Paragraph style={{ color: "#555", fontSize: 15, marginBottom: 24 }}>
+            Create your account and start exploring powerful trading tools.
+          </Typography.Paragraph>
 
-  <div
-    style={{
-      background: "#f9fffa",
-      padding: 16,
-      borderRadius: 12,
-      marginTop: "auto",
-    }}
-  >
-    <Typography.Text style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 12 }}>
-      Having issues while registering?  
-    </Typography.Text>
+          <div
+            style={{
+              background: "#f9fffa",
+              padding: 16,
+              borderRadius: 12,
+              marginTop: "auto",
+            }}
+          >
+            <Typography.Text style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 12 }}>
+              Having issues while registering?
+            </Typography.Text>
 
-    <Button
-      type="primary"
-      href="https://t.me/anuragX_sys"
-      target="_blank"
-      block
-      style={{
-        background: "linear-gradient(135deg, #00c853, #64dd17)",
-        border: "none",
-        borderRadius: 8,
-        fontWeight: 600,
-      }}
-    >
-      Contact Support on Telegram
-    </Button>
+            <Button
+              type="primary"
+              href="https://t.me/anuragX_sys"
+              target="_blank"
+              block
+              style={{
+                background: "linear-gradient(135deg, #00c853, #64dd17)",
+                border: "none",
+                borderRadius: 8,
+                fontWeight: 600,
+              }}
+            >
+              Contact Support on Telegram
+            </Button>
 
-    <Typography.Text style={{ color: "#888", fontSize: 12, display: "block", marginTop: 12 }}>
-      We’ll help you with manual registration if needed.
-    </Typography.Text>
-  </div>
-</Card>
+            <Typography.Text style={{ color: "#888", fontSize: 12, display: "block", marginTop: 12 }}>
+              We’ll help you with manual registration if needed.
+            </Typography.Text>
+          </div>
+        </Card>
 
 
         <Card style={{
