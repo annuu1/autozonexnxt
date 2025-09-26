@@ -51,10 +51,14 @@ export default function BillingPage() {
   ]
 
   // Function to handle subscription button click
-  const handleSubscribeClick = () => {
-    window.location.href = "https://t.me/jc_autozonex_bot"
-  }
+const handleSubscribeClick = () => {
+  const url =
+    user?.invitedBy === null
+      ? "https://t.me/AnuragX_SYS"
+      : "https://t.me/jc_autozonex_bot";
 
+  window.open(url, "_blank", "noopener,noreferrer");
+};
   return (
     <div style={{ maxWidth: 900, margin: "2rem auto" }}>
       <Title level={2}>Billing</Title>
@@ -77,8 +81,8 @@ export default function BillingPage() {
               </Text>
               <Space style={{ marginTop: "1rem" }}>
                 <Button type="primary" onClick={handleSubscribeClick}>
-                  Upgrade Plan
-                </Button>
+                {user?.invitedBy === null ? "Get Access" : "Upgrade Plan"}
+              </Button>
                 <Button onClick={() => alert("Cancel plan clicked")} danger disabled>
                   Cancel Subscription
                 </Button>
@@ -100,14 +104,16 @@ export default function BillingPage() {
       </Card>
 
       {/* How to Get a Subscription */}
+      {user?.invitedBy !== null && (
       <Card style={{ marginBottom: "2rem" }}>
         <Space direction="vertical" style={{ width: "100%" }}>
           <Title level={4}>How to Get a Subscription</Title>
-          <Text>
-            To subscribe to our plan, please follow these steps:
-          </Text>
+          <Text>To subscribe to our plan, please follow these steps:</Text>
           <ul>
-            <li>Click the "Subscribe Now" button below to connect with our payment team.</li>
+            <li>
+              Click the "Subscribe Now" button below to connect with our payment
+              team.
+            </li>
             <li>Complete the payment as instructed.</li>
             <li>
               Fill out the form below with the following details:
@@ -119,38 +125,21 @@ export default function BillingPage() {
               </ul>
             </li>
             <li>
-              Once your payment and form submission are confirmed, you will receive{" "}
-              <strong>instant access</strong> to your subscription, or it may take up to{" "}
-              <strong>20 minutes</strong> in some cases.
+              Once your payment and form submission are confirmed, you will
+              receive <strong>instant access</strong> to your subscription, or
+              it may take up to <strong>20 minutes</strong> in some cases.
             </li>
           </ul>
-           <Button
+          <Button
             type="primary"
             style={{ marginTop: "1rem" }}
             onClick={handleSubscribeClick}
           >
             Subscribe Now
           </Button>
-
-          {/* <h2>Or fill form below</h2> */}
-
-          {/* Embedded Google Form */}
-          {/* <iframe
-            src="https://docs.google.com/forms/d/e/1FAIpQLSfeZT-lIVkh7Iixrys-gB5X94r1ew6nR3yjnNnc3enYdc1Kzg/viewform?embedded=true"
-            width="100%"
-            height="1521"
-            frameBorder="0"
-            marginHeight={0}
-            marginWidth={0}
-            title="Subscription Payment Details Form"
-            style={{ maxWidth: "640px", marginTop: "1rem" }}
-          >
-            Loading…
-          </iframe> */}
-          {/* Placeholder for future QR code */}
-          {/* <img src="/path-to-qr-code.jpg" alt="QR Code for Payment" style={{ maxWidth: "200px", marginTop: "1rem" }} /> */}
         </Space>
       </Card>
+    )}
 
       {/* Billing History */}
       {/* <Card>
