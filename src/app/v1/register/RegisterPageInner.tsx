@@ -129,22 +129,7 @@ export default function RegisterPageInner() {
         throw new Error(data?.error || "Registration failed");
       }
 
-      Modal.success({
-      title: "Registration Successful 🎉",
-      content: "Your account has been created successfully. Please wait while we log you in...",
-      okText: "Continue",
-      onOk: async () => {
-        // ✅ Fetch user details after user acknowledges success
-        const me = await fetch("/api/v1/auth/me", { cache: "no-store" });
-        if (me.ok) {
-          const userData = await me.json();
-          setUser(userData);
-        }
-
-        // ✅ Redirect after fetching user
-        router.replace(from);
-      },
-    });
+      router.replace("/v1/login");
 
       // const me = await fetch("/api/v1/auth/me", { cache: "no-store" });
       // if (me.ok) {
