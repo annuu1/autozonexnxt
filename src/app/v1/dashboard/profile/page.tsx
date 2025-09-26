@@ -180,6 +180,8 @@ export default function ProfilePage() {
                       "No active subscription"
                     )}
                   </Descriptions.Item>
+
+                  <Descriptions.Item label="Invited By">{user.invitedBy.name}</Descriptions.Item>
                 </Descriptions>
               ),
             },
