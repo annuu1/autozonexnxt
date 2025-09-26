@@ -52,7 +52,7 @@ export default function BillingPage() {
 
   // Function to handle subscription button click
   const handleSubscribeClick = () => {
-    window.location.href = "https://t.me/AnuragX_sys"
+    window.location.href = "https://t.me/jc_autozonex_bot"
   }
 
   return (
