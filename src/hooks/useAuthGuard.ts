@@ -33,7 +33,8 @@ export default function useAuthGuard() {
         const res = await fetch("/api/v1/auth/me", { cache: "no-store" });
         if (res.status === 401) {
           // Not logged in; redirect to home (or /login if you add one)
-          router.replace("/?from=/v1/dashboard");
+          if (mounted) setLoading(false);
+          router.replace("/v1/login?from=/v1/dashboard");
           return;
         }
         if (!res.ok) {
@@ -56,3 +57,4 @@ export default function useAuthGuard() {
 
   return { user, loading, error } as const;
 }
+
