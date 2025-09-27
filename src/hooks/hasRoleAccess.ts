@@ -19,9 +19,9 @@ export function useRoleAccess(featureKey: keyof typeof features | null, user: an
   
     const allowedRoles = roleFeatureMap[featureKey] || [];
     let allowed = user?.roles?.some((r: string) => allowedRoles.includes(r));
-    if (featureKey === "latestZones" && user?.subscription?.plan === "freemium") {
-      allowed = false;
-    }
+    // if (featureKey === "latestZones" && user?.subscription?.plan === "freemium") {
+    //   allowed = false;
+    // }
   
     return { allowed };
   }

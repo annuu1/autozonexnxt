@@ -3,18 +3,15 @@
 import { useEffect, useState } from "react";
 import {
   Button,
-  Card,
-  Col,
-  Row,
-  Spin,
   Alert,
   Typography,
   Tag,
   Drawer,
   Descriptions,
   Grid,
+  Spin,
 } from "antd";
-import { CopyOutlined } from "@ant-design/icons";
+import { CopyOutlined, LockOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import useAuthGuard from "@/hooks/useAuthGuard";
 
@@ -39,7 +36,7 @@ const getTimeframeColor = (timeframe: string) => {
 
 export default function LatestZonesPage() {
   const [zones, setZones] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<"1wk" | "1mo" | "3mo">("1wk");
   const [selectedZone, setSelectedZone] = useState<any>(null);
@@ -50,8 +47,15 @@ export default function LatestZonesPage() {
   const { user } = useAuthGuard();
   const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
 
+  const plan = user?.subscription?.plan;
+  const status = user?.subscription?.status;
+
   useEffect(() => {
     const fetchZones = async () => {
+      if (!user) return;
+      if (status !== "active") return; // inactive → no fetch
+      if (plan === "trial") return; // trial → no fetch
+
       setLoading(true);
       setError(null);
       try {
@@ -69,10 +73,8 @@ export default function LatestZonesPage() {
         setLoading(false);
       }
     };
-    if(user?.subscription?.plan !== "freemium" && user?.subscription?.status === "active"){
-      fetchZones();
-    }
-  }, [selectedTimeframe, user]);
+    fetchZones();
+  }, [selectedTimeframe, user, plan, status]);
 
   const handleCardClick = (zone: any) => {
     setSelectedZone(zone);
@@ -103,35 +105,50 @@ export default function LatestZonesPage() {
     <div style={{ padding: screens.xs ? 12 : 20, maxWidth: "1200px", margin: "0 auto" }}>
       {contextHolder}
       <Title level={3}>Latest {selectedTimeframe} Zones</Title>
+
+      {/* Timeframe buttons */}
       <div style={{ marginBottom: "24px" }}>
-        <Button
-          type={selectedTimeframe === "1wk" ? "primary" : "default"}
-          onClick={() => setSelectedTimeframe("1wk")}
-          style={{ marginRight: "8px" }}
-        >
-          1 Week
-        </Button>
-        <Button
-          type={selectedTimeframe === "1mo" ? "primary" : "default"}
-          onClick={() => setSelectedTimeframe("1mo")}
-          style={{ marginRight: "8px" }}
-        >
-          1 Month
-        </Button>
-        <Button
-          type={selectedTimeframe === "3mo" ? "primary" : "default"}
-          onClick={() => setSelectedTimeframe("3mo")}
-        >
-          3 Months
-        </Button>
+        {["1wk", "1mo", "3mo"].map((tf) => (
+          <Button
+            key={tf}
+            type={selectedTimeframe === tf ? "primary" : "default"}
+            onClick={() => setSelectedTimeframe(tf as "1wk" | "1mo" | "3mo")}
+            style={{ marginRight: "8px" }}
+          >
+            {tf === "1wk" ? "1 Week" : tf === "1mo" ? "1 Month" : "3 Months"}
+          </Button>
+        ))}
       </div>
 
+      {/* Subscription checks */}
+      {status !== "active" && (
+        <Alert
+          message="Subscription inactive"
+          description="Please activate your subscription to view latest zones."
+          type="warning"
+          showIcon
+          style={{ marginBottom: "24px" }}
+        />
+      )}
+
+      {plan === "trial" && status === "active" && (
+        <Alert
+          message="Not available on Trial"
+          description="Latest zones are not included in the Trial plan. Please upgrade to access this feature."
+          type="info"
+          showIcon
+          style={{ marginBottom: "24px" }}
+        />
+      )}
+
+      {/* Loading */}
       {loading && (
         <div style={{ textAlign: "center", padding: "50px" }}>
           <Spin size="large" tip="Loading latest zones..." />
         </div>
       )}
 
+      {/* Error */}
       {error && (
         <Alert
           message="Error"
@@ -142,7 +159,8 @@ export default function LatestZonesPage() {
         />
       )}
 
-      {!loading && !error && zones.length === 0 && (
+      {/* Zones */}
+      {!loading && !error && status === "active" && plan !== "trial" && zones.length === 0 && (
         <Alert
           message={`No zones found for the latest ${selectedTimeframe} period.`}
           type="info"
@@ -151,66 +169,79 @@ export default function LatestZonesPage() {
         />
       )}
 
-      {!loading && !error && zones.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: screens.xs ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: "16px",
-          }}
-        >
-          {zones.map((zone) => {
-            const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
-            const formattedDate = match
-              ? new Date(match[0]).toLocaleDateString("en-IN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  timeZone: "Asia/Kolkata",
-                })
-              : null;
+      {!loading && !error && status === "active" && plan !== "trial" && zones.length > 0 && (
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: screens.xs ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
+              gap: "16px",
+            }}
+          >
+            {(plan === "freemium" ? zones.slice(0, 9) : zones).map((zone) => {
+              const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
+              const formattedDate = match
+                ? new Date(match[0]).toLocaleDateString("en-IN", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    timeZone: "Asia/Kolkata",
+                  })
+                : null;
 
-            return (
-              <div
-                key={zone._id}
-                className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
-                style={{ transition: "transform 0.15s ease-in-out, box-shadow 0.15s" }}
-                onClick={() => handleCardClick(zone)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <strong>{zone.ticker}</strong>
-                    <div>
-                      {(zone.timeframes || []).map((f: string) => (
-                        <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>
-                          {f}
-                        </Tag>
-                      ))}
+              return (
+                <div
+                  key={zone._id}
+                  className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
+                  style={{ transition: "transform 0.15s ease-in-out, box-shadow 0.15s" }}
+                  onClick={() => handleCardClick(zone)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <strong>{zone.ticker}</strong>
+                      <div>
+                        {(zone.timeframes || []).map((f: string) => (
+                          <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>
+                            {f}
+                          </Tag>
+                        ))}
+                      </div>
+                      <CopyOutlined
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copy(zone.ticker);
+                        }}
+                        style={{ cursor: "pointer", color: "#555" }}
+                      />
                     </div>
-                    <CopyOutlined
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copy(zone.ticker);
-                      }}
-                      style={{ cursor: "pointer", color: "#555" }}
-                    />
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    {formattedDate && <div>Date: {formattedDate}</div>}
+                    <div>Pattern: {zone.pattern}</div>
+                    <div>Proximal: {Number(zone.proximal_line).toFixed(2)}</div>
+                    <div>Distal: {Number(zone.distal_line).toFixed(2)}</div>
+                    <div>Trade Score: {zone.trade_score}</div>
+                    <div>Freshness: {zone.freshness}</div>
+                    <div>Coinciding Zones: {zone.coinciding_lower_zones.length}</div>
                   </div>
                 </div>
-                <div className="mt-2 text-sm text-gray-600">
-                  {formattedDate && <div>Date: {formattedDate}</div>}
-                  <div>Pattern: {zone.pattern}</div>
-                  <div>Proximal: {Number(zone.proximal_line).toFixed(2)}</div>
-                  <div>Distal: {Number(zone.distal_line).toFixed(2)}</div>
-                  <div>Trade Score: {zone.trade_score}</div>
-                  <div>Freshness: {zone.freshness}</div>
-                  <div>Coinciding Zones: {zone.coinciding_lower_zones.length}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* Locked message for Freemium */}
+          {plan === "freemium" && zones.length > 9 && (
+            <div style={{ textAlign: "center", marginTop: 24 }}>
+              <LockOutlined style={{ fontSize: 20, marginRight: 8, color: "#999" }} />
+              <span>
+                Upgrade to <b>Starter</b> plan to unlock all latest zones.
+              </span>
+            </div>
+          )}
+        </>
       )}
 
+      {/* Drawer */}
       <Drawer
         title={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

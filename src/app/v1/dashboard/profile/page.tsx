@@ -129,14 +129,14 @@ export default function ProfilePage() {
           >
             Change Password
           </Button>,
-          <Button
-            type="link"
-            icon={<ReloadOutlined />}
-            key="refresh"
-            onClick={() => window.location.reload()}
-          >
-            Refresh
-          </Button>,
+          // <Button
+          //   type="link"
+          //   icon={<ReloadOutlined />}
+          //   key="refresh"
+          //   onClick={() => window.location.reload()}
+          // >
+          //   Refresh
+          // </Button>,
         ]}
       >
         <Tabs
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                     )}
                   </Descriptions.Item>
 
-                  <Descriptions.Item label="Invited By">{user?.invitedBy?.name | '-'}</Descriptions.Item>
+                  {<Descriptions.Item label="Invited By">{user?.invitedBy?.name || "-"}</Descriptions.Item>}
                 </Descriptions>
               ),
             },
