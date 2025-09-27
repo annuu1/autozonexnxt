@@ -1,7 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Table, Tag, Space, Button, Popconfirm, message, Modal, Form, Input, Select, Switch, DatePicker } from "antd";
+import {
+  Table,
+  Tag,
+  Space,
+  Button,
+  Popconfirm,
+  message,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Switch,
+  DatePicker,
+  Card,
+  List,
+  Grid,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import moment from "moment-timezone";
 import { useRoleAccess } from "@/hooks/hasRoleAccess";
@@ -29,6 +45,7 @@ interface User {
 }
 
 const { Option } = Select;
+const { useBreakpoint } = Grid;
 
 const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -37,29 +54,17 @@ const UsersPage: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
 
-  // New search/filter states
   const [search, setSearch] = useState("");
   const [invitedBy, setInvitedBy] = useState<string | undefined>(undefined);
 
-  // Current logged in user (for actions visibility)
   const { user: currentUser } = useAuthStore();
-
   const { allowed: canManageUsers } = useRoleAccess("userActions", currentUser);
+
+  const screens = useBreakpoint();
 
   useEffect(() => {
     fetchUsers();
   }, [search, invitedBy]);
-
-  // const fetchCurrentUser = async () => {
-  //   try {
-  //     const res = await fetch("/api/v1/auth/me");
-  //     if (!res.ok) return;
-  //     const data = await res.json();
-  //     useAuthStore.setState({ user: data.user });
-  //   } catch {
-  //     // ignore
-  //   }
-  // };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -126,7 +131,7 @@ const UsersPage: React.FC = () => {
       message.success("User updated");
       setIsModalOpen(false);
       fetchUsers();
-    } catch (err) {
+    } catch {
       message.error("Update failed");
     }
   };
@@ -176,33 +181,8 @@ const UsersPage: React.FC = () => {
       render: (date) => (date ? new Date(date).toLocaleString() : "Never"),
     },
   ];
-  
-  // ✅ Only append "Actions" if role is allowed
-  if (canManageUsers) {
-    columns.push({
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space>
-          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
-          <Popconfirm
-            title="Are you sure delete this user?"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="link" danger>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    });
-  }
-  
 
-  // Only show Actions column for admins
-  if (!canManageUsers) {
+  if (canManageUsers) {
     columns.push({
       title: "Actions",
       key: "actions",
@@ -250,15 +230,62 @@ const UsersPage: React.FC = () => {
         </Select>
       </Space>
 
-      <Table
-        columns={columns}
-        dataSource={users}
-        rowKey="_id"
-        loading={loading}
-        pagination={{ pageSize: 10 }}
-      />
+      {/* Desktop → Table | Mobile → Card List */}
+      {screens.md ? (
+        <Table
+          columns={columns}
+          dataSource={users}
+          rowKey="_id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+        />
+      ) : (
+        <List
+          loading={loading}
+          dataSource={users}
+          renderItem={(user) => (
+            <Card
+              key={user._id}
+              style={{ marginBottom: 16 }}
+              title={user.name}
+              extra={
+                canManageUsers && (
+                  <Space>
+                    <Button size="small" onClick={() => handleEdit(user)}>Edit</Button>
+                    <Popconfirm
+                      title="Are you sure delete this user?"
+                      onConfirm={() => handleDelete(user._id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button size="small" danger>
+                        Delete
+                      </Button>
+                    </Popconfirm>
+                  </Space>
+                )
+              }
+            >
+              <p><b>Email:</b> {user.email}</p>
+              <p><b>Mobile:</b> {user.mobile}</p>
+              <p><b>Roles:</b> {user.roles.map((r) => <Tag key={r}>{r}</Tag>)}</p>
+              <p>
+                <b>Subscription:</b>{" "}
+                <Tag color={user.subscription?.status === "active" ? "green" : "volcano"}>
+                  {user.subscription?.plan || "none"}
+                </Tag>
+              </p>
+              <p><b>Verified:</b> {user.isVerified ? "✅ Yes" : "❌ No"}</p>
+              <p><b>Last Login:</b> {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "Never"}</p>
+              {user.invitedBy && (
+                <p><b>Invited By:</b> {user.invitedBy.name} ({user.invitedBy.email})</p>
+              )}
+            </Card>
+          )}
+        />
+      )}
 
-      {/* Edit Modal (unchanged) */}
+      {/* Edit Modal */}
       <Modal
         title="Edit User"
         open={isModalOpen}
@@ -297,24 +324,17 @@ const UsersPage: React.FC = () => {
               <Option value="inactive">Inactive</Option>
             </Select>
           </Form.Item>
-            {/* ⚡ New Subscription Start Date */}
-            <Form.Item
-            name="startDate"
-            label="Subscription Start Date"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="startDate" label="Subscription Start Date" rules={[{ required: true }]}>
             <DatePicker style={{ width: "100%" }} />
           </Form.Item>
-
-            {/* ⚡ New Billing Cycle */}
-            <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
-              <Select>
-                <Option value="weekly">Weekly</Option>
-                <Option value="monthly">Monthly</Option>
-                <Option value="quarterly">Quarterly</Option>
-                <Option value="yearly">Yearly</Option>
-              </Select>
-            </Form.Item>
+          <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
+            <Select>
+              <Option value="weekly">Weekly</Option>
+              <Option value="monthly">Monthly</Option>
+              <Option value="quarterly">Quarterly</Option>
+              <Option value="yearly">Yearly</Option>
+            </Select>
+          </Form.Item>
         </Form>
       </Modal>
     </>
