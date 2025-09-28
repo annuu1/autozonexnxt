@@ -106,7 +106,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   } else if (sub?.startDate && sub?.billingCycle) {
     const start = new Date(sub.startDate);
     const d = new Date(start);
-    if (sub.billingCycle === "weekly") d.setDate(d.getDate() + 7);
+    if (sub.billingCycle === "daily") d.setDate(d.getDate() + 2);
+    else if (sub.billingCycle === "weekly") d.setDate(d.getDate() + 7);
     else if (sub.billingCycle === "monthly") d.setMonth(d.getMonth() + 1);
     else if (sub.billingCycle === "quarterly") d.setMonth(d.getMonth() + 3);
     else if (sub.billingCycle === "yearly") d.setFullYear(d.getFullYear() + 1);

@@ -309,6 +309,7 @@ const UsersPage: React.FC = () => {
             {/* ⚡ New Billing Cycle */}
             <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
               <Select>
+                <Option value="daily">Daily</Option>
                 <Option value="weekly">Weekly</Option>
                 <Option value="monthly">Monthly</Option>
                 <Option value="quarterly">Quarterly</Option>
