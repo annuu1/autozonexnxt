@@ -52,7 +52,7 @@ export async function getUserFromRequest(req: Request) {
   const decoded = verifyJwt<{ id: string; sid?: string }>(token);
   if (!decoded?.id) return null;
   await dbConnect();
-  const user = await User.findById(decoded.id).populate("invitedBy", "name email").lean<any>();
+  const user = await User.findById(decoded.id).populate("invitedBy", "name email other_channels").lean<any>();
   if (!user) return null;
   // Enforce single-device session: JWT sid must match user's current sessionId
   if ((user as any).sessionId && decoded.sid && (user as any).sessionId === decoded.sid) {

@@ -16,6 +16,7 @@ export interface User {
   email: string
   roles: string[]
   subscription?: Subscription
+  other_channels?: any
 }
 
 interface AuthState {

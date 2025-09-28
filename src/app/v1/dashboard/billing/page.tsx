@@ -55,7 +55,7 @@ const handleSubscribeClick = () => {
   const url =
     user?.invitedBy === null
       ? "https://t.me/AnuragX_SYS"
-      : "https://t.me/jc_autozonex_bot";
+      : `https://t.me/${user?.invitedBy?.other_channels.find((channel : any) => channel.channel === "telegramSupport")?.id}`;
 
   window.open(url, "_blank", "noopener,noreferrer");
 };
