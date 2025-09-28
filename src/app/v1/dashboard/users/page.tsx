@@ -327,14 +327,16 @@ const UsersPage: React.FC = () => {
           <Form.Item name="startDate" label="Subscription Start Date" rules={[{ required: true }]}>
             <DatePicker style={{ width: "100%" }} />
           </Form.Item>
-          <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
-            <Select>
-              <Option value="weekly">Weekly</Option>
-              <Option value="monthly">Monthly</Option>
-              <Option value="quarterly">Quarterly</Option>
-              <Option value="yearly">Yearly</Option>
-            </Select>
-          </Form.Item>
+            <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
+              <Select>
+                <Option value="daily">Daily</Option>
+                <Option value="weekly">Weekly</Option>
+                <Option value="monthly">Monthly</Option>
+                <Option value="quarterly">Quarterly</Option>
+                <Option value="yearly">Yearly</Option>
+              </Select>
+            </Form.Item>
+
         </Form>
       </Modal>
     </>

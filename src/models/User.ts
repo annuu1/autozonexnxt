@@ -61,8 +61,8 @@ const UserSchema = new Schema(
       endDate: { type: Date },
       billingCycle: {
         type: String,
-        enum: ["weekly", "monthly", "quarterly", "yearly"],
-        default: "weekly",
+        enum: ["daily", "weekly", "monthly", "quarterly", "yearly"],
+        default: "daily",
       },
     },
 
