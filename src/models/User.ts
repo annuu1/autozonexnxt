@@ -86,12 +86,11 @@ const UserSchema = new Schema(
 );
 
 // Add indexes for frequently queried fields
-UserSchema.index({ email: 1 });
-UserSchema.index({ mobile: 1 });
 UserSchema.index({ invitedBy: 1 });
 UserSchema.index({ roles: 1 });
 UserSchema.index({ isVerified: 1 });
 UserSchema.index({ 'subscription.plan': 1, 'subscription.status': 1 });
+UserSchema.index({ 'other_channels.channel': 1, 'other_channels.id': 1 });
 
 const User = models.User || model("User", UserSchema);
 
