@@ -38,6 +38,12 @@ const NoteSchema = new Schema(
   { timestamps: true }
 );
 
+// Add indexes for frequently queried fields
+NoteSchema.index({ userId: 1 });
+NoteSchema.index({ demandZoneId: 1 });
+NoteSchema.index({ tags: 1 });
+NoteSchema.index({ isPinned: 1 });
+
 const Note = models.Note || model("Note", NoteSchema);
 
 export default Note;

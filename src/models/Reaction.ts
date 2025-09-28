@@ -13,5 +13,9 @@ const ReactionSchema = new Schema(
 
 ReactionSchema.index({ itemId: 1, userId: 1, type: 1 }, { unique: true });
 
+// Additional indexes for querying
+ReactionSchema.index({ itemId: 1, type: 1 }); // For fetching all reactions for an item
+ReactionSchema.index({ userId: 1 }); // For fetching all reactions by a user
+
 const Reaction = models.Reaction || mongoose.model("Reaction", ReactionSchema);
 export default Reaction;

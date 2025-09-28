@@ -20,6 +20,12 @@ const demandZoneSchema = new Schema(
   { timestamps: true } // adds createdAt, updatedAt
 );
 
+// Indexes for faster queries
+demandZoneSchema.index({ ticker: 1, timestamp: -1 }); // Compound index for common queries
+demandZoneSchema.index({ timeframes: 1 });
+demandZoneSchema.index({ parent_zone_id: 1 });
+demandZoneSchema.index({ timestamp: 1 });
+
 const DemandZone =
   models.DemandZone || model("DemandZone", demandZoneSchema, "demand_zones");
 

@@ -85,6 +85,14 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
+// Add indexes for frequently queried fields
+UserSchema.index({ email: 1 });
+UserSchema.index({ mobile: 1 });
+UserSchema.index({ invitedBy: 1 });
+UserSchema.index({ roles: 1 });
+UserSchema.index({ isVerified: 1 });
+UserSchema.index({ 'subscription.plan': 1, 'subscription.status': 1 });
+
 const User = models.User || model("User", UserSchema);
 
 export default User;

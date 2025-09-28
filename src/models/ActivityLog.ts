@@ -25,5 +25,10 @@ const ActivityLogSchema = new Schema<IActivityLog>(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+// Add indexes for frequently queried fields
+ActivityLogSchema.index({ userId: 1 });
+ActivityLogSchema.index({ action: 1 });
+ActivityLogSchema.index({ endpoint: 1 });
+
 export default mongoose.models.ActivityLog ||
   mongoose.model<IActivityLog>("ActivityLog", ActivityLogSchema);

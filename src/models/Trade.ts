@@ -14,6 +14,12 @@ const tradeSchema = new Schema(
   { timestamps: true }
 );
 
+// Add indexes for frequently queried fields
+tradeSchema.index({ symbol: 1 });
+tradeSchema.index({ trade_type: 1 });
+tradeSchema.index({ status: 1 });
+tradeSchema.index({ symbol: 1, status: 1 });
+
 const Trade = models.Trades || model("Trades", tradeSchema, "trades");
 
 export default Trade;

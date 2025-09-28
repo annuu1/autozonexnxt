@@ -14,6 +14,9 @@ const InviteCodeSchema = new Schema({
   },
 }, { timestamps: true });
 
+// Add index for owner field
+InviteCodeSchema.index({ owner: 1 });
+
 const InviteCode = models.InviteCode || model("InviteCode", InviteCodeSchema);
 
 export default InviteCode;

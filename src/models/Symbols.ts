@@ -16,6 +16,12 @@ const symbolSchema = new Schema(
   { timestamps: true }
 );
 
+// Add indexes for frequently queried fields
+symbolSchema.index({ symbol: 1 }, { unique: true });
+symbolSchema.index({ sectors: 1 });
+symbolSchema.index({ watchlists: 1 });
+symbolSchema.index({ company_name: 1 });
+
 const Symbol = models.Symbol || model("Symbol", symbolSchema);
 
 export default Symbol;

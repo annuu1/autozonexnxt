@@ -18,5 +18,9 @@ const OtpSchema = new Schema<IOtp>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Indexes
+OtpSchema.index({ email: 1, purpose: 1, verified: 1 }); // For finding specific OTPs
+OtpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for auto-deletion
+
 // Prevent model overwrite during hot-reload
 export default mongoose.models.Otp || mongoose.model<IOtp>("Otp", OtpSchema);
