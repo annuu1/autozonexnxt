@@ -62,20 +62,30 @@ const UsersPage: React.FC = () => {
 
   const screens = useBreakpoint();
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
   useEffect(() => {
     fetchUsers();
-  }, [search, invitedBy]);
+  }, [search, invitedBy, page, pageSize]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", pageSize.toString());
       if (search) params.append("search", search);
       if (invitedBy) params.append("invitedBy", invitedBy);
 
-      const res = await fetch(`/api/v1/users?${params.toString()}`, { cache: "no-store" });
+      const res = await fetch(`/api/v1/users?${params.toString()}`, {
+        cache: "no-store",
+      });
       const data = await res.json();
-      setUsers(Array.isArray(data) ? data : data.users || []);
+
+      setUsers(data.users || []);
+      setTotal(data.pagination?.total || 0);
     } catch {
       message.error("Failed to load users");
     } finally {
@@ -103,7 +113,9 @@ const UsersPage: React.FC = () => {
       isVerified: user.isVerified,
       plan: user.subscription?.plan,
       status: user.subscription?.status,
-      startDate: user.subscription?.startDate ? moment(user.subscription.startDate) : null,
+      startDate: user.subscription?.startDate
+        ? moment(user.subscription.startDate)
+        : null,
       billingCycle: user.subscription?.billingCycle || "",
     });
     setIsModalOpen(true);
@@ -137,14 +149,20 @@ const UsersPage: React.FC = () => {
   };
 
   const columns: ColumnsType<User> = [
-    { title: "Name", dataIndex: "name", key: "name", render: (text) => <b>{text}</b> },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      render: (text) => <b>{text}</b>,
+    },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Mobile", dataIndex: "mobile", key: "mobile" },
     {
       title: "Invited By",
       dataIndex: "invitedBy",
       key: "invitedBy",
-      render: (invitedBy) => invitedBy ? `${invitedBy.name} (${invitedBy.email})` : "—",
+      render: (invitedBy) =>
+        invitedBy ? `${invitedBy.name} (${invitedBy.email})` : "—",
     },
     {
       title: "Roles",
@@ -161,7 +179,9 @@ const UsersPage: React.FC = () => {
       title: "Subscription",
       key: "subscription",
       render: (_, record) => (
-        <Tag color={record.subscription?.status === "active" ? "green" : "volcano"}>
+        <Tag
+          color={record.subscription?.status === "active" ? "green" : "volcano"}
+        >
           {record.subscription?.plan || "none"}
         </Tag>
       ),
@@ -171,7 +191,9 @@ const UsersPage: React.FC = () => {
       dataIndex: "isVerified",
       key: "isVerified",
       render: (verified) => (
-        <Tag color={verified ? "green" : "orange"}>{verified ? "Yes" : "No"}</Tag>
+        <Tag color={verified ? "green" : "orange"}>
+          {verified ? "Yes" : "No"}
+        </Tag>
       ),
     },
     {
@@ -188,7 +210,9 @@ const UsersPage: React.FC = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+          <Button type="link" onClick={() => handleEdit(record)}>
+            Edit
+          </Button>
           <Popconfirm
             title="Are you sure delete this user?"
             onConfirm={() => handleDelete(record._id)}
@@ -229,6 +253,10 @@ const UsersPage: React.FC = () => {
             ))}
         </Select>
       </Space>
+      <div className="p-4 bg-white shadow rounded-xl flex items-center justify-between">
+        <span className="text-gray-600 font-medium">Total Users</span>
+        <span className="text-2xl font-bold">{total}</span>
+      </div>
 
       {/* Desktop → Table | Mobile → Card List */}
       {screens.md ? (
@@ -237,52 +265,88 @@ const UsersPage: React.FC = () => {
           dataSource={users}
           rowKey="_id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            showSizeChanger: true,
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
+          }}
         />
       ) : (
-        <List
-          loading={loading}
-          dataSource={users}
-          renderItem={(user) => (
-            <Card
-              key={user._id}
-              style={{ marginBottom: 16 }}
-              title={user.name}
-              extra={
-                canManageUsers && (
-                  <Space>
-                    <Button size="small" onClick={() => handleEdit(user)}>Edit</Button>
-                    <Popconfirm
-                      title="Are you sure delete this user?"
-                      onConfirm={() => handleDelete(user._id)}
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <Button size="small" danger>
-                        Delete
-                      </Button>
-                    </Popconfirm>
-                  </Space>
-                )
-              }
-            >
-              <p><b>Email:</b> {user.email}</p>
-              <p><b>Mobile:</b> {user.mobile}</p>
-              <p><b>Roles:</b> {user.roles.map((r) => <Tag key={r}>{r}</Tag>)}</p>
-              <p>
-                <b>Subscription:</b>{" "}
-                <Tag color={user.subscription?.status === "active" ? "green" : "volcano"}>
-                  {user.subscription?.plan || "none"}
-                </Tag>
-              </p>
-              <p><b>Verified:</b> {user.isVerified ? "✅ Yes" : "❌ No"}</p>
-              <p><b>Last Login:</b> {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "Never"}</p>
-              {user.invitedBy && (
-                <p><b>Invited By:</b> {user.invitedBy.name} ({user.invitedBy.email})</p>
-              )}
-            </Card>
-          )}
-        />
+          <List
+    loading={loading}
+    dataSource={users}
+    pagination={{
+      current: page,
+      pageSize,
+      total,
+      showSizeChanger: false, // mobile usually uses fixed size
+      onChange: (p) => setPage(p),
+    }}
+    renderItem={(user) => (
+      <Card
+        key={user._id}
+        style={{ marginBottom: 16 }}
+        title={user.name}
+        extra={
+          canManageUsers && (
+            <Space>
+              <Button size="small" onClick={() => handleEdit(user)}>
+                Edit
+              </Button>
+              <Popconfirm
+                title="Are you sure delete this user?"
+                onConfirm={() => handleDelete(user._id)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button size="small" danger>
+                  Delete
+                </Button>
+              </Popconfirm>
+            </Space>
+          )
+        }
+      >
+        <p>
+          <b>Email:</b> {user.email}
+        </p>
+        <p>
+          <b>Mobile:</b> {user.mobile}
+        </p>
+        <p>
+          <b>Roles:</b>{" "}
+          {user.roles.map((r) => (
+            <Tag key={r}>{r}</Tag>
+          ))}
+        </p>
+        <p>
+          <b>Subscription:</b>{" "}
+          <Tag
+            color={user.subscription?.status === "active" ? "green" : "volcano"}
+          >
+            {user.subscription?.plan || "none"}
+          </Tag>
+        </p>
+        <p>
+          <b>Verified:</b> {user.isVerified ? "✅ Yes" : "❌ No"}
+        </p>
+        <p>
+          <b>Last Login:</b>{" "}
+          {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "Never"}
+        </p>
+        {user.invitedBy && (
+          <p>
+            <b>Invited By:</b> {user.invitedBy.name} ({user.invitedBy.email})
+          </p>
+        )}
+      </Card>
+    )}
+  />
       )}
 
       {/* Edit Modal */}
@@ -297,7 +361,11 @@ const UsersPage: React.FC = () => {
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, type: "email" }]}
+          >
             <Input />
           </Form.Item>
           <Form.Item name="roles" label="Roles">
@@ -324,19 +392,26 @@ const UsersPage: React.FC = () => {
               <Option value="inactive">Inactive</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="startDate" label="Subscription Start Date" rules={[{ required: true }]}>
+          <Form.Item
+            name="startDate"
+            label="Subscription Start Date"
+            rules={[{ required: true }]}
+          >
             <DatePicker style={{ width: "100%" }} />
           </Form.Item>
-            <Form.Item name="billingCycle" label="Billing Cycle" rules={[{ required: true }]}>
-              <Select>
-                <Option value="daily">Daily</Option>
-                <Option value="weekly">Weekly</Option>
-                <Option value="monthly">Monthly</Option>
-                <Option value="quarterly">Quarterly</Option>
-                <Option value="yearly">Yearly</Option>
-              </Select>
-            </Form.Item>
-
+          <Form.Item
+            name="billingCycle"
+            label="Billing Cycle"
+            rules={[{ required: true }]}
+          >
+            <Select>
+              <Option value="daily">Daily</Option>
+              <Option value="weekly">Weekly</Option>
+              <Option value="monthly">Monthly</Option>
+              <Option value="quarterly">Quarterly</Option>
+              <Option value="yearly">Yearly</Option>
+            </Select>
+          </Form.Item>
         </Form>
       </Modal>
     </>

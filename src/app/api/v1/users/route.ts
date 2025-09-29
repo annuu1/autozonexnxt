@@ -20,6 +20,11 @@ export async function GET(req: Request) {
     const search = searchParams.get("search");
     const invitedBy = searchParams.get("invitedBy");
 
+    // ✅ Pagination params (default page=1, limit=20)
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const skip = (page - 1) * limit;
+
     const userId = new mongoose.Types.ObjectId(auth.user._id);
     const userRoles = auth.user?.roles || [];
 
@@ -42,11 +47,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const users = await User.find(query)
-    .populate("invitedBy", "name email")
-    .limit(500);
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .populate("invitedBy", "name email")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
+      User.countDocuments(query),
+    ]);
 
-    return NextResponse.json(users);
+    return NextResponse.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
