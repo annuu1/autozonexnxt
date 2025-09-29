@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { features } from "@/config/features";
 import { useRoleAccess } from "@/hooks/hasRoleAccess";
+import { usePathname } from "next/navigation";
 
 const { Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -32,6 +33,7 @@ export default function Sidebar({
   setCollapsed,
 }: SidebarProps) {
   const screens = useBreakpoint();
+  const pathname = usePathname();
 
   // ✅ Filter nav items before rendering
   const filteredNavItems = navItems.filter((item) => {
@@ -45,7 +47,7 @@ export default function Sidebar({
     <Menu
       theme="dark"
       mode="inline"
-      selectedKeys={[]}
+      selectedKeys={[pathname]}
       items={filteredNavItems.map((item) => ({
         key: item.href,
         icon: item.icon,
@@ -89,7 +91,7 @@ export default function Sidebar({
             height={40}
             style={{ marginRight: 8, objectFit: "contain" }}
           />
-          AutoZone
+          AutoZoneX
         </div>
         {menu}
       </Drawer>
