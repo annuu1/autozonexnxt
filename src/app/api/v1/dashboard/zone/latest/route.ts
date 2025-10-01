@@ -28,15 +28,16 @@ export async function GET(req: Request) {
     const timeframe = (searchParams.get("timeframe") as "1wk" | "1mo" | "3mo") || "1wk";
 
     // 🔑 Cache key (based on timeframe)
-    const cacheKey = `latest-zone-${req.url}`;
+    const cacheKey = `latest-zone-${timeframe}`;
 
     // Check Redis cache
     const cached = await redis.get(cacheKey);
     if (cached) {
       return NextResponse.json(cached, {
         headers: {
-          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=60",
-          "Vary": "Accept-Encoding, Query-String",
+          "Cache-Control": "private, no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
         },
       });
     }
@@ -98,8 +99,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json(zones, {
       headers: {
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=60",
-        "Vary": "Accept-Encoding, Query-String",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
       },
     });
   } catch (err: any) {
