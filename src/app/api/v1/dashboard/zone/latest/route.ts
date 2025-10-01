@@ -3,8 +3,14 @@ import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
 import { requireAuth } from "@/lib/auth";
 import moment from "moment-timezone";
+import { Redis } from "@upstash/redis";
 
-// ✅ GET /api/v1/dashboard/zone/latest
+// Initialize Upstash Redis
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_URL,
+  token: process.env.UPSTASH_REDIS_TOKEN,
+});
+
 export async function GET(req: Request) {
   // 1️⃣ Authentication
   const auth = await requireAuth(req, {
@@ -20,6 +26,20 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const timeframe = (searchParams.get("timeframe") as "1wk" | "1mo" | "3mo") || "1wk";
+
+    // 🔑 Cache key (based on timeframe)
+    const cacheKey = `latest-zone-${req.url}`;
+
+    // Check Redis cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=60",
+          "Vary": "Accept-Encoding, Query-String",
+        },
+      });
+    }
 
     // 3️⃣ Current time in IST
     const now = moment().tz("Asia/Kolkata");
@@ -73,7 +93,15 @@ export async function GET(req: Request) {
       .sort({ createdAt: -1 })
       .lean();
 
-    return NextResponse.json(zones);
+    // Save result in Redis with 1-hour TTL
+    await redis.set(cacheKey, zones, { ex: 3600 });
+
+    return NextResponse.json(zones, {
+      headers: {
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=60",
+        "Vary": "Accept-Encoding, Query-String",
+      },
+    });
   } catch (err: any) {
     console.error("Fetch latest zones error:", err);
     return NextResponse.json(
