@@ -30,7 +30,7 @@ import ZonesModal from "@/components/dashboard/ZonesModal";
 import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 import AsidePanel from "@/components/dashboard/AsidePanel";
 import NewUpdates from "@/components/dashboard/NewUpdates";
-// import FreeTrialModal from "@/components/dashboard/FreeTrialModal";
+import FreeTrialModal from "@/components/dashboard/FreeTrialModal";
 
 // Hooks
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
   const { user, loading } = useAuthGuard();
 
-  // const [freeTrialVisible, setFreeTrialVisible] = useState(false);
+  const [freeTrialVisible, setFreeTrialVisible] = useState(false);
 
   const {
     data: stats,
@@ -87,24 +87,22 @@ export default function DashboardPage() {
       refetch();
     }
   };
-
-  // useEffect(() => {
-    // const hasSeenModal = localStorage.getItem("seenFreeTrialModal");
-    // if (!hasSeenModal) {
-    //   setFreeTrialVisible(true);
-    //   localStorage.setItem("seenFreeTrialModal", "true");
-    // }
-  //   const showModal = user?.subscription?.billingCycle === "daily" && user?.subscription?.status === "active";
-  //   console.log("Show free trial modal:", user);
-  //   if (showModal) setFreeTrialVisible(true);
-  // }, []);
+  useEffect(() => {
+    // Wait for user data to be loaded and not in loading state
+    if (!loading && user) {
+      const showModal = user?.subscription?.billingCycle === "daily" && user?.subscription?.status === "inactive";
+      console.log("Show free trial modal:", user);
+      console.log("Show free trial modal:", showModal);
+      if (showModal) setFreeTrialVisible(true);
+    }
+  }, [user, loading]);
   
 
-  // const handleClaimTrial = () => {
-  //   console.log("✅ Free trial claimed!");
-  //   // 👉 Here you could call API to activate trial
-  //   setFreeTrialVisible(false);
-  // };
+  const handleClaimTrial = () => {
+    console.log("✅ Free trial claimed!");
+    // 👉 Here you could call API to activate trial
+    setFreeTrialVisible(false);
+  };
 
   // Zones handlers
   const openZones = async () => {
@@ -157,11 +155,11 @@ export default function DashboardPage() {
   return (
     <Row gutter={16}>
 
-      {/* <FreeTrialModal
+      <FreeTrialModal
         open={freeTrialVisible}
         onClose={() => setFreeTrialVisible(false)}
         onClaim={handleClaimTrial}
-      /> */}
+      />
 
       {/* Main Content */}
       <Col xs={24} md={18}>
