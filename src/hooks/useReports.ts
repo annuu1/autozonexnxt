@@ -1,51 +1,37 @@
 // hooks/useReports.ts
-"use client"
+import { useQuery } from "@tanstack/react-query";
 
-import { useQuery } from "@tanstack/react-query"
-import useAuthStore from "@/store/useAuthStore"
-
-export interface ZoneRow {
-  id: string
-  range: string
-  time: string
-  strength?: string
-  holding?: boolean
-  reaction?: string
-  notes?: string
-  entry?: string
+interface ReportsParams {
+  date?: string;
+  includeHistory?: boolean;
+  page?: number;
+  limit?: number;
 }
 
-export interface ReportsResponse {
-  today: {
-    approaching: ZoneRow[]
-    entered: ZoneRow[]
-    breached: ZoneRow[]
+async function fetchReports(params: ReportsParams = {}) {
+  const queryParams = new URLSearchParams();
+  
+  if (params.date) queryParams.append("date", params.date);
+  if (params.includeHistory) queryParams.append("includeHistory", "true");
+  if (params.page) queryParams.append("page", params.page.toString());
+  if (params.limit) queryParams.append("limit", params.limit.toString());
+
+  const url = `/api/v1/dashboard/report${queryParams.toString() ? `?${queryParams}` : ""}`;
+  
+  const res = await fetch(url);
+  
+  if (!res.ok) {
+    throw new Error("Failed to fetch reports");
   }
-  history: Record<
-    string,
-    {
-      approaching?: ZoneRow[]
-      entered?: ZoneRow[]
-      breached?: ZoneRow[]
-    }
-  >
+  
+  return res.json();
 }
 
-export function useReports() {
-  const user = useAuthStore((state) => state.user)
-
-  return useQuery<ReportsResponse>({
-    queryKey: ["reports"],
-    queryFn: async () => {
-      const res = await fetch("/api/v1/dashboard/report", {
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      })
-      if (!res.ok) {
-        throw new Error("Failed to fetch reports")
-      }
-      return res.json()
-    },
-    enabled: !!user, // don’t fetch if not logged in
-  })
+export function useReports(params: ReportsParams = {}) {
+  return useQuery({
+    queryKey: ["reports", params],
+    queryFn: () => fetchReports(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
 }

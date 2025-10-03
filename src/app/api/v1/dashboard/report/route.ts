@@ -14,7 +14,7 @@ function formatApproaching(doc: any) {
           timeZone: "UTC",
           hour: "2-digit",
           minute: "2-digit",
-          hour12: true, // Recommended for consistency
+          hour12: true,
         })
       : null,
     strength: doc.trade_score >= 7 ? "Strong" : "Medium",
@@ -38,7 +38,6 @@ function formatEntered(doc: any) {
   };
 }
 
-
 function formatBreached(doc: any) {
   return {
     _id: doc._id,
@@ -52,7 +51,7 @@ function formatBreached(doc: any) {
           hour12: true
         })
       : null,
-    reaction: "Failed", // placeholder
+    reaction: "Failed",
   };
 }
 
@@ -69,17 +68,20 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const dateParam = url.searchParams.get("date");
+  const includeHistory = url.searchParams.get("includeHistory") === "true";
+  const historyPage = parseInt(url.searchParams.get("page") || "1");
+  const historyLimit = parseInt(url.searchParams.get("limit") || "7"); // 7 days per load
+  
   const selectedDate = dateParam ? new Date(dateParam) : new Date();
   selectedDate.setHours(0, 0, 0, 0);
 
   const tomorrow = new Date(selectedDate);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // 🔹 Use ISO strings for range filtering
   const startIso = selectedDate.toISOString();
   const endIso = tomorrow.toISOString();
 
-  // 🔹 Today’s zones
+  // 🔹 Today's zones (always fetch)
   const todayZones = await DemandZone.find({
     $or: [
       { zone_alert_time: { $gte: startIso, $lt: endIso } },
@@ -98,51 +100,77 @@ export async function GET(req: Request) {
     breached: todayZones.filter((z) => z.zone_breach_time).map(formatBreached),
   };
 
-  // 🔹 Past zones (before today)
-  const pastZones = await DemandZone.find({
-    $or: [
-      { zone_alert_time: { $lt: startIso } },
-      { zone_entry_time: { $lt: startIso } },
-      { zone_breach_time: { $lt: startIso } },
-    ],
-  }).lean();
+  // 🔹 Historical data (only fetch if requested)
+  let historyData = {};
+  let totalHistoryDays = 0;
 
-  const daywiseData: Record<string, any> = {};
-  for (const doc of pastZones) {
-    const rawTime =
-      doc.zone_breach_time || doc.zone_entry_time || doc.zone_alert_time;
-    if (!rawTime) continue;
+  if (includeHistory) {
+    const pastZones = await DemandZone.find({
+      $or: [
+        { zone_alert_time: { $lt: startIso } },
+        { zone_entry_time: { $lt: startIso } },
+        { zone_breach_time: { $lt: startIso } },
+      ],
+    }).lean();
 
-    const dateKey = new Date(rawTime).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      timeZone: "UTC",
+    // Group by date
+    const daywiseMap: Record<string, any> = {};
+    for (const doc of pastZones) {
+      const rawTime =
+        doc.zone_breach_time || doc.zone_entry_time || doc.zone_alert_time;
+      if (!rawTime) continue;
+
+      const dateKey = new Date(rawTime).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      });
+
+      if (!daywiseMap[dateKey]) {
+        daywiseMap[dateKey] = { approaching: [], entered: [], breached: [] };
+      }
+
+      if (doc.zone_alert_time && !doc.zone_entry_time) {
+        daywiseMap[dateKey].approaching.push(formatApproaching(doc));
+      } else if (doc.zone_entry_time && !doc.zone_breach_time) {
+        daywiseMap[dateKey].entered.push(formatEntered(doc));
+      } else if (doc.zone_breach_time) {
+        daywiseMap[dateKey].breached.push(formatBreached(doc));
+      }
+    }
+
+    // Sort dates (newest first)
+    const sortedDates = Object.keys(daywiseMap).sort(
+      (a, b) => new Date(b).getTime() - new Date(a).getTime()
+    );
+
+    totalHistoryDays = sortedDates.length;
+
+    // Apply pagination
+    const startIdx = (historyPage - 1) * historyLimit;
+    const endIdx = startIdx + historyLimit;
+    const paginatedDates = sortedDates.slice(startIdx, endIdx);
+
+    // Build paginated history
+    const sortedDaywiseData: Record<string, any> = {};
+    paginatedDates.forEach((key) => {
+      sortedDaywiseData[key] = daywiseMap[key];
     });
 
-    if (!daywiseData[dateKey]) {
-      daywiseData[dateKey] = { approaching: [], entered: [], breached: [] };
-    }
-
-    if (doc.zone_alert_time && !doc.zone_entry_time) {
-      daywiseData[dateKey].approaching.push(formatApproaching(doc));
-    } else if (doc.zone_entry_time && !doc.zone_breach_time) {
-      daywiseData[dateKey].entered.push(formatEntered(doc));
-    } else if (doc.zone_breach_time) {
-      daywiseData[dateKey].breached.push(formatBreached(doc));
-    }
+    historyData = sortedDaywiseData;
   }
 
-  // 🔹 Sort history dates (latest → oldest)
-  const sortedDaywiseData: Record<string, any> = {};
-  Object.keys(daywiseData)
-    .sort(
-      (a, b) =>
-        new Date(b).getTime() - new Date(a).getTime() // newest first
-    )
-    .forEach((key) => {
-      sortedDaywiseData[key] = daywiseData[key];
-    });
-
-  return NextResponse.json({ today: todayData, history: sortedDaywiseData });
+  return NextResponse.json({
+    today: todayData,
+    history: historyData,
+    pagination: includeHistory
+      ? {
+          currentPage: historyPage,
+          totalDays: totalHistoryDays,
+          daysPerPage: historyLimit,
+          totalPages: Math.ceil(totalHistoryDays / historyLimit),
+        }
+      : null,
+  });
 }

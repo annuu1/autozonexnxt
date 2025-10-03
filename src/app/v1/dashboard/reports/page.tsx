@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, Typography, Spin, Alert, Divider, Tabs, Tag } from "antd";
+import { Card, Typography, Spin, Alert, Divider, Tabs, Tag, Pagination, Button } from "antd";
 import { useReports } from "@/hooks/useReports";
 import Reactions from "@/components/ui/Reactions";
 
 const { Title } = Typography;
 
-// ✅ Parse zone_id into symbol, timeframe, date
 function parseZoneId(zone_id: string) {
   if (!zone_id) return { symbol: "Unknown", timeframe: "Unknown", date: "Unknown" };
 
-  // Regex to match: SYMBOL-TIMEFRAME-YYYY-MM-DDTHH:mm:ss+TZ
   const match = zone_id.match(/^(.+?)-([^-]+)-(\d{4}-\d{2}-\d{2})/);
 
   if (!match) {
@@ -21,7 +19,6 @@ function parseZoneId(zone_id: string) {
 
   const [, symbol, timeframe, rawDate] = match;
 
-  // ✅ Format date nicely
   const dateObj = new Date(rawDate);
   const formattedDate = dateObj.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -43,38 +40,31 @@ function ZoneCard({
 }) {
   const { symbol, timeframe, date } = parseZoneId(zone.zone_id);
 
-  function parseUtcTimeToLocal(zone:any) {
-    // Extract the date part from zone_id (e.g., "2025-05-12")
+  function parseUtcTimeToLocal(zone: any) {
     const isoDateMatch = zone.zone_id.match(/\d{4}-\d{2}-\d{2}/);
     const datePart = isoDateMatch ? isoDateMatch[0] : null;
-  
-    if (!datePart || !zone.time) return zone.time; // fallback
-  
-    // Combine date and time, assume UTC
-    // Format time to 24-hour for Date parse, helper:
+
+    if (!datePart || !zone.time) return zone.time;
+
     const time24h = (() => {
       const [time, modifier] = zone.time.toLowerCase().split(' ');
       let [hours, minutes] = time.split(':').map(Number);
-  
+
       if (modifier === 'pm' && hours < 12) hours += 12;
       if (modifier === 'am' && hours === 12) hours = 0;
-  
+
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
     })();
-  
-    // Construct full UTC datetime string
-    const utcDateTimeStr = `${datePart}T${time24h}Z`; // Z means UTC
-  
+
+    const utcDateTimeStr = `${datePart}T${time24h}Z`;
     const dateObj = new Date(utcDateTimeStr);
-  
-    // Convert to user's local time string (12hr format)
+
     return dateObj.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
     });
   }
-  
 
   return (
     <div
@@ -89,13 +79,11 @@ function ZoneCard({
       onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <strong style={{ fontSize: 16 }}>{symbol}</strong>
         <span style={{ fontSize: 12, color: "#555" }}>{parseUtcTimeToLocal(zone)}</span>
       </div>
 
-      {/* Timeframe + Date */}
       <div className="mt-2 text-sm text-gray-600">
         <Tag color={timeframe === "1wk" ? "green" : timeframe === "1mo" ? "blue" : "orange"}>
           {timeframe}
@@ -103,16 +91,14 @@ function ZoneCard({
         <Tag>{date}</Tag>
       </div>
 
-      {/* Range */}
       <div className="mt-1 text-sm text-gray-700">
         Range: <strong>{zone.range}</strong>
       </div>
 
-      {/* Conditional Reactions */}
       {showReactions && (
         <div className="mt-3">
           <Reactions
-            itemId={zone._id} // ✅ use real doc id
+            itemId={zone._id}
             type="zone"
             allItemIds={allItemIds}
             teamPickEnabled
@@ -132,52 +118,90 @@ function ZoneSection({
   data: any[];
   showReactions?: boolean;
 }) {
-  if (!data || data.length === 0) return [];
-  const allIds = data.map((z) => z._id); // ✅ use _id for allItemIds
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+        No zones found
+      </div>
+    );
+  }
+  
+  const allIds = data.map((z) => z._id);
 
   return (
-    <>
-      <Divider orientation="left" style={{ fontSize: 14, margin: "12px 0" }}>
-        {title}
-      </Divider>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {data.map((zone) => (
-          <ZoneCard key={zone._id} zone={zone} allItemIds={allIds} showReactions={showReactions} />
-        ))}
-      </div>
-    </>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {data.map((zone) => (
+        <ZoneCard key={zone._id} zone={zone} allItemIds={allIds} showReactions={showReactions} />
+      ))}
+    </div>
   );
 }
 
 function ReportsPage() {
-  const { data, isLoading, error } = useReports();
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
   const [showHistoryReactions, setShowHistoryReactions] = useState(false);
 
-  // Lazy-enable reactions for history after page load
-  useEffect(() => {
-    const timer = setTimeout(() => setShowHistoryReactions(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  // Fetch today's data (always)
+  const { data: todayData, isLoading: todayLoading, error: todayError } = useReports({
+    includeHistory: false,
+  });
 
-  if (isLoading) {
+  // Fetch historical data (only when showHistory is true)
+  const { 
+    data: historyData, 
+    isLoading: historyLoading, 
+    error: historyError 
+  } = useReports({
+    includeHistory: showHistory,
+    page: historyPage,
+    limit: 1, // One day per page
+  });
+
+  // Lazy-enable reactions for history after showing
+  useEffect(() => {
+    if (showHistory) {
+      const timer = setTimeout(() => setShowHistoryReactions(true), 1500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowHistoryReactions(false);
+    }
+  }, [showHistory]);
+
+  // Reset to page 1 when toggling history
+  useEffect(() => {
+    if (!showHistory) {
+      setHistoryPage(1);
+    }
+  }, [showHistory]);
+
+  const isLoading = todayLoading || (showHistory && historyLoading);
+  const error = todayError || historyError;
+
+  if (todayLoading) {
     return (
       <div style={{ padding: 16, textAlign: "center" }}>
-        <Spin size="large" />
+        <Spin size="large" tip="Loading today's zones..." />
       </div>
     );
   }
 
-  if (error || !data) {
+  if (todayError || !todayData) {
     return (
       <div style={{ padding: 16 }}>
         <Alert
           type="error"
           message="Error"
-          description={(error as Error).message}
+          description={(todayError as Error)?.message || "Failed to load reports"}
         />
       </div>
     );
   }
+
+  const historyDates = Object.keys(historyData?.history || {});
+  const currentDate = historyDates[0]; // Since we're fetching one day at a time
+  const currentHistoryData = currentDate ? historyData.history[currentDate] : null;
+  const pagination = historyData?.pagination;
 
   return (
     <div style={{ padding: 16, maxWidth: "100%", overflowX: "hidden" }}>
@@ -193,39 +217,39 @@ function ReportsPage() {
       </Title>
 
       {/* Today Section */}
-      <Card title="Today’s Demand Zones" style={{ marginBottom: 24 }}>
+      <Card title="Today's Demand Zones" style={{ marginBottom: 24 }}>
         <Tabs
           tabPosition="top"
           items={[
             {
               key: "approaching",
-              label: "Approaching",
+              label: `Approaching (${todayData?.today?.approaching?.length || 0})`,
               children: (
                 <ZoneSection
                   title="Approaching Zones"
-                  data={data?.today?.approaching || []}
+                  data={todayData?.today?.approaching || []}
                   showReactions={true}
                 />
               ),
             },
             {
               key: "entered",
-              label: "Entered",
+              label: `Entered (${todayData?.today?.entered?.length || 0})`,
               children: (
                 <ZoneSection
                   title="Entered Zones"
-                  data={data?.today?.entered || []}
+                  data={todayData?.today?.entered || []}
                   showReactions={true}
                 />
               ),
             },
             {
               key: "breached",
-              label: "Breached",
+              label: `Breached (${todayData?.today?.breached?.length || 0})`,
               children: (
                 <ZoneSection
                   title="Breached Zones"
-                  data={data?.today?.breached || []}
+                  data={todayData?.today?.breached || []}
                   showReactions={true}
                 />
               ),
@@ -234,27 +258,101 @@ function ReportsPage() {
         />
       </Card>
 
-      {/* Daywise Section */}
-      <Card title="Daywise History">
-        {Object.entries(data?.history || {}).map(([date, statuses]) => (
-          <div key={date} style={{ marginBottom: 24 }}>
-            <Divider orientation="left">{date}</Divider>
-            <Tabs
-              tabPosition="top"
-              items={Object.entries(statuses).map(([status, rows]) => ({
-                key: status,
-                label: status.charAt(0).toUpperCase() + status.slice(1),
-                children: (
-                  <ZoneSection
-                    title={`${status.charAt(0).toUpperCase() + status.slice(1)} Zones`}
-                    data={rows as any[]}
-                    showReactions={showHistoryReactions}
-                  />
-                ),
-              }))}
-            />
+      {/* Historical Section Toggle */}
+      <Card 
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Historical Data</span>
+            <Button 
+              type={showHistory ? "default" : "primary"}
+              onClick={() => setShowHistory(!showHistory)}
+              loading={showHistory && historyLoading}
+            >
+              {showHistory ? "Hide History" : "Show History"}
+            </Button>
           </div>
-        ))}
+        }
+      >
+        {!showHistory ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+            Click "Show History" to view past demand zones
+          </div>
+        ) : historyLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin size="large" tip="Loading historical data..." />
+          </div>
+        ) : historyError ? (
+          <Alert
+            type="error"
+            message="Error loading history"
+            description={(historyError as Error)?.message || "Failed to load historical data"}
+          />
+        ) : !pagination || pagination.totalDays === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+            No historical data available
+          </div>
+        ) : (
+          <>
+            {/* Current Date History */}
+            <div style={{ marginBottom: 24 }}>
+              <Divider orientation="left">
+                <strong>{currentDate}</strong>
+              </Divider>
+              <Tabs
+                tabPosition="top"
+                items={[
+                  {
+                    key: "approaching",
+                    label: `Approaching (${currentHistoryData?.approaching?.length || 0})`,
+                    children: (
+                      <ZoneSection
+                        title="Approaching Zones"
+                        data={currentHistoryData?.approaching || []}
+                        showReactions={showHistoryReactions}
+                      />
+                    ),
+                  },
+                  {
+                    key: "entered",
+                    label: `Entered (${currentHistoryData?.entered?.length || 0})`,
+                    children: (
+                      <ZoneSection
+                        title="Entered Zones"
+                        data={currentHistoryData?.entered || []}
+                        showReactions={showHistoryReactions}
+                      />
+                    ),
+                  },
+                  {
+                    key: "breached",
+                    label: `Breached (${currentHistoryData?.breached?.length || 0})`,
+                    children: (
+                      <ZoneSection
+                        title="Breached Zones"
+                        data={currentHistoryData?.breached || []}
+                        showReactions={showHistoryReactions}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </div>
+
+            {/* Pagination */}
+            {pagination && pagination.totalDays > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                <Pagination
+                  current={historyPage}
+                  total={pagination.totalDays}
+                  pageSize={1}
+                  onChange={(page) => setHistoryPage(page)}
+                  showSizeChanger={false}
+                  showTotal={(total) => `${total} days of history`}
+                />
+              </div>
+            )}
+          </>
+        )}
       </Card>
     </div>
   );
