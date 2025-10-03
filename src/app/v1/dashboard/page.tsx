@@ -98,10 +98,30 @@ export default function DashboardPage() {
   }, [user, loading]);
   
 
-  const handleClaimTrial = () => {
-    console.log("✅ Free trial claimed!");
-    // 👉 Here you could call API to activate trial
-    setFreeTrialVisible(false);
+  const handleClaimTrial = async () => {
+    try {
+      const response = await fetch(`/api/v1/users/subscription/${user?.id||user?._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activate_trial' })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        message.error(data.error || "Failed to activate trial");
+        return;
+      }
+
+      message.success("🎉 Free trial activated successfully!");
+      setFreeTrialVisible(false);
+      
+      // Refresh user data to reflect the updated subscription
+      window.location.reload();
+    } catch (error) {
+      console.error("Error activating trial:", error);
+      message.error("Failed to activate trial. Please try again.");
+    }
   };
 
   // Zones handlers
