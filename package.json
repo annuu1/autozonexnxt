@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.2",
     "less": "^4.4.1",
     "less-loader": "^12.3.0",
+    "lodash.debounce": "^4.0.8",
     "moment-timezone": "^0.6.0",
     "mongoose": "^8.17.2",
     "next": "15.4.6",
