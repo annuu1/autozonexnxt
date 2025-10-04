@@ -36,10 +36,12 @@ export default function TeamsPickModal({
   const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [page, setPage] = useState(1);
-  const pageSize = 20; // ✅ show 20 cards per page
-  const paginatedZones = zones?.slice((page - 1) * pageSize, page * pageSize);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+  });
 
   // Fetch data when modal opens
   useEffect(() => {
@@ -47,14 +49,19 @@ export default function TeamsPickModal({
       setLoading(true);
       setError(null);
 
-      fetch("/api/v1/teams-picks")
+      fetch(`/api/v1/teams-picks?page=${pagination.page}&pageSize=${pagination.pageSize}`)
         .then(async (res) => {
           if (!res.ok) throw new Error("Failed to fetch team’s picks");
           return res.json();
         })
-        .then((data) => {
-          setZones(data || []);
-          setPage(1);
+        .then((response) => {
+          setZones(response.data || []);
+          setPagination({
+            page: response.pagination.page,
+            pageSize: response.pagination.pageSize,
+            total: response.pagination.total,
+            totalPages: response.pagination.totalPages,
+          });
         })
         .catch((err) => {
           setError(err.message);
@@ -63,7 +70,7 @@ export default function TeamsPickModal({
           setLoading(false);
         });
     }
-  }, [open]);
+  }, [open, pagination.page, pagination.pageSize]);
 
   // Reusable formatter
   function formatDate(dateString?: string): string | null {
@@ -96,7 +103,7 @@ export default function TeamsPickModal({
     <>
       {contextHolder}
       <Modal
-        title="Team’s Pick Zones"
+        title={`Team’s Pick Zones (${pagination.total})`}
         open={open}
         onCancel={onClose}
         footer={null}
@@ -120,7 +127,7 @@ export default function TeamsPickModal({
                 gap: "16px",
               }}
             >
-              {paginatedZones?.map((zone) => {
+              {zones.map((zone) => {
                 const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
                 const formattedDate = match
                   ? new Date(match[0]).toLocaleDateString("en-US", {
@@ -212,10 +219,10 @@ export default function TeamsPickModal({
             {/* Pagination */}
             <div className="flex justify-center mt-4">
               <Pagination
-                current={page}
-                pageSize={pageSize}
-                total={zones.length}
-                onChange={(p) => setPage(p)}
+                current={pagination.page}
+                pageSize={pagination.pageSize}
+                total={pagination.total}
+                onChange={(p, ps) => setPagination({ ...pagination, page: p, pageSize: ps })}
                 size="small"
               />
             </div>

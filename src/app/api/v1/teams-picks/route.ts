@@ -41,7 +41,18 @@ export async function GET(req: Request) {
   }
 
   try {
-    const teamPicks = await TeamPick.find({ type: "zone" }).lean();
+    // Extract pagination parameters from query
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(url.searchParams.get("pageSize") || "20", 10);
+    const skip = (page - 1) * pageSize;
+
+    // Fetch team picks with sorting and pagination
+    const teamPicks = await TeamPick.find({ type: "zone" })
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order (latest first)
+      .skip(skip)
+      .limit(pageSize)
+      .lean();
 
     if (!teamPicks.length) {
       return NextResponse.json([]);
@@ -54,17 +65,39 @@ export async function GET(req: Request) {
 
     const zones = await DemandZone.find({ _id: { $in: itemIds } }).lean();
 
-    const result = zones.map((zone) => {
-      const pick = teamPicks.find(
-        (p) => p.itemId.toString() === zone._id.toString()
-      );
-      return {
-        ...zone,
-        teamPick: pick ? { createdAt: pick.addDate, ...pick } : null,
-      };
-    });
+    const result = zones
+      .map((zone) => {
+        const pick = teamPicks.find(
+          (p) => p.itemId.toString() === zone._id.toString()
+        );
+        return {
+          ...zone,
+          teamPick: pick ? { createdAt: pick.createdAt, ...pick } : null,
+        };
+      })
+      // Sort result by teamPick.createdAt in descending order
+      .sort((a, b) => {
+        const dateA = a.teamPick?.createdAt
+          ? new Date(a.teamPick.createdAt).getTime()
+          : 0;
+        const dateB = b.teamPick?.createdAt
+          ? new Date(b.teamPick.createdAt).getTime()
+          : 0;
+        return dateB - dateA; // Latest date first
+      });
 
-    return NextResponse.json(result);
+    // Get total count for pagination
+    const total = await TeamPick.countDocuments({ type: "zone" });
+
+    return NextResponse.json({
+      data: result,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    });
   } catch (err) {
     console.error("Error fetching team picks:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
