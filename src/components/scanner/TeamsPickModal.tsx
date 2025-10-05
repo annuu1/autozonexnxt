@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Modal, Tag, Pagination, Spin, Alert, Grid, Space } from "antd";
-import { CopyOutlined } from "@ant-design/icons";
+import { CopyOutlined, LockOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
+import useAuthStore from "@/store/useAuthStore";
 
 const { useBreakpoint } = Grid;
 
-// Helper function to get color for timeframe tags
+// Helper: tag colors for timeframes
 const getTimeframeColor = (timeframe: string) => {
   switch (timeframe) {
     case "1wk":
@@ -32,6 +33,7 @@ export default function TeamsPickModal({
 }) {
   const screens = useBreakpoint();
   const { copy, contextHolder } = useCopyToClipboard();
+  const { user } = useAuthStore();
 
   const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,13 +45,17 @@ export default function TeamsPickModal({
     totalPages: 1,
   });
 
-  // Fetch data when modal opens
+  const isFreemium = user?.subscription?.plan === "freemium";
+
+  // Fetch data when modal opens or pagination changes
   useEffect(() => {
     if (open) {
       setLoading(true);
       setError(null);
 
-      fetch(`/api/v1/teams-picks?page=${pagination.page}&pageSize=${pagination.pageSize}`)
+      fetch(
+        `/api/v1/teams-picks?page=${pagination.page}&pageSize=${pagination.pageSize}`
+      )
         .then(async (res) => {
           if (!res.ok) throw new Error("Failed to fetch team’s picks");
           return res.json();
@@ -72,7 +78,7 @@ export default function TeamsPickModal({
     }
   }, [open, pagination.page, pagination.pageSize]);
 
-  // Reusable formatter
+  // Helpers
   function formatDate(dateString?: string): string | null {
     if (!dateString) return null;
     return new Intl.DateTimeFormat("en-GB", {
@@ -82,13 +88,12 @@ export default function TeamsPickModal({
     }).format(new Date(dateString));
   }
 
-  // Reusable key-value display component
   function InfoRow({
     label,
     value,
   }: {
     label: string;
-    value?: string | number | null;
+    value?: string | number | null | React.ReactNode;
   }) {
     if (value === null || value === undefined) return null;
     return (
@@ -117,7 +122,6 @@ export default function TeamsPickModal({
           <Alert type="info" message="No team’s pick zones available" />
         ) : (
           <>
-            {/* Simple Grid Layout */}
             <div
               style={{
                 display: "grid",
@@ -127,7 +131,10 @@ export default function TeamsPickModal({
                 gap: "16px",
               }}
             >
-              {zones.map((zone) => {
+              {zones.map((zone, idx) => {
+                // Lock anything beyond 6th card for freemium users
+                const locked = isFreemium && idx >= 6;
+
                 const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
                 const formattedDate = match
                   ? new Date(match[0]).toLocaleDateString("en-US", {
@@ -140,92 +147,131 @@ export default function TeamsPickModal({
                 return (
                   <div
                     key={zone._id}
-                    className="p-3 border rounded-md bg-white shadow-sm"
-                    style={{
-                      transition:
-                        "transform 0.15s ease-in-out, box-shadow 0.15s",
-                    }}
+                    className="relative p-3 border rounded-md bg-white shadow-sm overflow-hidden"
                   >
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <strong>{zone.ticker}</strong>
-                        <Space size={4}>
-                          {(zone.timeframes || []).map((f: string) => (
-                            <Tag
-                              key={f}
-                              color={getTimeframeColor(f)}
-                              style={{ margin: 0 }}
-                            >
-                              {f}
-                            </Tag>
-                          ))}
-                        </Space>
-                        <CopyOutlined
-                          onClick={() => copy(zone.ticker)}
-                          style={{ cursor: "pointer", color: "#555" }}
+                    {/* Card Content */}
+                    <div
+                      style={{
+                        opacity: locked ? 0.4 : 1,
+                        filter: locked ? "blur(2px)" : "none",
+                        pointerEvents: locked ? "none" : "auto",
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <strong>{zone.ticker}</strong>
+                          <Space size={4}>
+                            {(zone.timeframes || []).map((f: string) => (
+                              <Tag
+                                key={f}
+                                color={getTimeframeColor(f)}
+                                style={{ margin: 0 }}
+                              >
+                                {f}
+                              </Tag>
+                            ))}
+                          </Space>
+                          <CopyOutlined
+                            onClick={() => copy(zone.ticker)}
+                            style={{ cursor: "pointer", color: "#555" }}
+                          />
+                        </div>
+                        <Tag
+                          color={zone.status === "entered" ? "green" : "blue"}
+                        >
+                          {zone.status?.toUpperCase()}
+                        </Tag>
+                      </div>
+
+                      <div className="mt-2 text-sm text-gray-600 space-y-1">
+                        <InfoRow
+                          label="Added At"
+                          value={formatDate(zone.teamPick?.createdAt)}
+                        />
+                        <InfoRow label="Legout" value={formattedDate} />
+                        <InfoRow label="Pattern" value={zone.pattern} />
+                        <InfoRow
+                          label="Proximal"
+                          value={zone.proximal_line?.toFixed(2)}
+                        />
+                        <InfoRow
+                          label="Distal"
+                          value={zone.distal_line?.toFixed(2)}
+                        />
+                        {zone.status === "approaching" &&
+                          zone.percentDiff !== undefined && (
+                            <InfoRow
+                              label="Approach"
+                              value={
+                                <span
+                                  style={{
+                                    fontWeight: "bold",
+                                    color: "#d46b08",
+                                  }}
+                                >
+                                  {(zone.percentDiff * 100).toFixed(2)}%
+                                </span>
+                              }
+                            />
+                          )}
+                      </div>
+
+                      <div className="mt-2">
+                        <Reactions
+                          itemId={zone._id}
+                          type="zone"
+                          allItemIds={zones.map((z: any) => z._id)}
+                          teamPickEnabled
                         />
                       </div>
-                      <Tag color={zone.status === "entered" ? "green" : "blue"}>
-                        {zone.status?.toUpperCase()}
-                      </Tag>
                     </div>
 
-                    {/* Body */}
-                    <div className="mt-2 text-sm text-gray-600 space-y-1">
-                      <InfoRow
-                        label="Added At"
-                        value={formatDate(zone.teamPick?.createdAt)}
-                      />
-                      <InfoRow label="Legout" value={formattedDate} />
-                      <InfoRow label="Pattern" value={zone.pattern} />
-                      <InfoRow
-                        label="Proximal"
-                        value={zone.proximal_line?.toFixed(2)}
-                      />
-                      <InfoRow
-                        label="Distal"
-                        value={zone.distal_line?.toFixed(2)}
-                      />
-                      {zone.status === "approaching" &&
-                        zone.percentDiff !== undefined && (
-                          <InfoRow
-                            label="Approach"
-                            value={
-                              <span
-                                style={{ fontWeight: "bold", color: "#d46b08" }}
-                              >
-                                {(zone.percentDiff * 100).toFixed(2)}%
-                              </span>
-                            }
-                          />
-                        )}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-2">
-                      <Reactions
-                        itemId={zone._id}
-                        type="zone"
-                        allItemIds={zones.map((z: any) => z._id)}
-                        teamPickEnabled
-                      />
-                    </div>
+                    {/* Lock Overlay for blurred cards */}
+                    {locked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
+                        <div className="text-center">
+                          <LockOutlined style={{ fontSize: 28, color: "#555" }} />
+                          <div className="mt-1 text-sm font-medium">
+                            Upgrade to unlock
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            {/* Pagination */}
+            {/* Always show pagination */}
             <div className="flex justify-center mt-4">
               <Pagination
                 current={pagination.page}
                 pageSize={pagination.pageSize}
                 total={pagination.total}
-                onChange={(p, ps) => setPagination({ ...pagination, page: p, pageSize: ps })}
+                onChange={(p, ps) =>
+                  setPagination({ ...pagination, page: p, pageSize: ps })
+                }
                 size="small"
               />
             </div>
+
+            {/* Upgrade notice for freemium */}
+            {isFreemium && zones.length > 6 && (
+              <div className="mt-4">
+                <Alert
+                  type="warning"
+                  message="Upgrade Required"
+                  description={
+                    <div>
+                      You are on a <strong>Freemium Plan</strong>. <br />
+                      Only <strong>6 Team’s Picks</strong> are accessible per page. <br />
+                      Please upgrade to unlock the full list.
+                    </div>
+                  }
+                  showIcon
+                />
+              </div>
+            )}
           </>
         )}
       </Modal>
