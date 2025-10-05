@@ -19,6 +19,7 @@ import {
   Modal,
   Upload,
   Popconfirm,
+  FloatButton,
 } from "antd";
 import { PlusOutlined, MinusCircleOutlined, InboxOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { RcFile } from "antd/es/upload";
@@ -49,6 +50,7 @@ const statusColorMap: Record<Trade["status"], string> = {
 export default function TradesPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
@@ -59,12 +61,16 @@ export default function TradesPage() {
   const fetchTrades = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/v1/dashboard/tradeanalysis");
+      const res = await fetch("/api/v1/dashboard/tradeanalysis", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+      });
       const data = await res.json();
       if (data.success) {
         setTrades(data.data);
       } else {
-        setError("Failed to fetch trades.");
+        setError(data.error || "Failed to fetch trades.");
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
@@ -80,10 +86,22 @@ export default function TradesPage() {
   // Add or Update Trade
   const onFinish = async (values: any) => {
     try {
+      setSubmitting(true);
+      const normalizedImages = Array.isArray(values.images)
+        ? values.images.filter((img: string) => img && typeof img === "string")
+        : values.images && typeof values.images === "string"
+        ? [values.images]
+        : [];
+
       const payload = {
-        ...values,
-        date: values.date ? values.date.toISOString() : new Date(),
+        stock: values.stock,
+        analysis: values.analysis,
+        status: values.status || "Analysis Only",
+        images: normalizedImages,
+        date: values.date ? values.date.toISOString() : new Date().toISOString(),
       };
+
+      console.log("Sending payload:", JSON.stringify(payload, null, 2)); // Debug log
 
       let url = "/api/v1/dashboard/tradeanalysis";
       let method: "POST" | "PUT" = "POST";
@@ -95,7 +113,10 @@ export default function TradesPage() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -107,10 +128,12 @@ export default function TradesPage() {
         setEditingTrade(null);
         fetchTrades();
       } else {
-        message.error("Failed to save trade.");
+        message.error(data.error || "Failed to save trade.");
       }
-    } catch (err) {
-      message.error("Error submitting form.");
+    } catch (err: any) {
+      message.error(err.message || "Error submitting form.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -119,32 +142,19 @@ export default function TradesPage() {
     try {
       const res = await fetch(`/api/v1/dashboard/tradeanalysis/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
       });
       const data = await res.json();
       if (data.success) {
         message.success("Trade deleted!");
         fetchTrades();
       } else {
-        message.error("Failed to delete trade.");
+        message.error(data.error || "Failed to delete trade.");
       }
-    } catch (err) {
-      message.error("Error deleting trade.");
-    }
-  };
-
-  // Paste screenshot from clipboard
-  const handlePaste = (e: ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.indexOf("image") !== -1) {
-        const file = item.getAsFile();
-        if (file) {
-          uploadToImageKit(file);
-        }
-      }
+    } catch (err: any) {
+      message.error(err.message || "Error deleting trade.");
     }
   };
 
@@ -162,19 +172,39 @@ export default function TradesPage() {
         const res = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
           method: "POST",
           headers: {
-            Authorization: "Basic " + btoa(`${process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE_KEY}:`),
+            Authorization: `Basic ${btoa(`${process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE_KEY}:`)}`,
           },
           body: formData,
         });
 
         const data = await res.json();
-        const currentImages = form.getFieldValue("images") || [];
-        form.setFieldsValue({ images: [...currentImages, data.url] });
-        message.success("Image uploaded from clipboard!");
+        if (data.url) {
+          const currentImages = form.getFieldValue("images") || [];
+          form.setFieldsValue({ images: [...currentImages, data.url] });
+          message.success("Image uploaded successfully!");
+        } else {
+          message.error("Image upload failed.");
+        }
       };
     } catch (err) {
-      message.error("Upload failed");
+      message.error("Upload failed.");
       console.error(err);
+    }
+  };
+
+  // Paste screenshot from clipboard
+  const handlePaste = (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          uploadToImageKit(file as RcFile);
+        }
+      }
     }
   };
 
@@ -190,15 +220,18 @@ export default function TradesPage() {
   const openEditModal = (trade: Trade) => {
     setEditingTrade(trade);
     form.setFieldsValue({
-      ...trade,
-      date: dayjs(trade.date),
+      stock: trade.stock,
+      analysis: trade.analysis,
+      status: trade.status,
+      images: trade.images || [],
+      date: trade.date ? dayjs(trade.date) : dayjs(),
     });
     setModalVisible(true);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <Spin size="large" />
       </div>
     );
@@ -206,7 +239,7 @@ export default function TradesPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-gray-50">
         <Alert message="Error" description={error} type="error" showIcon />
       </div>
     );
@@ -214,23 +247,23 @@ export default function TradesPage() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <Title level={2}>Trade Analysis</Title>
-      <Paragraph type="secondary">
-        Manage detailed trade analysis with charts across multiple timeframes. You can add, edit, or delete trades.
+      <Title level={2} className="mb-2">Trade Analysis</Title>
+      <Paragraph type="secondary" className="mb-6">
+        Manage detailed trade analysis with charts across multiple timeframes. Add, edit, or delete trades with ease.
       </Paragraph>
 
-      <Button
-        type="primary"
+      {/* Floating Action Button */}
+      <FloatButton
         icon={<PlusOutlined />}
-        className="mb-6"
+        type="primary"
+        tooltip="Add New Trade"
+        className="shadow-lg"
         onClick={() => {
           setEditingTrade(null);
           form.resetFields();
           setModalVisible(true);
         }}
-      >
-        Add New Trade
-      </Button>
+      />
 
       {/* Modal */}
       <Modal
@@ -239,26 +272,39 @@ export default function TradesPage() {
         onCancel={() => {
           setModalVisible(false);
           setEditingTrade(null);
+          form.resetFields();
         }}
         footer={null}
         destroyOnClose
+        width={600}
+        className="rounded-lg"
       >
-        <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          disabled={submitting}
+          className="space-y-4"
+        >
           <Form.Item
             label="Stock"
             name="stock"
             rules={[{ required: true, message: "Please enter stock name" }]}
           >
-            <Input placeholder="e.g. INFY" />
+            <Input placeholder="e.g. INFY" size="large" />
           </Form.Item>
 
-          <Form.Item label="Status" name="status">
-            <Select defaultValue="Analysis Only">
+          <Form.Item
+            label="Status"
+            name="status"
+            rules={[{ required: true, message: "Please select a status" }]}
+          >
+            <Select size="large" placeholder="Select status">
+              <Select.Option value="Analysis Only">Analysis Only</Select.Option>
               <Select.Option value="Entry Given">Entry Given</Select.Option>
               <Select.Option value="Running">Running</Select.Option>
               <Select.Option value="Target Hit">Target Hit</Select.Option>
               <Select.Option value="Stoploss Hit">Stoploss Hit</Select.Option>
-              <Select.Option value="Analysis Only">Analysis Only</Select.Option>
             </Select>
           </Form.Item>
 
@@ -267,49 +313,98 @@ export default function TradesPage() {
             name="analysis"
             rules={[{ required: true, message: "Please enter analysis" }]}
           >
-            <Input.TextArea rows={4} placeholder="Detailed analysis..." />
+            <Input.TextArea rows={4} placeholder="Detailed analysis..." className="resize-none" />
           </Form.Item>
 
           <Form.List name="images">
             {(fields, { add, remove }) => (
               <>
                 {fields.map(({ key, name, ...restField }) => (
-                  <Space key={key} align="baseline" style={{ display: "flex", marginBottom: 8 }}>
-                    <Form.Item {...restField} name={name}>
-                      <Input placeholder="Image URL or paste/upload below" />
+                  <Space key={key} align="baseline" className="flex mb-4">
+                    <Form.Item {...restField} name={name} className="flex-1">
+                      <Input placeholder="Image URL" size="large" />
                     </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
+                    <Button
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => remove(name)}
+                      danger
+                      size="large"
+                    />
                   </Space>
                 ))}
                 <Form.Item>
-                  <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                    size="large"
+                    className="mb-4"
+                  >
                     Add Image URL
                   </Button>
                 </Form.Item>
 
-                <div ref={pasteRef} style={{ border: "1px dashed #d9d9d9", padding: 12, marginBottom: 12 }}>
+                <div ref={pasteRef} className="border border-dashed border-gray-300 p-4 rounded-lg mb-4">
                   <Dragger
                     accept="image/*"
                     multiple
                     showUploadList={false}
                     customRequest={({ file }) => uploadToImageKit(file as RcFile)}
+                    disabled={submitting}
                   >
                     <p className="ant-upload-drag-icon">
                       <InboxOutlined />
                     </p>
-                    <p>Drag & drop images here, click to upload, or paste from clipboard</p>
+                    <p className="ant-upload-text">Drag & drop images, click to upload, or paste from clipboard</p>
                   </Dragger>
+                </div>
+
+                {/* Image Preview */}
+                <div className="grid grid-cols-2 gap-4">
+                  {(form.getFieldValue("images") || []).map((url: string, index: number) => (
+                    url && (
+                      <div key={index} className="relative">
+                        <Image
+                          src={url}
+                          alt={`Uploaded image ${index + 1}`}
+                          className="rounded-lg"
+                          width="100%"
+                          preview
+                        />
+                        <Button
+                          icon={<DeleteOutlined />}
+                          danger
+                          size="small"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            const currentImages = form.getFieldValue("images") || [];
+                            form.setFieldsValue({
+                              images: currentImages.filter((_: string, i: number) => i !== index),
+                            });
+                          }}
+                        />
+                      </div>
+                    )
+                  ))}
                 </div>
               </>
             )}
           </Form.List>
 
           <Form.Item label="Date" name="date" initialValue={dayjs()}>
-            <DatePicker />
+            <DatePicker size="large" className="w-full" />
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" block>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              size="large"
+              loading={submitting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               {editingTrade ? "Update Trade" : "Submit Trade"}
             </Button>
           </Form.Item>
@@ -317,42 +412,60 @@ export default function TradesPage() {
       </Modal>
 
       {/* Trades List */}
-      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {trades.map((trade) => (
           <Card
             key={trade._id}
             title={
               <Space>
-                <span>{trade.stock}</span>
+                <span className="font-semibold">{trade.stock}</span>
                 <Tag color={statusColorMap[trade.status]}>{trade.status}</Tag>
               </Space>
             }
-            extra={<span>{new Date(trade.date).toLocaleDateString()}</span>}
-            style={{ width: "100%" }}
+            extra={<span className="text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>}
+            className="shadow-md hover:shadow-lg transition-shadow rounded-lg"
             actions={[
-              <EditOutlined key="edit" onClick={() => openEditModal(trade)} />,
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                onClick={() => openEditModal(trade)}
+                key="edit"
+              >
+                Edit
+              </Button>,
               <Popconfirm
                 key="delete"
-                title="Are you sure delete this trade?"
+                title="Are you sure you want to delete this trade?"
                 onConfirm={() => handleDelete(trade._id)}
+                okText="Yes"
+                cancelText="No"
               >
-                <DeleteOutlined />
+                <Button type="text" icon={<DeleteOutlined />} danger>
+                  Delete
+                </Button>
               </Popconfirm>,
             ]}
           >
             <Collapse ghost>
               <Panel header="View Analysis" key="1">
-                <Paragraph>{trade.analysis}</Paragraph>
-                <Space wrap>
+                <Paragraph className="text-gray-700">{trade.analysis}</Paragraph>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {trade.images.map((img, i) => (
-                    <Image key={i} width={300} src={img} alt={`${trade.stock} timeframe ${i + 1}`} />
+                    <Image
+                      key={i}
+                      src={img}
+                      alt={`${trade.stock} timeframe ${i + 1}`}
+                      className="rounded-lg"
+                      width="100%"
+                      preview
+                    />
                   ))}
-                </Space>
+                </div>
               </Panel>
             </Collapse>
           </Card>
         ))}
-      </Space>
+      </div>
     </div>
   );
 }
