@@ -15,6 +15,7 @@
     "@upstash/redis": "^1.35.4",
     "antd": "^5.27.1",
     "bcryptjs": "^3.0.2",
+    "imagekit-javascript": "^4.0.1",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "less": "^4.4.1",
