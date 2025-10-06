@@ -171,6 +171,9 @@ export default function ProfilePage() {
                           {user.subscription.status}
                         </Tag>
                         <br />
+                        <b>Billing:</b>{" "}
+                        {user.subscription.billingCycle}
+                        <br />
                         <b>Start Date:</b>{" "}
                         {new Date(
                           user.subscription.startDate
