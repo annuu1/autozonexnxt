@@ -23,6 +23,9 @@ import moment from "moment-timezone";
 import { useRoleAccess } from "@/hooks/hasRoleAccess";
 import useAuthStore from "@/store/useAuthStore";
 
+import SubscriptionModal from "@/components/users/SubscriptionModal";
+import { PlusOutlined } from "@ant-design/icons";
+
 interface Subscription {
   plan: string;
   status: string;
@@ -65,6 +68,9 @@ const UsersPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -148,6 +154,11 @@ const UsersPage: React.FC = () => {
     }
   };
 
+  const openSubscriptionModal = (user: User) => {
+    setSelectedUser(user);
+    setIsSubModalOpen(true);
+  };
+
   const columns: ColumnsType<User> = [
     {
       title: "Name",
@@ -210,6 +221,13 @@ const UsersPage: React.FC = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
+          <Button
+            type="link"
+            onClick={() => openSubscriptionModal(record)}
+            style={{ color: "#52c41a" }}
+          >
+            <PlusOutlined />
+          </Button>
           <Button type="link" onClick={() => handleEdit(record)}>
             Edit
           </Button>
@@ -295,6 +313,9 @@ const UsersPage: React.FC = () => {
         extra={
           canManageUsers && (
             <Space>
+              <Button size="small" onClick={() => openSubscriptionModal(user)}>
+                  <PlusOutlined />
+              </Button>
               <Button size="small" onClick={() => handleEdit(user)}>
                 Edit
               </Button>
@@ -414,6 +435,16 @@ const UsersPage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+      <SubscriptionModal
+        open={isSubModalOpen}
+        user={selectedUser}
+        onClose={() => setIsSubModalOpen(false)}
+        onSuccess={() => {
+          setIsSubModalOpen(false);
+          fetchUsers();
+        }}
+      />
+
     </>
   );
 };
