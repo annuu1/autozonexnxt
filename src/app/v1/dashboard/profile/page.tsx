@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Card,
   Descriptions,
@@ -21,7 +21,7 @@ import useAuthStore from "@/store/useAuthStore"
 const { Title } = Typography
 
 export default function ProfilePage() {
-  const { user, logout, setUser } = useAuthStore()
+  const { user, logout, setUser,refreshUser } = useAuthStore()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -42,6 +42,10 @@ export default function ProfilePage() {
       </Card>
     )
   }
+
+  useEffect(() => {
+    refreshUser()
+  }, [])
 
   // ✅ Update Profile
   const handleUpdateProfile = async (values: any) => {

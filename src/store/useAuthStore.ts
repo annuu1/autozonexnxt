@@ -24,6 +24,7 @@ interface AuthState {
   setUser: (user: User) => void
   clearUser: () => void
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 // Zustand store with persist (saves to localStorage)
@@ -40,6 +41,18 @@ const useAuthStore = create<AuthState>()(
           console.error("Logout failed", e)
         }
         set({ user: null })
+      },
+      refreshUser: async () => {
+        try {
+          const res = await fetch("/api/v1/auth/me")
+          if (!res.ok) throw new Error("Failed to fetch user")
+          const data = await res.json()
+          set({ user: data })
+        } catch (err) {
+          console.error("Failed to refresh user", err)
+          // optionally clear user if unauthorized
+          set({ user: null })
+        }
       },
     }),
     { name: "auth-storage" }
