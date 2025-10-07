@@ -6,6 +6,7 @@ import "./globals.css";
 import "antd/dist/reset.css";
 import Providers from "./providers"; // 👈 Client wrapper
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister"; // 👈 PWA SW registrar
+import InstallPrompt from "@/components/pwa/InstallPrompt"; // 👈 PWA install banner
 import UserRefresher from "./UserRefresher";
 
 const geistSans = Geist({
@@ -75,6 +76,16 @@ export const metadata: Metadata = {
     images: ["/hero.png"],
     creator: "@autozonex",
   },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Autoznonex",
+  },
 };
 
 export const viewport: Viewport = {
@@ -129,6 +140,8 @@ export default function RootLayout({
           {children}
           {/* Register PWA Service Worker (client-side only) */}
           <ServiceWorkerRegister />
+          {/* PWA Install Prompt (desktop & mobile) */}
+          <InstallPrompt /> 
         </Providers>
       </body>
     </html>
