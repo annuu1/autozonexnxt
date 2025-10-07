@@ -17,6 +17,7 @@ import {
   AuditOutlined,
   ProfileOutlined,
   CloseOutlined,
+  TrophyOutlined
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useState } from "react";
@@ -44,11 +45,12 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/v1/dashboard", icon: <DashboardOutlined /> },
-  { label: "New Zones", href: "/v1/dashboard/latest-zones", icon: <AppstoreOutlined /> },
+  { label: "New Setups", href: "/v1/dashboard/latest-zones", icon: <AppstoreOutlined /> },
   { label: "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined /> },
   { label: "Trades", href: "/v1/dashboard/trades", icon: <BarChartOutlined /> },
   { label: "Reports", href: "/v1/dashboard/reports", icon: <FileTextOutlined /> },
   { label: "Users", href: "/v1/dashboard/users", icon: <UserOutlined /> },
+  { label: "Exclusive", href: "/v1/dashboard/exclusive", icon: <TrophyOutlined /> },
   { label: "Activity Log", href: "/v1/dashboard/activity-logs", icon: <AuditOutlined /> },
   { label: "Zones", href: "/v1/dashboard/demand-zones", icon: <AppstoreOutlined /> },
   { label: "Notifications", href: "/v1/dashboard/notifications", icon: <BellOutlined /> },
@@ -64,6 +66,7 @@ const routeFeatureMap: Record<string, keyof typeof features | null> = {
   "/v1/dashboard/scanner": "scanner",
   "/v1/dashboard/trades": "trades",
   "/v1/dashboard/reports": "zonesReport",
+  "/v1/dashboard/exclusive": "exclusive",
   "/v1/dashboard/demand-zones": "allZoneList",
   "/v1/dashboard/notifications": "notifications",
   "/v1/dashboard/users": "users",

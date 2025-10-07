@@ -14,7 +14,7 @@ import {
   Pagination,
   Input,
 } from "antd";
-import { StarFilled, CopyOutlined } from "@ant-design/icons";
+import { StarFilled, CopyOutlined, LockOutlined } from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
@@ -24,7 +24,6 @@ import useAuthStore from "@/store/useAuthStore";
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
-// Helper function to get color for timeframe tags
 const getTimeframeColor = (timeframe: string) => {
   switch (timeframe) {
     case "1wk":
@@ -61,14 +60,18 @@ export default function ScannerPage() {
   const screens = useBreakpoint();
   const { copy, contextHolder } = useCopyToClipboard();
 
-  const paginatedZones = filteredZones.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedZones = filteredZones.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
   const [teamsPickOpen, setTeamsPickOpen] = useState(false);
   const { user } = useAuthStore();
-  const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
+  const canDelete =
+    user?.roles?.includes("admin") || user?.roles?.includes("manager");
 
-  const [searchTerm, setSearchTerm] = useState(search);
-
-  const handleCardClick = (zone: any) => {
+  const handleCardClick = (zone: any, locked = false) => {
+    if (locked) return; // don’t open locked cards
     setSelectedZone(zone);
     setDrawerOpen(true);
   };
@@ -79,27 +82,18 @@ export default function ScannerPage() {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Failed to delete zone");
       }
-
       setDrawerOpen(false);
     } catch (err) {
       console.error("Failed to delete zone", err);
     }
   };
 
-  const getStatusColor = (zone: any) => {
-    if (zone.status === "approaching") {
-      return zone.zone_entry_sent ? "gold" : "blue";
-    }
-    if (zone.status === "entered") {
-      return zone.zone_entry_sent ? "red" : "green";
-    }
-    return "default";
-  };
+  const isFreemium = user?.subscription?.plan === "freemium";
+  const isLockedPage = isFreemium && page > 2;
 
   return (
     <div style={{ padding: screens.xs ? 12 : 20 }}>
@@ -126,8 +120,6 @@ export default function ScannerPage() {
           />
           <Input.Search
             placeholder="Search by ticker"
-            // value={searchTerm}
-            // onChange={(e) => setSearchTerm(e.target.value)}
             defaultValue={search}
             onSearch={(value) => setSearch(value)}
             style={{ width: screens.xs ? "100%" : 200 }}
@@ -169,7 +161,36 @@ export default function ScannerPage() {
           </Button>
         </Space>
 
-        <TeamsPickModal open={teamsPickOpen} onClose={() => setTeamsPickOpen(false)} />
+        <TeamsPickModal
+          open={teamsPickOpen}
+          onClose={() => setTeamsPickOpen(false)}
+        />
+
+        {/* Banner for locked pages */}
+        {isLockedPage && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginTop: 12 }}
+            message="Upgrade Required"
+            description={
+              <span>
+                You are on a <strong>Freemium Plan</strong>. Only{" "}
+                <strong>2 pages</strong> are accessible. Upgrade to unlock full
+                Zone Scanner access.
+              </span>
+            }
+            action={
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => (window.location.href = "/v1/dashboard/billing")}
+              >
+                Upgrade Now
+              </Button>
+            }
+          />
+        )}
 
         {/* Data */}
         {isLoading ? (
@@ -180,7 +201,7 @@ export default function ScannerPage() {
           <Alert type="info" message="No zones available" />
         ) : (
           <>
-            {/* ✅ Grid of Cards for both Desktop + Mobile */}
+            {/* Grid of Cards */}
             <div
               style={{
                 display: "grid",
@@ -191,6 +212,8 @@ export default function ScannerPage() {
               }}
             >
               {paginatedZones.map((zone) => {
+                const locked = isLockedPage;
+
                 const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
                 const formattedDate = match
                   ? new Date(match[0]).toLocaleDateString("en-US", {
@@ -203,23 +226,73 @@ export default function ScannerPage() {
                 return (
                   <div
                     key={zone._id}
-                    className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
+                    className="p-3 border rounded-md bg-white shadow-sm cursor-pointer relative"
                     style={{
-                      transition: "transform 0.15s ease-in-out, box-shadow 0.15s",
+                      transition:
+                        "transform 0.15s ease-in-out, box-shadow 0.15s",
+                      ...(locked && {
+                        filter: "blur(3px)",
+                        userSelect: "none", // ✅ disable selection
+                        pointerEvents: "none", // ✅ disable interaction
+                      }),
                     }}
                   >
-                   <div className="flex items-center justify-between">
+                    {/* Overlay lock */}
+                    {locked && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          background: "rgba(255,255,255,0.7)",
+                          borderRadius: 8,
+                          zIndex: 10,
+                          userSelect: "none",
+                          pointerEvents: "auto", // allow upgrade button click
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <LockOutlined
+                            style={{ fontSize: 28, color: "#faad14" }}
+                          />
+                          <Button
+                            type="primary"
+                            size="small"
+                            onClick={() =>
+                              (window.location.href = "/v1/dashboard/billing")
+                            }
+                          >
+                            Upgrade
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Card content */}
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <strong onClick={() => handleCardClick(zone)}>{zone.ticker}</strong>
 
                         <Space size={4}>
                           {(zone.timeframes || []).map((f: string) => (
-                            <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>
+                            <Tag
+                              key={f}
+                              color={getTimeframeColor(f)}
+                              style={{ margin: 0 }}
+                            >
                               {f}
                             </Tag>
                           ))}
                         </Space>
-
                         <CopyOutlined
                           onClick={(e) => {
                             e.stopPropagation();
@@ -228,7 +301,9 @@ export default function ScannerPage() {
                           style={{ cursor: "pointer", color: "#555" }}
                         />
                       </div>
-                      <Tag color={zone.status === "entered" ? "green" : "blue"} style={{ borderColor: zone.zone_alert_sent && zone.zone_entry_sent ? "#a3c6ff" : "blue" }}>
+                      <Tag
+                        color={zone.status === "entered" ? "green" : "blue"}
+                      >
                         {zone.status?.toUpperCase()}
                       </Tag>
                     </div>
@@ -240,8 +315,10 @@ export default function ScannerPage() {
                       <div>Distal: {zone.distal_line?.toFixed(2)}</div>
                       <div>
                         Approach:{" "}
-                        <span style={{ fontWeight: "bold", color: "#d46b08" }}>
-                          {(zone.percentDiff).toFixed(3)}%
+                        <span
+                          style={{ fontWeight: "bold", color: "#d46b08" }}
+                        >
+                          {zone.percentDiff.toFixed(3)}%
                         </span>
                       </div>
                     </div>
@@ -301,7 +378,9 @@ export default function ScannerPage() {
             <Descriptions column={1} bordered size="small">
               {Object.entries(selectedZone).map(([key, value]) => (
                 <Descriptions.Item key={key} label={key}>
-                  {Array.isArray(value) ? value.join(", ") : value?.toString()}
+                  {Array.isArray(value)
+                    ? value.join(", ")
+                    : value?.toString()}
                 </Descriptions.Item>
               ))}
             </Descriptions>
