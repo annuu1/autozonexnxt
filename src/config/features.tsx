@@ -78,6 +78,11 @@ export const features = {
     enabled: true,
     minPlan: "pro" as const,
     allowedRoles: ["admin"], 
+  },
+  exclusive:{
+    enabled: true,
+    minPlan: "pro" as const,
+    allowedRoles: ["admin"], 
   }
 } as const;
 
