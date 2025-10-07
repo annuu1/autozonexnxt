@@ -6,6 +6,7 @@ import "./globals.css";
 import "antd/dist/reset.css";
 import Providers from "./providers"; // 👈 Client wrapper
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister"; // 👈 PWA SW registrar
+import UserRefresher from "./UserRefresher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -89,6 +90,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
+          <UserRefresher />
           <Script
             id="ld-json-website"
             type="application/ld+json"

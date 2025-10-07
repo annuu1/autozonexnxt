@@ -43,10 +43,6 @@ export default function ProfilePage() {
     )
   }
 
-  useEffect(() => {
-    refreshUser()
-  }, [])
-
   // ✅ Update Profile
   const handleUpdateProfile = async (values: any) => {
     try {
