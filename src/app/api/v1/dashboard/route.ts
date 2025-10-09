@@ -78,11 +78,22 @@ export async function GET(req: Request) {
       {
         $addFields: {
           percentDiff: {
-            $abs: {
-              $divide: [
-                { $subtract: ["$proximal_line", "$symbol.day_low"] },
-                "$symbol.day_low",
-              ],
+            $cond: {
+              if: {
+                $or: [
+                  { $eq: ["$symbol.day_low", null] },
+                  { $eq: ["$symbol.day_low", 0] }
+                ]
+              },
+              then: 1,  // High value to exclude from "in range" match
+              else: {
+                $abs: {
+                  $divide: [
+                    { $subtract: ["$proximal_line", "$symbol.day_low"] },
+                    "$symbol.day_low",
+                  ],
+                },
+              },
             },
           },
         },
