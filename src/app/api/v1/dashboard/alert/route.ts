@@ -9,38 +9,57 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_TOKEN!,
 });
 
-// GET all alerts
+// Helper to parse pagination params
+const getPaginationParams = (searchParams: URLSearchParams) => {
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "12", 10))); // Cap at 100 for safety
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
+};
+
+// GET all alerts with pagination
 export async function GET(req: Request) {
-    try {
-      await dbConnect();
-      const user = await getUserFromRequest(req);
-      if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  
-      const cacheKey = `alerts:${user._id}`;
-      const cached = await redis.get(cacheKey);
-  
-      if (cached && cached !== "null" && cached !== "") {
-        try {
-          const parsed = JSON.parse(cached);
-          return NextResponse.json(parsed);
-        } catch {
-          // corrupted cache, ignore it
-          await redis.del(cacheKey);
-        }
+  try {
+    await dbConnect();
+    const user = await getUserFromRequest(req);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { searchParams } = new URL(req.url);
+    const { page, limit, skip } = getPaginationParams(searchParams);
+
+    const cacheKey = `alerts:${user._id}:${page}:${limit}`;
+    const cached = await redis.get(cacheKey);
+
+    if (cached && cached !== "null" && cached !== "") {
+      try {
+        const parsed = JSON.parse(cached);
+        return NextResponse.json(parsed);
+      } catch {
+        // corrupted cache, ignore it
+        await redis.del(cacheKey);
       }
-  
-      const alerts = await Alert.find({ userId: user._id }).sort({ createdAt: -1 });
-  
-      // Cache the result even if empty
-      await redis.set(cacheKey, JSON.stringify(alerts), { ex: 60 });
-  
-      return NextResponse.json(alerts);
-    } catch (error: any) {
-      console.error("GET /alert error:", error);
-      return NextResponse.json({ error: "Failed to fetch alerts" }, { status: 500 });
     }
+
+    // Get total count
+    const total = await Alert.countDocuments({ userId: user._id });
+
+    // Get paginated alerts
+    const alerts = await Alert.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const response = { alerts, total };
+
+    // Cache the result even if empty
+    await redis.set(cacheKey, JSON.stringify(response), { ex: 60 });
+
+    return NextResponse.json(response);
+  } catch (error: any) {
+    console.error("GET /alert error:", error);
+    return NextResponse.json({ error: "Failed to fetch alerts" }, { status: 500 });
   }
-  
+}
 
 // POST new alert
 export async function POST(req: Request) {

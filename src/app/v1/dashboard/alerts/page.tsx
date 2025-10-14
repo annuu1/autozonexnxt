@@ -4,31 +4,39 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
   Col,
+  Pagination,
   Row,
   message,
   Spin,
 } from "antd";
 import {
   PlusOutlined,
+  BellOutlined,
 } from "@ant-design/icons";
+import debounce from "lodash.debounce";
 
 import AlertCard from "@/components/alerts/AlertCard";
 import AlertDrawer from "@/components/alerts/AlertDrawer";
-import type { Alert } from "@/components/alerts/types"
+import type { Alert } from "@/components/alerts/types";
 
 const AlertsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
+  const [current, setCurrent] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [total, setTotal] = useState(0);
 
-  // Fetch alerts from API
-  const fetchAlerts = async () => {
+  // Fetch alerts from API with pagination
+  const fetchAlerts = async (page = current, limit = pageSize) => {
     try {
       setLoading(true);
-      const res = await fetch("/api/v1/dashboard/alert");
-      const data = await res.json();
-      setAlerts(data);
+      const res = await fetch(`/api/v1/dashboard/alert?page=${page}&limit=${limit}`);
+      if (!res.ok) throw new Error("Failed to fetch alerts");
+      const { alerts, total: totalCount } = await res.json();
+      setAlerts(alerts);
+      setTotal(totalCount);
     } catch (error) {
       message.error("Failed to load alerts");
     } finally {
@@ -58,13 +66,13 @@ const AlertsPage: React.FC = () => {
       if (!res.ok) throw new Error("Failed to save alert");
       const savedAlert = await res.json();
 
+      const nextPage = editingAlert ? current : 1;
+      setCurrent(nextPage);
+      await fetchAlerts(nextPage, pageSize);
+
       if (editingAlert) {
-        setAlerts((prev) =>
-          prev.map((a) => (a._id === savedAlert._id ? savedAlert : a))
-        );
         message.success("Alert updated successfully");
       } else {
-        setAlerts((prev) => [savedAlert, ...prev]);
         message.success("Alert added successfully");
       }
 
@@ -80,7 +88,12 @@ const AlertsPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await fetch(`/api/v1/dashboard/alert?id=${id}`, { method: "DELETE" });
-      setAlerts((prev) => prev.filter((a) => a._id !== id));
+      
+      // Adjust page if deleting the last item on current page
+      const nextPage = alerts.length === 1 && current > 1 ? current - 1 : current;
+      setCurrent(nextPage);
+      await fetchAlerts(nextPage, pageSize);
+      
       message.success("Alert deleted");
     } catch {
       message.error("Failed to delete alert");
@@ -102,6 +115,15 @@ const AlertsPage: React.FC = () => {
     } catch {
       message.error("Failed to update alert");
     }
+  };
+
+  // Pagination handler
+  const onPaginate = (page: number, size?: number) => {
+    setCurrent(page);
+    if (size) {
+      setPageSize(size);
+    }
+    fetchAlerts(page, size || pageSize);
   };
 
   // Open drawer for add/edit
@@ -135,6 +157,22 @@ const AlertsPage: React.FC = () => {
           </Col>
         ))}
       </Row>
+
+      {total > 0 && (
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          <Pagination
+            current={current}
+            pageSize={pageSize}
+            total={total}
+            onChange={onPaginate}
+            showSizeChanger
+            showQuickJumper
+            showTotal={(totalCount, range) =>
+              `${range[0]}-${range[1]} of ${totalCount} alerts`
+            }
+          />
+        </div>
+      )}
 
       {/* Floating Add Button */}
       <Button

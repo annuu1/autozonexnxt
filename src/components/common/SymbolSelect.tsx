@@ -1,4 +1,4 @@
-// components/SymbolSelect.tsx
+// components/SymbolSelect.tsx (updated for Antd v4 compatibility)
 import React from "react";
 import { Select } from "antd";
 
@@ -22,9 +22,14 @@ const SymbolSelect: React.FC<SymbolSelectProps> = ({
       filterOption={false}
       onSearch={onSearch}
       loading={loading}
-      options={options}
       notFoundContent={loading ? "Loading..." : "No symbols"}
-    />
+    >
+      {options.map((option) => (
+        <Option key={option.value} value={option.value}>
+          {option.label}
+        </Option>
+      ))}
+    </Select>
   );
 };
 

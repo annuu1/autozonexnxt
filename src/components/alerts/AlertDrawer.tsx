@@ -1,5 +1,5 @@
 // components/AlertDrawer.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Drawer,
   Form,
@@ -13,12 +13,13 @@ import {
 import debounce from "lodash.debounce";
 
 import SymbolSelect from "@/components/common/SymbolSelect";
+import type { Alert } from "./types";
 
 interface AlertDrawerProps {
   open: boolean;
-  editingAlert: any | null;
+  editingAlert: Alert | null;
   onClose: () => void;
-  onSubmit: (values: Partial<any>) => Promise<void>;
+  onSubmit: (values: Partial<Alert>) => Promise<void>;
 }
 
 const AlertDrawer: React.FC<AlertDrawerProps> = ({
@@ -27,7 +28,7 @@ const AlertDrawer: React.FC<AlertDrawerProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [form] = Form.useForm<Partial<any>>();
+  const [form] = Form.useForm<Partial<Alert>>();
 
   // Symbol search state (local to drawer)
   const [symbols, setSymbols] = useState<{ value: string; label: string }[]>([]);
@@ -55,17 +56,36 @@ const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
   const debouncedFetchSymbols = useCallback(debounce(fetchSymbols, 400), []);
 
-  const handleSubmit = async (values: Partial<any>) => {
+  // Reset and set initial values when drawer opens or editingAlert changes
+  useEffect(() => {
+    if (open) {
+      if (editingAlert) {
+        // For edit: set values
+        form.setFieldsValue(editingAlert);
+        // Optionally refetch symbols for the current symbol
+        if (editingAlert.symbol) {
+          debouncedFetchSymbols(editingAlert.symbol);
+        }
+      } else {
+        // For add: reset and set defaults
+        form.resetFields();
+        form.setFieldsValue({ active: true });
+      }
+    }
+  }, [open, editingAlert, form, debouncedFetchSymbols]);
+
+  const handleSubmit = async (values: Partial<Alert>) => {
     try {
       await onSubmit(values);
-      form.resetFields();
-      setSymbols([]); // Reset symbols
+      // Reset symbols on success
+      setSymbols([]);
     } catch (error) {
       // Error handled in parent
     }
   };
 
   const handleClose = () => {
+    // Reset form and symbols on close
     form.resetFields();
     setSymbols([]);
     onClose();
@@ -82,7 +102,6 @@ const AlertDrawer: React.FC<AlertDrawerProps> = ({
         layout="vertical"
         form={form}
         onFinish={handleSubmit}
-        initialValues={{ active: true, ...editingAlert }}
       >
         <Form.Item
           label="Stock Symbol"
