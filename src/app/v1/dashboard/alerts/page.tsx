@@ -3,72 +3,24 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
-  Card,
   Col,
-  Drawer,
-  Form,
-  Input,
   Row,
-  Select,
-  Space,
-  Switch,
-  Tag,
   message,
   Spin,
 } from "antd";
 import {
   PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  BellOutlined,
 } from "@ant-design/icons";
-import debounce from "lodash.debounce";
-import ExpandableNote from "@/components/common/ExpandableNote";
 
-const { Option } = Select;
-
-interface Alert {
-  _id: string;
-  symbol: string;
-  condition: "Above" | "Below";
-  price: number;
-  active: boolean;
-  note?: string;
-}
+import AlertCard from "@/components/alerts/AlertCard";
+import AlertDrawer from "@/components/alerts/AlertDrawer";
+import type { Alert } from "@/components/alerts/types"
 
 const AlertsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
-  const [form] = Form.useForm();
-
-  // Symbol search
-  const [symbols, setSymbols] = useState<{ value: string; label: string }[]>([]);
-  const [fetchingSymbols, setFetchingSymbols] = useState(false);
-
-  // Debounced fetch for symbols
-  const fetchSymbols = async (query: string) => {
-    if (!query) return;
-    setFetchingSymbols(true);
-    try {
-      const res = await fetch(`/api/v1/symbols?search=${query}`);
-      const data = await res.json();
-
-      const options = data.map((item: any) => ({
-        value: item.symbol,
-        label: item.symbol,
-      }));
-      setSymbols(options);
-    } catch (err) {
-      console.error("Error fetching symbols:", err);
-    } finally {
-      setFetchingSymbols(false);
-    }
-  };
-
-  // debounce symbol fetching
-  const debouncedFetchSymbols = useCallback(debounce(fetchSymbols, 400), []);
 
   // Fetch alerts from API
   const fetchAlerts = async () => {
@@ -88,8 +40,8 @@ const AlertsPage: React.FC = () => {
     fetchAlerts();
   }, []);
 
-  // Add or Update alert
-  const handleAddOrEdit = async (values: any) => {
+  // Add or Update alert (passed to drawer)
+  const handleAddOrEdit = async (values: Partial<Alert>) => {
     try {
       const endpoint = "/api/v1/dashboard/alert";
       const method = editingAlert ? "PUT" : "POST";
@@ -118,14 +70,13 @@ const AlertsPage: React.FC = () => {
 
       setDrawerOpen(false);
       setEditingAlert(null);
-      form.resetFields();
     } catch (error) {
       console.error("Save alert error:", error);
       message.error("Failed to save alert");
     }
   };
 
-  // Delete alert
+  // Delete alert (passed to card)
   const handleDelete = async (id: string) => {
     try {
       await fetch(`/api/v1/dashboard/alert?id=${id}`, { method: "DELETE" });
@@ -136,7 +87,7 @@ const AlertsPage: React.FC = () => {
     }
   };
 
-  // Toggle active state
+  // Toggle active state (passed to card)
   const handleToggleActive = async (alert: Alert, active: boolean) => {
     try {
       const res = await fetch("/api/v1/dashboard/alert", {
@@ -151,6 +102,12 @@ const AlertsPage: React.FC = () => {
     } catch {
       message.error("Failed to update alert");
     }
+  };
+
+  // Open drawer for add/edit
+  const openDrawer = (alert?: Alert) => {
+    setEditingAlert(alert || null);
+    setDrawerOpen(true);
   };
 
   if (loading) return <Spin style={{ marginTop: 50 }} size="large" />;
@@ -169,64 +126,12 @@ const AlertsPage: React.FC = () => {
             lg={6}
             style={{ display: "flex" }}
           >
-            <Card
-              style={{
-                width: "100%",
-                borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-              title={
-                <Space>
-                  <BellOutlined />
-                  <strong>{alert.symbol}</strong>
-                </Space>
-              }
-              extra={
-                <Switch
-                  checked={alert.active}
-                  onChange={(checked) => handleToggleActive(alert, checked)}
-                />
-              }
-              actions={[
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  onClick={() => {
-                    setEditingAlert(alert);
-                    form.setFieldsValue(alert);
-                    setDrawerOpen(true);
-                  }}
-                >
-                  Edit
-                </Button>,
-                <Button
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(alert._id)}
-                >
-                  Delete
-                </Button>,
-              ]}
-            >
-              <p style={{ marginBottom: 6 }}>
-                <strong>Condition:</strong>{" "}
-                {alert.condition === "Above" ? (
-                  <Tag color="green">Above</Tag>
-                ) : (
-                  <Tag color="red">Below</Tag>
-                )}
-              </p>
-              <p style={{ marginBottom: 6 }}>
-                <strong>Target Price:</strong> ₹{alert.price}
-              </p>
-              {alert.note && (
-                <ExpandableNote note={alert.note} />
-              )}
-            </Card>
+            <AlertCard
+              alert={alert}
+              onToggleActive={handleToggleActive}
+              onEdit={() => openDrawer(alert)}
+              onDelete={handleDelete}
+            />
           </Col>
         ))}
       </Row>
@@ -245,81 +150,16 @@ const AlertsPage: React.FC = () => {
           boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
           zIndex: 1000,
         }}
-        onClick={() => {
-          form.resetFields();
-          setEditingAlert(null);
-          setDrawerOpen(true);
-        }}
+        onClick={() => openDrawer()}
       />
 
-      {/* Drawer Form */}
-      <Drawer
-        title={editingAlert ? "Edit Alert" : "Add Alert"}
+      {/* Drawer */}
+      <AlertDrawer
         open={drawerOpen}
+        editingAlert={editingAlert}
         onClose={() => setDrawerOpen(false)}
-        width={380}
-      >
-        <Form
-          layout="vertical"
-          form={form}
-          onFinish={handleAddOrEdit}
-          initialValues={{ active: true }}
-        >
-          <Form.Item
-            label="Stock Symbol"
-            name="symbol"
-            rules={[{ required: true, message: "Please select the stock" }]}
-          >
-            <Select
-              showSearch
-              placeholder="Search symbol..."
-              filterOption={false}
-              onSearch={debouncedFetchSymbols}
-              loading={fetchingSymbols}
-              options={symbols}
-              notFoundContent={fetchingSymbols ? "Loading..." : "No symbols"}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Condition"
-            name="condition"
-            rules={[{ required: true }]}
-          >
-            <Select
-              options={[
-                { value: "Above", label: "Price Above" },
-                { value: "Below", label: "Price Below" },
-              ]}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Target Price"
-            name="price"
-            rules={[{ required: true, message: "Please enter target price" }]}
-          >
-            <Input type="number" placeholder="e.g. 200" />
-          </Form.Item>
-
-          <Form.Item label="Note" name="note">
-            <Input.TextArea rows={3} placeholder="Optional note about this alert" />
-          </Form.Item>
-
-          <Form.Item label="Active" name="active" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                {editingAlert ? "Update" : "Add"}
-              </Button>
-              <Button onClick={() => setDrawerOpen(false)}>Cancel</Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Drawer>
+        onSubmit={handleAddOrEdit}
+      />
     </div>
   );
 };
