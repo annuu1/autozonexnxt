@@ -60,19 +60,15 @@ const AlertDrawer: React.FC<AlertDrawerProps> = ({
   useEffect(() => {
     if (open) {
       if (editingAlert) {
-        // For edit: set values
+        // For edit: set values (options will load on search if needed)
         form.setFieldsValue(editingAlert);
-        // Optionally refetch symbols for the current symbol
-        if (editingAlert.symbol) {
-          debouncedFetchSymbols(editingAlert.symbol);
-        }
       } else {
         // For add: reset and set defaults
         form.resetFields();
         form.setFieldsValue({ active: true });
       }
     }
-  }, [open, editingAlert, form, debouncedFetchSymbols]);
+  }, [open, editingAlert, form]);
 
   const handleSubmit = async (values: Partial<Alert>) => {
     try {
