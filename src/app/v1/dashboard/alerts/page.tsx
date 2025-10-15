@@ -4,20 +4,27 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
   Col,
+  Input,
   Pagination,
   Row,
+  Tabs,
   message,
   Spin,
 } from "antd";
 import {
   PlusOutlined,
   BellOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import debounce from "lodash.debounce";
+import type { TabsProps } from "antd";
 
 import AlertCard from "@/components/alerts/AlertCard";
 import AlertDrawer from "@/components/alerts/AlertDrawer";
 import type { Alert } from "@/components/alerts/types";
+
+const { TabPane } = Tabs;
+const { Search } = Input;
 
 const AlertsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -27,12 +34,26 @@ const AlertsPage: React.FC = () => {
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("active"); // Default to 'active'
 
-  // Fetch alerts from API with pagination
-  const fetchAlerts = async (page = current, limit = pageSize) => {
+  // Fetch alerts from API with pagination, search, and status filter
+  const fetchAlerts = async (
+    page = current,
+    limit = pageSize,
+    status = activeTab,
+    search = searchTerm
+  ) => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/v1/dashboard/alert?page=${page}&limit=${limit}`);
+      let url = `/api/v1/dashboard/alert?page=${page}&limit=${limit}`;
+      if (status && status !== "all") {
+        url += `&status=${status}`;
+      }
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch alerts");
       const { alerts, total: totalCount } = await res.json();
       setAlerts(alerts);
@@ -44,9 +65,27 @@ const AlertsPage: React.FC = () => {
     }
   };
 
+  // Debounced search handler (now only on button/Enter)
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      setSearchTerm(value);
+      setCurrent(1); // Reset to first page on search
+      fetchAlerts(1, pageSize, activeTab, value);
+    }, 300),
+    [activeTab, pageSize]
+  );
+
   useEffect(() => {
     fetchAlerts();
   }, []);
+
+  // Reset page and refetch on tab change
+  const onTabChange = (key: string) => {
+    setActiveTab(key);
+    setCurrent(1);
+    setSearchTerm(""); // Clear search on tab switch
+    fetchAlerts(1, pageSize, key, "");
+  };
 
   // Add or Update alert (passed to drawer)
   const handleAddOrEdit = async (values: Partial<Alert>) => {
@@ -68,7 +107,7 @@ const AlertsPage: React.FC = () => {
 
       const nextPage = editingAlert ? current : 1;
       setCurrent(nextPage);
-      await fetchAlerts(nextPage, pageSize);
+      await fetchAlerts(nextPage, pageSize, activeTab, searchTerm);
 
       if (editingAlert) {
         message.success("Alert updated successfully");
@@ -92,7 +131,7 @@ const AlertsPage: React.FC = () => {
       // Adjust page if deleting the last item on current page
       const nextPage = alerts.length === 1 && current > 1 ? current - 1 : current;
       setCurrent(nextPage);
-      await fetchAlerts(nextPage, pageSize);
+      await fetchAlerts(nextPage, pageSize, activeTab, searchTerm);
       
       message.success("Alert deleted");
     } catch {
@@ -112,6 +151,8 @@ const AlertsPage: React.FC = () => {
       setAlerts((prev) =>
         prev.map((a) => (a._id === updated._id ? updated : a))
       );
+      // Refetch to update pagination if needed
+      fetchAlerts(current, pageSize, activeTab, searchTerm);
     } catch {
       message.error("Failed to update alert");
     }
@@ -123,7 +164,7 @@ const AlertsPage: React.FC = () => {
     if (size) {
       setPageSize(size);
     }
-    fetchAlerts(page, size || pageSize);
+    fetchAlerts(page, size || pageSize, activeTab, searchTerm);
   };
 
   // Open drawer for add/edit
@@ -132,47 +173,162 @@ const AlertsPage: React.FC = () => {
     setDrawerOpen(true);
   };
 
-  if (loading) return <Spin style={{ marginTop: 50 }} size="large" />;
+  const tabItems: TabsProps['items'] = [
+    {
+      key: "all",
+      label: `All Alerts`,
+      children: (
+        <Spin spinning={loading}>
+          <div>
+            <Row gutter={[16, 16]}>
+              {alerts.map((alert) => (
+                <Col
+                  key={alert._id}
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  style={{ display: "flex" }}
+                >
+                  <AlertCard
+                    alert={alert}
+                    onToggleActive={handleToggleActive}
+                    onEdit={() => openDrawer(alert)}
+                    onDelete={handleDelete}
+                  />
+                </Col>
+              ))}
+            </Row>
+
+            {total > 0 && (
+              <div style={{ marginTop: 24, textAlign: "center" }}>
+                <Pagination
+                  current={current}
+                  pageSize={pageSize}
+                  total={total}
+                  onChange={onPaginate}
+                  showSizeChanger
+                  showQuickJumper
+                  showTotal={(totalCount, range) =>
+                    `${range[0]}-${range[1]} of ${totalCount} alerts`
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </Spin>
+      ),
+    },
+    {
+      key: "active",
+      label: `Active Alerts`,
+      children: (
+        <Spin spinning={loading}>
+          <div>
+            <Row gutter={[16, 16]}>
+              {alerts.map((alert) => (
+                <Col
+                  key={alert._id}
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  style={{ display: "flex" }}
+                >
+                  <AlertCard
+                    alert={alert}
+                    onToggleActive={handleToggleActive}
+                    onEdit={() => openDrawer(alert)}
+                    onDelete={handleDelete}
+                  />
+                </Col>
+              ))}
+            </Row>
+
+            {total > 0 && (
+              <div style={{ marginTop: 24, textAlign: "center" }}>
+                <Pagination
+                  current={current}
+                  pageSize={pageSize}
+                  total={total}
+                  onChange={onPaginate}
+                  showSizeChanger
+                  showQuickJumper
+                  showTotal={(totalCount, range) =>
+                    `${range[0]}-${range[1]} of ${totalCount} active alerts`
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </Spin>
+      ),
+    },
+    {
+      key: "inactive",
+      label: `Inactive Alerts`,
+      children: (
+        <Spin spinning={loading}>
+          <div>
+            <Row gutter={[16, 16]}>
+              {alerts.map((alert) => (
+                <Col
+                  key={alert._id}
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  style={{ display: "flex" }}
+                >
+                  <AlertCard
+                    alert={alert}
+                    onToggleActive={handleToggleActive}
+                    onEdit={() => openDrawer(alert)}
+                    onDelete={handleDelete}
+                  />
+                </Col>
+              ))}
+            </Row>
+
+            {total > 0 && (
+              <div style={{ marginTop: 24, textAlign: "center" }}>
+                <Pagination
+                  current={current}
+                  pageSize={pageSize}
+                  total={total}
+                  onChange={onPaginate}
+                  showSizeChanger
+                  showQuickJumper
+                  showTotal={(totalCount, range) =>
+                    `${range[0]}-${range[1]} of ${totalCount} inactive alerts`
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </Spin>
+      ),
+    },
+  ];
 
   return (
     <div style={{ padding: "24px", position: "relative" }}>
       <h2 style={{ marginBottom: 16, fontWeight: 600 }}>📢 Price Alerts</h2>
 
-      <Row gutter={[16, 16]}>
-        {alerts.map((alert) => (
-          <Col
-            key={alert._id}
-            xs={24}
-            sm={12}
-            md={8}
-            lg={6}
-            style={{ display: "flex" }}
-          >
-            <AlertCard
-              alert={alert}
-              onToggleActive={handleToggleActive}
-              onEdit={() => openDrawer(alert)}
-              onDelete={handleDelete}
-            />
-          </Col>
-        ))}
-      </Row>
+      {/* Search Bar */}
+      <div style={{ marginBottom: 16 }}>
+        <Search
+          placeholder="Search alerts by symbol or note..."
+          prefix={<SearchOutlined />}
+          onSearch={debouncedSearch}  // Only triggers on Enter or button click
+          allowClear
+          style={{ width: 300 }}
+          enterButton
+        />
+      </div>
 
-      {total > 0 && (
-        <div style={{ marginTop: 24, textAlign: "center" }}>
-          <Pagination
-            current={current}
-            pageSize={pageSize}
-            total={total}
-            onChange={onPaginate}
-            showSizeChanger
-            showQuickJumper
-            showTotal={(totalCount, range) =>
-              `${range[0]}-${range[1]} of ${totalCount} alerts`
-            }
-          />
-        </div>
-      )}
+      {/* Tabs */}
+      <Tabs activeKey={activeTab} onChange={onTabChange} items={tabItems} />
 
       {/* Floating Add Button */}
       <Button

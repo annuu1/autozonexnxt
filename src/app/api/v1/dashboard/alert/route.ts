@@ -17,7 +17,7 @@ const getPaginationParams = (searchParams: URLSearchParams) => {
   return { page, limit, skip };
 };
 
-// GET all alerts with pagination
+// GET all alerts with pagination, search, and status filter
 export async function GET(req: Request) {
   try {
     await dbConnect();
@@ -26,8 +26,29 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const { page, limit, skip } = getPaginationParams(searchParams);
+    const status = searchParams.get('status') || 'all';
+    const search = searchParams.get('search') || '';
 
-    const cacheKey = `alerts:${user._id}:${page}:${limit}`;
+    // Build query filters
+    const baseQuery = { userId: user._id };
+    let query = { ...baseQuery };
+
+    // Status filter (using 'active' boolean field)
+    if (status !== 'all') {
+      query.active = status === 'active';
+    }
+
+    // Search filter (across symbol and note, case-insensitive partial match)
+    // Note: Assuming 'note' field exists based on frontend; adjust if needed
+    if (search.trim()) {
+      const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
+      query.$or = [
+        { symbol: searchRegex },
+        { note: searchRegex }, // Remove if no 'note' field
+      ];
+    }
+
+    const cacheKey = `alerts:${user._id}:${page}:${limit}:${status}:${search}`;
     const cached = await redis.get(cacheKey);
 
     if (cached && cached !== "null" && cached !== "") {
@@ -40,11 +61,11 @@ export async function GET(req: Request) {
       }
     }
 
-    // Get total count
-    const total = await Alert.countDocuments({ userId: user._id });
+    // Get total count with filters
+    const total = await Alert.countDocuments(query);
 
-    // Get paginated alerts
-    const alerts = await Alert.find({ userId: user._id })
+    // Get paginated alerts with filters
+    const alerts = await Alert.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -61,6 +82,10 @@ export async function GET(req: Request) {
   }
 }
 
+// Helper function to escape regex special chars (add this if not existing)
+function escapeRegex(text: string): string {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
 // POST new alert
 export async function POST(req: Request) {
   try {
