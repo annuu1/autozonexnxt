@@ -39,9 +39,8 @@ export const features = {
   },
   alerts: { 
     enabled: true,
-    comingSoon: true,
-    minPlan: "starter" as const,
-    allowedRoles: ["admin", "manager", "agent", "user"], 
+    minPlan: "freemium" as const,
+    allowedRoles: ["admin", "manager", "agent"], 
   },
   notifications: { 
     enabled: false,
