@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     email: user.email,
     roles: user.roles,
     subscription: user.subscription,
+    other_channels: user.other_channels,
     invitedBy: user.invitedBy || null,
   });
 }

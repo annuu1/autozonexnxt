@@ -74,6 +74,19 @@ const UserSchema = new Schema(
     lastLogin: {
       type: Date,
     },
+
+    other_channels: [{
+      _id: false,
+      channel: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      id: {
+        type: String, // Change to Number if IDs are numeric (e.g., Telegram chat IDs)
+        required: true,
+      },
+    }],
     
     // Single active session tracking
     sessionId: {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Button,
   Col,
@@ -10,6 +10,7 @@ import {
   Tabs,
   message,
   Spin,
+  Modal,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,12 +22,14 @@ import type { TabsProps } from "antd";
 
 import AlertCard from "@/components/alerts/AlertCard";
 import AlertDrawer from "@/components/alerts/AlertDrawer";
+import TelegramSetup from "@/components/common/TelegramSetup";
+import useAuthStore from "@/store/useAuthStore";
 import type { Alert } from "@/components/alerts/types";
 
-const { TabPane } = Tabs;
 const { Search } = Input;
 
 const AlertsPage: React.FC = () => {
+  const { user } = useAuthStore();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -36,6 +39,54 @@ const AlertsPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("active"); // Default to 'active'
+  const [showSetupModal, setShowSetupModal] = useState(false);
+
+  const telegramChannel = useMemo(
+    () => user?.other_channels?.find((ch: any) => ch.channel === "telegramChatId"),
+    [user]
+  );
+  const chatId = telegramChannel?.id || null;
+
+  if (!user) {
+    return (
+      <div style={{ padding: "24px", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  // Show setup modal if no chat ID
+  useEffect(() => {
+    if (!chatId) {
+      setShowSetupModal(true);
+    }
+  }, [chatId]);
+
+  // Save Telegram chat ID
+  const handleSaveChatId = async (newChatId: string) => {
+    try {
+      const existingIndex = user.other_channels?.findIndex((ch: any) => ch.channel === "telegramChatId") || -1;
+      const updatedChannels = [...(user.other_channels || [])];
+      if (existingIndex > -1) {
+        updatedChannels[existingIndex] = { channel: "telegramChatId", id: newChatId };
+      } else {
+        updatedChannels.push({ channel: "telegramChatId", id: newChatId });
+      }
+
+      const res = await fetch("/api/v1/users/otherChannels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel: "telegramChatId", id: newChatId }),
+      });
+      if (!res.ok) throw new Error("Failed to save chat ID");
+
+      // updateUser({ ...user, other_channels: updatedChannels });
+      message.success("Telegram setup completed! You can now create alerts.");
+    } catch (error) {
+      console.error("Save chat ID error:", error);
+      throw error;
+    }
+  };
 
   // Fetch alerts from API with pagination, search, and status filter
   const fetchAlerts = async (
@@ -76,8 +127,10 @@ const AlertsPage: React.FC = () => {
   );
 
   useEffect(() => {
-    fetchAlerts();
-  }, []);
+    if (chatId !== null) {
+      fetchAlerts();
+    }
+  }, [chatId]);
 
   // Reset page and refetch on tab change
   const onTabChange = (key: string) => {
@@ -169,6 +222,11 @@ const AlertsPage: React.FC = () => {
 
   // Open drawer for add/edit
   const openDrawer = (alert?: Alert) => {
+    if (!chatId) {
+      message.warning("Please set up Telegram notifications first.");
+      setShowSetupModal(true);
+      return;
+    }
     setEditingAlert(alert || null);
     setDrawerOpen(true);
   };
@@ -312,49 +370,77 @@ const AlertsPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: "24px", position: "relative" }}>
-      <h2 style={{ marginBottom: 16, fontWeight: 600 }}>📢 Price Alerts</h2>
+    <>
+      <div style={{ padding: "24px", position: "relative" }}>
+        <h2 style={{ marginBottom: 16, fontWeight: 600 }}>📢 Price Alerts</h2>
 
-      {/* Search Bar */}
-      <div style={{ marginBottom: 16 }}>
-        <Search
-          placeholder="Search alerts by symbol or note..."
-          prefix={<SearchOutlined />}
-          onSearch={debouncedSearch}  // Only triggers on Enter or button click
-          allowClear
-          style={{ width: 300 }}
-          enterButton
+        
+
+        {!chatId && (
+          <div style={{ marginBottom: 16, padding: 12, backgroundColor: "#fff3cd", borderRadius: 8, border: "1px solid #ffeaa7" }}>
+            <BellOutlined style={{ color: "#856404", marginRight: 8 }} />
+            <span style={{ color: "#856404" }}>Set up Telegram to receive alerts. <Button type="link" onClick={() => setShowSetupModal(true)}>Configure now</Button></span>
+          </div>
+        )}
+
+        {/* Search Bar */}
+        <div style={{ marginBottom: 16 }}>
+          <Search
+            placeholder="Search alerts by symbol or note..."
+            prefix={<SearchOutlined />}
+            onSearch={debouncedSearch}  // Only triggers on Enter or button click
+            allowClear
+            style={{ width: 300 }}
+            enterButton
+          />
+        </div>
+
+        {/* Tabs */}
+        <Tabs activeKey={activeTab} onChange={onTabChange} items={tabItems} />
+
+        {/* Floating Add Button */}
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            borderRadius: "50%",
+            width: 56,
+            height: 56,
+            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+            zIndex: 1000,
+          }}
+          onClick={() => openDrawer()}
+          disabled={!chatId}
+        />
+
+        {/* Drawer */}
+        <AlertDrawer
+          open={drawerOpen}
+          editingAlert={editingAlert}
+          onClose={() => setDrawerOpen(false)}
+          onSubmit={handleAddOrEdit}
         />
       </div>
 
-      {/* Tabs */}
-      <Tabs activeKey={activeTab} onChange={onTabChange} items={tabItems} />
-
-      {/* Floating Add Button */}
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        style={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          borderRadius: "50%",
-          width: 56,
-          height: 56,
-          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-          zIndex: 1000,
-        }}
-        onClick={() => openDrawer()}
-      />
-
-      {/* Drawer */}
-      <AlertDrawer
-        open={drawerOpen}
-        editingAlert={editingAlert}
-        onClose={() => setDrawerOpen(false)}
-        onSubmit={handleAddOrEdit}
-      />
-    </div>
+      <Modal
+        title="Set Up Telegram Notifications"
+        open={showSetupModal}
+        onCancel={() => setShowSetupModal(false)}
+        footer={null}
+        width={600}
+      >
+        <TelegramSetup
+          onSubmit={async (newChatId: string) => {
+            await handleSaveChatId(newChatId);
+            setShowSetupModal(false);
+          }}
+          initialChatId=""
+        />
+      </Modal>
+    </>
   );
 };
 
