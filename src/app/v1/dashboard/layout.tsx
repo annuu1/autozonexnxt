@@ -70,7 +70,7 @@ const routeFeatureMap: Record<string, keyof typeof features | null> = {
   "/v1/dashboard/reports": "zonesReport",
   "/v1/dashboard/exclusive": "exclusive",
   "/v1/dashboard/demand-zones": "allZoneList",
-  "/v1/dashboard/notifications": null,
+  // "/v1/dashboard/notifications": null,
   "/v1/dashboard/users": "users",
   "/v1/dashboard/activity-logs": "activityLog",
   "/v1/dashboard/billing": null,
@@ -178,7 +178,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     sub?.status !== "active" || (derivedEndDate && derivedEndDate < new Date());
 
     const shouldBlock = isExpired && pathname !== "/v1/dashboard/profile" 
-    && pathname !== "/v1/dashboard/billing" && pathname !== "/v1/dashboard";
+    && pathname !== "/v1/dashboard/billing" && pathname !== "/v1/dashboard" 
+    && pathname !== "/v1/dashboard/alerts";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
