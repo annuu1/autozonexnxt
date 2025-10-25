@@ -16,7 +16,7 @@ export function useRoleAccess(featureKey: keyof typeof features | null, user: an
       scanner: ["admin", "manager", "user", "associate"],
       latestZones: ["admin", "manager", "user", "associate"],
       exclusive: ["admin", "manager"],
-      alerts: ["admin", "manager"],
+      alerts: ["admin", "manager", "user", "associate"],
     };
   
     const allowedRoles = roleFeatureMap[featureKey] || [];
