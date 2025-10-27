@@ -46,7 +46,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/v1/dashboard", icon: <DashboardOutlined /> },
   { label: "New Setups", href: "/v1/dashboard/latest-zones", icon: <AppstoreOutlined /> },
-  { label: "Alerts", href: "/v1/dashboard/alerts", icon: <ScanOutlined /> },
+  { label: "Alerts", href: "/v1/dashboard/alerts", icon: <BellOutlined /> },
   { label: "Scanner", href: "/v1/dashboard/scanner", icon: <ScanOutlined /> },
   { label: "Trades", href: "/v1/dashboard/trades", icon: <BarChartOutlined /> },
   { label: "Reports", href: "/v1/dashboard/reports", icon: <FileTextOutlined /> },

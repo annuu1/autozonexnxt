@@ -448,7 +448,7 @@ export default function TradesPage() {
           >
             <Collapse ghost>
               <Panel header="View Analysis" key="1">
-                <Paragraph className="text-gray-700">{trade.analysis}</Paragraph>
+                <Paragraph style={{ whiteSpace: 'pre-line' }} className="text-gray-700">{trade.analysis}</Paragraph>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {trade.images.map((img, i) => (
                     <Image
