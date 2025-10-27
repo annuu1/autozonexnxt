@@ -25,6 +25,8 @@ import { PlusOutlined, MinusCircleOutlined, InboxOutlined, EditOutlined, DeleteO
 import type { RcFile } from "antd/es/upload";
 import dayjs from "dayjs";
 
+import useAuthStore from "@/store/useAuthStore";
+
 const { Title, Paragraph } = Typography;
 const { Panel } = Collapse;
 const { Dragger } = Upload;
@@ -56,6 +58,8 @@ export default function TradesPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const pasteRef = useRef<HTMLDivElement>(null);
+
+  const { user } = useAuthStore();
 
   // Fetch trades
   const fetchTrades = async () => {
@@ -246,24 +250,39 @@ export default function TradesPage() {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
       <Title level={2} className="mb-2">Trade Analysis</Title>
+
+      {/* Disclaimer Alert */}
+      <Alert
+        message="Important Disclaimer"
+        description={
+          <div>
+            <p>We are not SEBI registered. All analysis shared here is for educational purposes only. Do not buy or sell any securities based solely on this information. Always conduct your own research and consult with a qualified financial advisor before making any investment decisions.</p>
+          </div>
+        }
+        type="warning"
+        showIcon
+        className="mb-6"
+      />
       <Paragraph type="secondary" className="mb-6">
-        Manage detailed trade analysis with charts across multiple timeframes. Add, edit, or delete trades with ease.
+        Explore and document in-depth technical analysis for stocks, incorporating annotated charts from multiple timeframes to capture nuanced market insights.
       </Paragraph>
 
       {/* Floating Action Button */}
-      <FloatButton
-        icon={<PlusOutlined />}
-        type="primary"
-        tooltip="Add New Trade"
-        className="shadow-lg"
-        onClick={() => {
-          setEditingTrade(null);
-          form.resetFields();
-          setModalVisible(true);
-        }}
-      />
+      {(user?.roles?.includes("admin") || user?.roles?.includes("manager")) && (
+        <FloatButton
+          icon={<PlusOutlined />}
+          type="primary"
+          tooltip="Add New Trade"
+          className="shadow-lg"
+          onClick={() => {
+            setEditingTrade(null);
+            form.resetFields();
+            setModalVisible(true);
+          }}
+        />
+      )}
 
       {/* Modal */}
       <Modal
@@ -424,28 +443,32 @@ export default function TradesPage() {
             }
             extra={<span className="text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>}
             className="shadow-md hover:shadow-lg transition-shadow rounded-lg"
-            actions={[
-              <Button
-                type="text"
-                icon={<EditOutlined />}
-                onClick={() => openEditModal(trade)}
-                key="edit"
-              >
-                Edit
-              </Button>,
-              <Popconfirm
-                key="delete"
-                title="Are you sure you want to delete this trade?"
-                onConfirm={() => handleDelete(trade._id)}
-                okText="Yes"
-                cancelText="No"
-              >
-                <Button type="text" icon={<DeleteOutlined />} danger>
-                  Delete
-                </Button>
-              </Popconfirm>,
-            ]}
-          >
+            actions={
+              user?.roles?.includes("admin") || user?.roles?.includes("manager")
+                ? [
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      onClick={() => openEditModal(trade)}
+                      key="edit"
+                    >
+                      Edit
+                    </Button>,
+                    <Popconfirm
+                      key="delete"
+                      title="Are you sure you want to delete this trade?"
+                      onConfirm={() => handleDelete(trade._id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="text" icon={<DeleteOutlined />} danger>
+                        Delete
+                      </Button>
+                    </Popconfirm>,
+                  ]
+                : [] // No actions for non-admin/manager users
+              }
+            >
             <Collapse ghost>
               <Panel header="View Analysis" key="1">
                 <Paragraph style={{ whiteSpace: 'pre-line' }} className="text-gray-700">{trade.analysis}</Paragraph>
