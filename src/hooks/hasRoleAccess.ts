@@ -15,7 +15,7 @@ export function useRoleAccess(featureKey: keyof typeof features | null, user: an
       activityLog: ["admin"],
       scanner: ["admin", "manager", "user", "associate"],
       latestZones: ["admin", "manager", "user", "associate"],
-      exclusive: ["admin", "manager"],
+      exclusive: ["admin", "manager","user", "associate"],
       alerts: ["admin", "manager", "user", "associate"],
     };
   
