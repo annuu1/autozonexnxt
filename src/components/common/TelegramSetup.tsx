@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import { Button, Input, Alert, Typography, Space, message } from "antd";
-import { LinkOutlined } from "@ant-design/icons";
+import { LinkOutlined, SendOutlined } from "@ant-design/icons";
 import type { InputRef } from "antd";
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph, Title } = Typography;
 
 interface TelegramSetupProps {
   onSubmit?: (chatId: string) => Promise<void>;
@@ -39,7 +39,7 @@ const TelegramSetup: React.FC<TelegramSetupProps> = ({
     const value = e.target.value;
     setChatId(value);
     if (error) {
-      validateChatId(value); // Clear error if valid
+      validateChatId(value);
     }
   };
 
@@ -59,30 +59,33 @@ const TelegramSetup: React.FC<TelegramSetupProps> = ({
     }
   };
 
-  const handleTestChatId = () => {
-    if (!validateChatId(chatId)) return;
-    // Optional: Implement a test send if API supports it
-    message.info("Chat ID looks valid! You can now receive alerts via Telegram.");
-  };
-
   return (
     <Space direction="vertical" style={{ width: "100%" }} size="large">
       <Alert
-        message="Set up Telegram Notifications"
+        message={<Title level={5}>Set up Telegram Notifications</Title>}
         description={
           <Space direction="vertical" style={{ width: "100%" }}>
             <Paragraph>
-              To receive price alerts directly in Telegram, you need to add your chat ID. 
-              Users often confuse username (like @yourusername) with chat ID—username starts with @ and is not a number.
+              To receive alerts in Telegram, you must set up your <Text strong>Telegram Chat ID</Text>.
+              Note that your <Text code>username (e.g., @yourname)</Text> is not the same as your chat ID.
             </Paragraph>
+
             <Paragraph>
               <Text strong>Step 1:</Text> Open Telegram and search for <Text code>@userinfobot</Text>.
             </Paragraph>
             <Paragraph>
-              <Text strong>Step 2:</Text> Start a chat with the bot and send <Text code>/start</Text>. It will reply with your chat ID.
+              <Text strong>Step 2:</Text> Send <Text code>/start</Text> to <Text code>@userinfobot</Text>. It will reply with your numeric chat ID.
             </Paragraph>
             <Paragraph>
-              <Text strong>Step 3:</Text> Copy the numeric chat ID (e.g., 123456789) and paste it below. For groups, use the group chat ID starting with -.
+              <Text strong>Step 3:</Text> Copy that numeric chat ID (e.g., <Text code>123456789</Text>) and paste it below.
+              For groups, the ID usually starts with a minus sign (e.g., <Text code>-1001234567890</Text>).
+            </Paragraph>
+
+            <Paragraph>
+              <Text strong type="danger">🚨 Important Step:</Text> After saving your Chat ID, 
+              you <Text strong>must send a message</Text> to <Text code>@Myboy_1bot</Text> 
+              in Telegram (just say “Hi” or anything).  
+              <Text type="danger">The bot cannot send you alerts until you’ve messaged it first.</Text>
             </Paragraph>
           </Space>
         }
@@ -105,11 +108,9 @@ const TelegramSetup: React.FC<TelegramSetupProps> = ({
         onPressEnter={handleSubmit}
       />
 
-      {error && (
-        <Alert message={error} type="error" showIcon />
-      )}
+      {error && <Alert message={error} type="error" showIcon />}
 
-      <Space>
+      <Space wrap>
         <Button
           type="primary"
           onClick={handleSubmit}
@@ -119,9 +120,18 @@ const TelegramSetup: React.FC<TelegramSetupProps> = ({
         >
           Save Chat ID
         </Button>
-        <Button onClick={handleTestChatId} disabled={!chatId.trim() || !!error} size="large">
-          Test Validity
+
+        <Button
+          type="default"
+          href="https://t.me/Myboy_1bot"
+          target="_blank"
+          rel="noopener noreferrer"
+          size="large"
+          icon={<SendOutlined />}
+        >
+          Message AutoZoneX Bot
         </Button>
+
         <Button
           type="link"
           href="https://t.me/userinfobot"
