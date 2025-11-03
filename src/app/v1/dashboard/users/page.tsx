@@ -17,6 +17,7 @@ import {
   Card,
   List,
   Grid,
+  Badge,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import moment from "moment-timezone";
@@ -24,6 +25,7 @@ import { useRoleAccess } from "@/hooks/hasRoleAccess";
 import useAuthStore from "@/store/useAuthStore";
 
 import SubscriptionModal from "@/components/users/SubscriptionModal";
+import UserDetailsModal from "@/components/users/UserDetailsModal";
 import { PlusOutlined } from "@ant-design/icons";
 
 interface Subscription {
@@ -31,6 +33,11 @@ interface Subscription {
   status: string;
   billingCycle: string;
   startDate: string;
+}
+
+interface OtherChannel {
+  channel: string;
+  id: string;
 }
 
 interface User {
@@ -41,6 +48,7 @@ interface User {
   roles: string[];
   isVerified: boolean;
   subscription: Subscription;
+  other_channels?: OtherChannel[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -71,6 +79,10 @@ const UsersPage: React.FC = () => {
 
   const [isSubModalOpen, setIsSubModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Detail Modal
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [selectedDetailUser, setSelectedDetailUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -159,12 +171,24 @@ const UsersPage: React.FC = () => {
     setIsSubModalOpen(true);
   };
 
+  const showUserDetails = (user: User) => {
+    setSelectedDetailUser(user);
+    setDetailVisible(true);
+  };
+
   const columns: ColumnsType<User> = [
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      render: (text) => <b>{text}</b>,
+      render: (text, record) => (
+        <a 
+          onClick={() => showUserDetails(record)} 
+          style={{ cursor: 'pointer', color: '#1890ff' }}
+        >
+          <b>{text}</b>
+        </a>
+      ),
     },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Mobile", dataIndex: "mobile", key: "mobile" },
@@ -195,6 +219,16 @@ const UsersPage: React.FC = () => {
         >
           {record.subscription?.plan || "none"}
         </Tag>
+      ),
+    },
+    {
+      title: "Channels",
+      key: "channels",
+      render: (_, record) => (
+        <Badge 
+          count={record.other_channels?.length || 0} 
+          style={{ backgroundColor: '#52c41a' }}
+        />
       ),
     },
     {
@@ -309,7 +343,14 @@ const UsersPage: React.FC = () => {
       <Card
         key={user._id}
         style={{ marginBottom: 16 }}
-        title={user.name}
+        title={
+          <a 
+            onClick={() => showUserDetails(user)} 
+            style={{ cursor: 'pointer', color: '#1890ff' }}
+          >
+            {user.name}
+          </a>
+        }
         extra={
           canManageUsers && (
             <Space>
@@ -352,6 +393,13 @@ const UsersPage: React.FC = () => {
           >
             {user.subscription?.plan || "none"}
           </Tag>
+        </p>
+        <p>
+          <b>Channels:</b>{" "}
+          <Badge 
+            count={user.other_channels?.length || 0} 
+            style={{ backgroundColor: '#52c41a' }} 
+          />
         </p>
         <p>
           <b>Verified:</b> {user.isVerified ? "✅ Yes" : "❌ No"}
@@ -435,6 +483,13 @@ const UsersPage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <UserDetailsModal
+        visible={detailVisible}
+        user={selectedDetailUser}
+        onClose={() => setDetailVisible(false)}
+      />
+
       <SubscriptionModal
         open={isSubModalOpen}
         user={selectedUser}
