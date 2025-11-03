@@ -185,6 +185,19 @@ export default function ProfilePage() {
                   </Descriptions.Item>
 
                   {<Descriptions.Item label="Invited By">{user?.invitedBy?.name || "-"}</Descriptions.Item>}
+                  <Descriptions.Item label="Other Contact">
+                  {user.other_channels && user.other_channels.length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {user.other_channels.map((ch: any) => (
+                        <li key={ch.channel}>
+                          <strong>{ch.channel}:</strong> {ch.id}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "No channels added"
+                  )}
+            </Descriptions.Item>
                 </Descriptions>
               ),
             },

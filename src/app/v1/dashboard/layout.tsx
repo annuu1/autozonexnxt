@@ -20,7 +20,7 @@ import {
   TrophyOutlined
 } from "@ant-design/icons";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import useAuthStore from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
@@ -33,6 +33,7 @@ import Image from "next/image";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { usePathname } from "next/navigation";
 import ExpiringSoonBanner from "@/components/common/ExpiringSoonBanner";
+import OtherChannelsModal from "@/components/common/OtherChannelsModal";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -81,7 +82,7 @@ const routeFeatureMap: Record<string, keyof typeof features | null> = {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const screens = useBreakpoint();
-  const { user, loading } = useAuthGuard();
+  const { user,  } = useAuthStore();
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
 
@@ -89,13 +90,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const pathname = usePathname();
 
+  // Telegram modal state
+  const [telegramModalVisible, setTelegramModalVisible] = useState(false);
+
+  // Check for Telegram username on user load
+  useEffect(() => {
+    if (user) {
+      const hasTelegram = user?.other_channels?.some((ch: any) => ch.channel === "telegramUsername");
+      if (!hasTelegram) {
+        setTelegramModalVisible(true);
+      }
+    }
+  }, [user]);
+
   // handle logout click
   const handleLogout = async () => {
     await logout();
     router.replace("/v1/login");
   };
 
-  if (loading) {
+  if (!user) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Spin size="large" />
@@ -319,6 +333,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
         </Content>
       </Layout>
+
+      {/* Telegram Username Modal */}
+      <OtherChannelsModal
+        visible={telegramModalVisible}
+        onClose={() => setTelegramModalVisible(false)}
+        channel="telegramUsername"
+        title="Add Your Telegram Username"
+        description="Add your Telegram username for easy support and seamless services, like automatically adding you to our alerts group."
+        placeholder="Enter your Telegram username (without @)"
+        onSuccess={() => {
+          router.refresh();
+          setTelegramModalVisible(false);
+        }}
+      />
     </Layout>
   );
 }

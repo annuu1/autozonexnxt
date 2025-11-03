@@ -17,6 +17,7 @@ export type CurrentUser = {
     endDate?: string;
   };
   invitedBy?: any;
+  other_channels?: any;
 };
 
 export default function useAuthGuard() {
