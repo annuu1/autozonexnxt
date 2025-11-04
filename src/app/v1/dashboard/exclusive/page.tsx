@@ -20,6 +20,7 @@ import {
   Upload,
   Popconfirm,
   FloatButton,
+  Tabs,
 } from "antd";
 import { PlusOutlined, MinusCircleOutlined, InboxOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { RcFile } from "antd/es/upload";
@@ -162,34 +163,29 @@ export default function TradesPage() {
     }
   };
 
-  // Upload to ImageKit
+  // Upload to ImageKit (Fixed: Append file directly, not base64)
   const uploadToImageKit = async (file: RcFile) => {
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        const formData = new FormData();
-        formData.append("file", base64);
-        formData.append("fileName", file.name);
+      const formData = new FormData();
+      formData.append("file", file); // Append the actual file blob
+      formData.append("fileName", file.name);
 
-        const res = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${btoa(`${process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE_KEY}:`)}`,
-          },
-          body: formData,
-        });
+      const res = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE_KEY}:`)}`,
+        },
+        body: formData,
+      });
 
-        const data = await res.json();
-        if (data.url) {
-          const currentImages = form.getFieldValue("images") || [];
-          form.setFieldsValue({ images: [...currentImages, data.url] });
-          message.success("Image uploaded successfully!");
-        } else {
-          message.error("Image upload failed.");
-        }
-      };
+      const data = await res.json();
+      if (data.url) {
+        const currentImages = form.getFieldValue("images") || [];
+        form.setFieldsValue({ images: [...currentImages, data.url] });
+        message.success("Image uploaded successfully!");
+      } else {
+        message.error("Image upload failed.");
+      }
     } catch (err) {
       message.error("Upload failed.");
       console.error(err);
@@ -249,6 +245,93 @@ export default function TradesPage() {
     );
   }
 
+  // Group trades by status and sort by date descending
+  const statusGroups = trades.reduce((acc: Record<Trade["status"], Trade[]>, trade) => {
+    acc[trade.status] = [...(acc[trade.status] || []), trade];
+    return acc;
+  }, {} as Record<Trade["status"], Trade[]>);
+
+  Object.keys(statusGroups).forEach((status) => {
+    statusGroups[status as Trade["status"]]?.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  });
+
+  const tabItems = Object.entries(statusGroups).map(([status, groupTrades]) => ({
+    key: status,
+    label: (
+      <Space>
+        <Tag color={statusColorMap[status as Trade["status"]]}>{status}</Tag>
+        <span>({groupTrades.length})</span>
+      </Space>
+    ),
+    children: (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {groupTrades.map((trade) => (
+          <Card
+            key={trade._id}
+            title={
+              <Space>
+                <span className="font-semibold">{trade.stock}</span>
+                <Tag color={statusColorMap[trade.status]}>{trade.status}</Tag>
+              </Space>
+            }
+            extra={<span className="text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>}
+            className="shadow-md hover:shadow-lg transition-shadow rounded-lg"
+            actions={
+              user?.roles?.includes("admin") || user?.roles?.includes("manager")
+                ? [
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      onClick={() => openEditModal(trade)}
+                      key="edit"
+                    >
+                      Edit
+                    </Button>,
+                    <Popconfirm
+                      key="delete"
+                      title="Are you sure you want to delete this trade?"
+                      onConfirm={() => handleDelete(trade._id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="text" icon={<DeleteOutlined />} danger>
+                        Delete
+                      </Button>
+                    </Popconfirm>,
+                  ]
+                : []
+            }
+          >
+            <Collapse ghost>
+              <Panel header="View Analysis" key="1">
+                <Paragraph style={{ whiteSpace: "pre-line" }} className="text-gray-700">
+                  {trade.analysis}
+                </Paragraph>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {trade.images.map((img, i) => (
+                    <Image
+                      key={i}
+                      src={img}
+                      alt={`${trade.stock} timeframe ${i + 1}`}
+                      className="rounded-lg"
+                      width="100%"
+                      preview
+                    />
+                  ))}
+                </div>
+              </Panel>
+            </Collapse>
+          </Card>
+        ))}
+        {groupTrades.length === 0 && (
+          <Alert message="No trades in this category yet." type="info" showIcon />
+        )}
+      </div>
+    ),
+  }));
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <Title level={2} className="mb-2">Trade Analysis</Title>
@@ -258,7 +341,11 @@ export default function TradesPage() {
         message="Important Disclaimer"
         description={
           <div>
-            <p>We are not SEBI registered. All analysis shared here is for educational purposes only. Do not buy or sell any securities based solely on this information. Always conduct your own research and consult with a qualified financial advisor before making any investment decisions.</p>
+            <p>
+              We are not SEBI registered. All analysis shared here is for educational purposes only. Do not buy or
+              sell any securities based solely on this information. Always conduct your own research and consult with
+              a qualified financial advisor before making any investment decisions.
+            </p>
           </div>
         }
         type="warning"
@@ -266,7 +353,8 @@ export default function TradesPage() {
         className="mb-6"
       />
       <Paragraph type="secondary" className="mb-6">
-        Explore and document in-depth technical analysis for stocks, incorporating annotated charts from multiple timeframes to capture nuanced market insights.
+        Explore and document in-depth technical analysis for stocks, incorporating annotated charts from multiple
+        timeframes to capture nuanced market insights.
       </Paragraph>
 
       {/* Floating Action Button */}
@@ -375,7 +463,9 @@ export default function TradesPage() {
                     <p className="ant-upload-drag-icon">
                       <InboxOutlined />
                     </p>
-                    <p className="ant-upload-text">Drag & drop images, click to upload, or paste from clipboard</p>
+                    <p className="ant-upload-text">
+                      Drag & drop images, click to upload, or paste from clipboard
+                    </p>
                   </Dragger>
                 </div>
 
@@ -430,65 +520,20 @@ export default function TradesPage() {
         </Form>
       </Modal>
 
-      {/* Trades List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {trades.map((trade) => (
-          <Card
-            key={trade._id}
-            title={
-              <Space>
-                <span className="font-semibold">{trade.stock}</span>
-                <Tag color={statusColorMap[trade.status]}>{trade.status}</Tag>
-              </Space>
-            }
-            extra={<span className="text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>}
-            className="shadow-md hover:shadow-lg transition-shadow rounded-lg"
-            actions={
-              user?.roles?.includes("admin") || user?.roles?.includes("manager")
-                ? [
-                    <Button
-                      type="text"
-                      icon={<EditOutlined />}
-                      onClick={() => openEditModal(trade)}
-                      key="edit"
-                    >
-                      Edit
-                    </Button>,
-                    <Popconfirm
-                      key="delete"
-                      title="Are you sure you want to delete this trade?"
-                      onConfirm={() => handleDelete(trade._id)}
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <Button type="text" icon={<DeleteOutlined />} danger>
-                        Delete
-                      </Button>
-                    </Popconfirm>,
-                  ]
-                : [] // No actions for non-admin/manager users
-              }
-            >
-            <Collapse ghost>
-              <Panel header="View Analysis" key="1">
-                <Paragraph style={{ whiteSpace: 'pre-line' }} className="text-gray-700">{trade.analysis}</Paragraph>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {trade.images.map((img, i) => (
-                    <Image
-                      key={i}
-                      src={img}
-                      alt={`${trade.stock} timeframe ${i + 1}`}
-                      className="rounded-lg"
-                      width="100%"
-                      preview
-                    />
-                  ))}
-                </div>
-              </Panel>
-            </Collapse>
-          </Card>
-        ))}
-      </div>
+      {/* Trades Tabs */}
+      {trades.length === 0 ? (
+        <div className="p-8 text-center">
+          <Title level={4}>No trades yet</Title>
+          <Paragraph>Start by adding your first trade analysis!</Paragraph>
+        </div>
+      ) : (
+        <Tabs
+          defaultActiveKey="Analysis Only"
+          items={tabItems}
+          className="mt-6"
+          tabBarStyle={{ marginBottom: 24 }}
+        />
+      )}
     </div>
   );
 }
