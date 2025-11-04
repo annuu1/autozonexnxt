@@ -82,6 +82,7 @@ export async function PATCH(
 
       // Activate trial
       user.subscription.status = "active";
+      user.subscription.plan = "starter";
       user.subscription.startDate = new Date();
       
       // Set trial end date (e.g., 7 days from now)
