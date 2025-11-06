@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import {
   Select,
@@ -14,11 +15,18 @@ import {
   Pagination,
   Input,
 } from "antd";
-import { StarFilled, CopyOutlined, LockOutlined } from "@ant-design/icons";
+import {
+  StarFilled,
+  CopyOutlined,
+  ThunderboltOutlined,
+  BellOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
 import { useScanner } from "@/hooks/useScanner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
 import TeamsPickModal from "@/components/scanner/TeamsPickModal";
+import QuickAlertModal from "@/components/alerts/QuickAlertModal";
 import useAuthStore from "@/store/useAuthStore";
 
 const { Title } = Typography;
@@ -26,16 +34,11 @@ const { useBreakpoint } = Grid;
 
 const getTimeframeColor = (timeframe: string) => {
   switch (timeframe) {
-    case "1wk":
-      return "cyan";
-    case "1mo":
-      return "purple";
-    case "3mo":
-      return "orange";
-    case "1d":
-      return "blue";
-    default:
-      return "default";
+    case "1wk": return "cyan";
+    case "1mo": return "purple";
+    case "3mo": return "orange";
+    case "1d":  return "blue";
+    default:    return "default";
   }
 };
 
@@ -55,6 +58,8 @@ export default function ScannerPage() {
   const [selectedZone, setSelectedZone] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [quickAlertSymbol, setQuickAlertSymbol] = useState<string>("");
+  const [quickAlertOpen, setQuickAlertOpen] = useState(false);
   const pageSize = 16;
 
   const screens = useBreakpoint();
@@ -95,9 +100,23 @@ export default function ScannerPage() {
   const isFreemium = user?.subscription?.plan === "freemium";
   const isLockedPage = isFreemium && page > 2;
 
+  const openQuickAlert = (symbol: string) => {
+    setQuickAlertSymbol(symbol);
+    setQuickAlertOpen(true);
+  };
+
+
   return (
     <div style={{ padding: screens.xs ? 12 : 20 }}>
       {contextHolder}
+
+      {/* Quick Alert Modal (controlled) */}
+      <QuickAlertModal
+        open={quickAlertOpen}
+        onClose={() => setQuickAlertOpen(false)}
+        initialSymbol={quickAlertSymbol}
+      />
+
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <Title level={3}>Zone Scanner</Title>
 
@@ -118,6 +137,7 @@ export default function ScannerPage() {
               { value: "3mo", label: "3 Months" },
             ]}
           />
+
           <Input.Search
             placeholder="Search by ticker"
             defaultValue={search}
@@ -159,6 +179,22 @@ export default function ScannerPage() {
           >
             Team’s Pick
           </Button>
+
+          {/* Floating Quick Alert */}
+          {/* <Button
+            type="primary"
+            icon={<ThunderboltOutlined />}
+            style={{
+              borderRadius: 30,
+              height: 48,
+              padding: "0 20px",
+              fontWeight: 600,
+              boxShadow: "0 4px 12px rgba(24,144,255,0.3)",
+            }}
+            onClick={() => setQuickAlertOpen(true)}
+          >
+            Quick Alert
+          </Button> */}
         </Space>
 
         <TeamsPickModal
@@ -299,6 +335,20 @@ export default function ScannerPage() {
                             copy(zone.ticker);
                           }}
                           style={{ cursor: "pointer", color: "#555" }}
+                        />
+
+                        {/* Alert Button */}
+                        <BellOutlined
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openQuickAlert(zone.ticker);
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            color: "#1890ff",
+                            fontSize: 16,
+                          }}
+                          title="Set price alert"
                         />
                       </div>
                       <Tag

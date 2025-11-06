@@ -11,9 +11,10 @@ import {
   Grid,
   Spin,
 } from "antd";
-import { CopyOutlined, LockOutlined } from "@ant-design/icons";
+import { BellOutlined, CopyOutlined, LockOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import QuickAlertModal from "@/components/alerts/QuickAlertModal";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -46,6 +47,9 @@ export default function LatestZonesPage() {
   const { copy, contextHolder } = useCopyToClipboard();
   const { user } = useAuthGuard();
   const canDelete = user?.roles?.includes("admin") || user?.roles?.includes("manager");
+
+  const [quickAlertSymbol, setQuickAlertSymbol] = useState<string>("");
+  const [quickAlertOpen, setQuickAlertOpen] = useState(false);
 
   const plan = user?.subscription?.plan;
   const status = user?.subscription?.status;
@@ -81,6 +85,11 @@ export default function LatestZonesPage() {
     setDrawerOpen(true);
   };
 
+  const openQuickAlert = (symbol: string) => {
+    setQuickAlertSymbol(symbol);
+    setQuickAlertOpen(true);
+  };
+
   const handleDelete = async (zoneId: string) => {
     try {
       const res = await fetch(`/api/v1/dashboard/zone/${zoneId}`, {
@@ -104,6 +113,13 @@ export default function LatestZonesPage() {
   return (
     <div style={{ padding: screens.xs ? 12 : 20, maxWidth: "1200px", margin: "0 auto" }}>
       {contextHolder}
+
+      {/* Quick Alert Modal (controlled) */}
+      <QuickAlertModal
+        open={quickAlertOpen}
+        onClose={() => setQuickAlertOpen(false)}
+        initialSymbol={quickAlertSymbol}
+      />
       <Title level={3}>Latest {selectedTimeframe} Zones</Title>
 
       {/* Timeframe buttons */}
@@ -213,6 +229,21 @@ export default function LatestZonesPage() {
                         }}
                         style={{ cursor: "pointer", color: "#555" }}
                       />
+
+                      {/* Alert Button */}
+                      <BellOutlined
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openQuickAlert(zone.ticker);
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            color: "#1890ff",
+                            fontSize: 16,
+                          }}
+                          title="Set price alert"
+                        />
+
                     </div>
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
