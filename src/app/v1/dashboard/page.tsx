@@ -31,6 +31,7 @@ import InvalidSymbolsModal from "@/components/dashboard/InvalidSymbolsModal";
 import AsidePanel from "@/components/dashboard/AsidePanel";
 import NewUpdates from "@/components/dashboard/NewUpdates";
 import FreeTrialModal from "@/components/dashboard/FreeTrialModal";
+import FloatingMailButton from "@/components/common/FloatingMailButton";
 
 // Hooks
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -415,6 +416,7 @@ export default function DashboardPage() {
         handleUpdateSymbol={handleUpdateSymbol}
         handleDeleteSymbol={handleDeleteSymbol}
       />
+      <FloatingMailButton />
     </Row>
   );
 }
