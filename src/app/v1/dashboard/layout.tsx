@@ -82,7 +82,7 @@ const routeFeatureMap: Record<string, keyof typeof features | null> = {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const screens = useBreakpoint();
-  const { user,  } = useAuthStore();
+  const { user, loading } = useAuthStore();
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
 
@@ -92,6 +92,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Telegram modal state
   const [telegramModalVisible, setTelegramModalVisible] = useState(false);
+
+  useEffect(() => {
+  // If not loading and no user, redirect to login
+  if (!loading && !user) {
+    router.replace("/v1/login");
+  }
+}, [loading, user, router]);
 
   // Check for Telegram username on user load
   useEffect(() => {
@@ -109,7 +116,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.replace("/v1/login");
   };
 
-  if (!user) {
+  if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Spin size="large" />

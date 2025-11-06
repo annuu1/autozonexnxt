@@ -21,6 +21,7 @@ export interface User {
 
 interface AuthState {
   user: User | null
+  loading: boolean;
   setUser: (user: User) => void
   clearUser: () => void
   logout: () => Promise<void>
@@ -32,26 +33,27 @@ const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      setUser: (user) => set({ user }),
-      clearUser: () => set({ user: null }),
+      loading: true,
+      setUser: (user) => set({ user, loading: false }),
+      clearUser: () => set({ user: null, loading: false }),
       logout: async () => {
         try {
           await fetch("/api/v1/auth/logout", { method: "POST" }) // or DELETE, depends on your API
         } catch (e) {
           console.error("Logout failed", e)
         }
-        set({ user: null })
+        set({ user: null, loading: false })
       },
       refreshUser: async () => {
         try {
           const res = await fetch("/api/v1/auth/me")
           if (!res.ok) throw new Error("Failed to fetch user")
           const data = await res.json()
-          set({ user: data })
+          set({ user: data, loading: false })
         } catch (err) {
           console.error("Failed to refresh user", err)
           // optionally clear user if unauthorized
-          set({ user: null })
+          set({ user: null, loading: false })
         }
       },
     }),
