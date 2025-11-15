@@ -19,17 +19,21 @@ export async function DELETE(
   await dbConnect();
 
   try {
-    const deleted = await DemandZone.findOneAndDelete({ zone_id: id });
+    const updated = await DemandZone.findOneAndUpdate(
+      { zone_id: id },
+      { $set: { freshness: 0, trade_score: 0 } },
+      { new: true }
+    );    
 
-    if (!deleted) {
+    if (!updated) {
       return NextResponse.json({ error: "Zone not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Zone deleted successfully" });
+    return NextResponse.json({ message: "Zone freshness reset successfully" });
   } catch (err: any) {
-    console.error("Delete zone error:", err);
+    console.error("Reset zone freshness error:", err);
     return NextResponse.json(
-      { error: "Failed to delete zone" },
+      { error: "Failed to reset zone freshness" },
       { status: 500 }
     );
   }
