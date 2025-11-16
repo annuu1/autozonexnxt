@@ -10,8 +10,15 @@ export async function GET(req: Request) {
   const limit = parseInt(searchParams.get("limit") || "10", 10);
   const skip = (page - 1) * limit;
 
-  const proximalWithin = parseFloat(searchParams.get("proximalWithin") || "0"); // % threshold
+  const proximalWithin = parseFloat(searchParams.get("proximalWithin") || "0");
   const compareTo = searchParams.get("compareTo") || "ltp"; // ltp | day_low
+
+  // Min 3% above proximal, max = proximalWithin or 10%
+  const minPct = 0.03;
+  const maxPct = (proximalWithin || 10) / 100;
+
+  // Dynamic field reference (IMPORTANT)
+  const compareField = `$symbol_data.${compareTo}`;
 
   const pipeline: any[] = [
     {
@@ -25,34 +32,55 @@ export async function GET(req: Request) {
     { $unwind: { path: "$symbol_data", preserveNullAndEmptyArrays: true } },
   ];
 
-  // ✅ Apply filter if provided
-  if (proximalWithin > 0) {
-    pipeline.push({
-      $match: {
-        $expr: {
-          $lte: [
-            {
-              $abs: {
+  // ===============================
+  // ⭐ ADVANCED FILTER:
+  // Price must be:
+  // 1) At least 3% ABOVE proximal
+  // 2) Within maxPct distance from proximal
+  // ===============================
+  pipeline.push({
+    $match: {
+      $expr: {
+        $and: [
+          // Condition 1: price >= proximal + 3%
+          {
+            $gte: [
+              {
                 $divide: [
-                  { $subtract: ["$proximal_line", `$symbol_data.${compareTo}`] },
-                  `$symbol_data.${compareTo}`,
+                  { $subtract: [compareField, "$proximal_line"] },
+                  "$proximal_line",
                 ],
               },
-            },
-            proximalWithin / 100,
-          ],
-        },
-      },
-    });
-  }
+              minPct,
+            ],
+          },
 
-  // ✅ Sort by freshness highest → lowest
+          // Condition 2: |proximal - price| / price <= maxPct
+          {
+            $lte: [
+              {
+                $abs: {
+                  $divide: [
+                    { $subtract: ["$proximal_line", compareField] },
+                    compareField,
+                  ],
+                },
+              },
+              maxPct,
+            ],
+          },
+        ],
+      },
+    },
+  });
+
+  // Sort zones — freshest first
   pipeline.push({ $sort: { freshness: -1 } });
 
-  // ✅ Pagination after filtering + sorting
+  // Pagination
   pipeline.push({ $skip: skip }, { $limit: limit });
 
-  // Final projection
+  // Final output fields
   pipeline.push({
     $project: {
       zone_id: 1,
@@ -72,11 +100,17 @@ export async function GET(req: Request) {
     },
   });
 
-  // For total count AFTER filter
-  const countPipeline = pipeline.filter(
-    (stg) => !("$skip" in stg) && !("$limit" in stg) && !("$project" in stg) && !("$sort" in stg)
-  );
-  countPipeline.push({ $count: "total" });
+  // Count pipeline (same filters but no pagination)
+  const countPipeline = [
+    ...pipeline.filter(
+      (stg) =>
+        !("$skip" in stg) &&
+        !("$limit" in stg) &&
+        !("$project" in stg) &&
+        !("$sort" in stg)
+    ),
+    { $count: "total" },
+  ];
 
   const [zones, countResult] = await Promise.all([
     DemandZone.aggregate(pipeline),
