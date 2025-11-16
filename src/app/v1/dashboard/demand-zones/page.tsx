@@ -320,7 +320,7 @@ export default function DemandZonesPage() {
                   cancelText="No"
                   onConfirm={(e) => {
                     e?.stopPropagation?.();
-                    handleDelete(zone._id);
+                    handleDelete(zone.zone_id);
                   }}
                 >
                   <DeleteOutlined
