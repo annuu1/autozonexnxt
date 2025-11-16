@@ -25,6 +25,7 @@ import {
 
 import QuickAlertModal from "@/components/alerts/QuickAlertModal";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import Reactions from "@/components/ui/Reactions";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -289,6 +290,14 @@ export default function DemandZonesPage() {
 
               {/* FOOTER: Alert Button */}
               <div className="flex justify-end mt-2" style={{ gap: 12 }}>
+                 <div className="mr-3">
+                                      <Reactions
+                                        itemId={zone._id}
+                                        type="zone"
+                                        allItemIds={zones.map((z: any) => z._id)}
+                                        teamPickEnabled
+                                      />
+                                    </div>
 
                 {/* Quick Alert Button */}
                 <BellOutlined
