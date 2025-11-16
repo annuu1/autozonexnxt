@@ -88,6 +88,24 @@ export default function DemandZonesPage() {
     }
   };
 
+  const handleLastSeen = async (zoneId: string) => {
+    try {
+      const res = await fetch(`/api/demand-zones/${zoneId}/seen`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to update last seen");
+      }
+
+      fetchZones(); // refresh list
+    } catch (err) {
+      console.error("Failed to update last seen", err);
+    }
+  };
+
   const handleCardClick = (zone: any) => {
     setSelectedZone(zone);
     setDrawerOpen(true);
@@ -183,7 +201,9 @@ export default function DemandZonesPage() {
             <Card
               key={zone._id}
               className="shadow-sm"
-              style={{ transition: "0.2s ease" }}
+              style={{ transition: "0.2s ease",
+                border: zone.last_seen ? "2px solid #52c41a" : "1px solid #f0f0f0",
+               }}
               bodyStyle={{ padding: 14 }}
             >
               {/* HEADER */}
@@ -207,6 +227,7 @@ export default function DemandZonesPage() {
                   onClick={(e) => {
                     e.stopPropagation();
                     copy(zone.ticker);
+                    handleLastSeen(zone._id);
                   }}
                   style={{ cursor: "pointer", fontSize: 16 }}
                 />
