@@ -64,7 +64,7 @@ export default function OtherChannelsModal({
       onCancel={onClose}
       footer={null}
       closable
-      destroyOnClose
+      destroyOnHidden
     >
       <p>{description}</p>
       <Input
