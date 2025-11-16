@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import DemandZone from "@/models/DemandZone";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
-  await dbConnect();
+
+    // Require authentication + minimum plan
+    const auth = await requireAuth(req, {
+      rolesAllowed: ["admin"],
+      minPlan: "starter",
+    });
+
+    if (!("ok" in auth) || !auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    await dbConnect();
 
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") || "1", 10);

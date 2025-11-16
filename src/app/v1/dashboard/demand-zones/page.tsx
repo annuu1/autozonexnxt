@@ -50,10 +50,12 @@ export default function DemandZonesPage() {
   const [quickAlertSymbol, setQuickAlertSymbol] = useState<string>("");
   const [quickAlertOpen, setQuickAlertOpen] = useState(false);
 
+  const [includeSeen, setIncludeSeen] = useState<"true" | "false">("true");
+
   // Fetch Zones
   const fetchZones = () => {
     const baseUrl = useFilters
-      ? `/api/demand-zones/filters?page=${page}&limit=${rowsPerPage}&proximalWithin=${proximalWithin}&compareTo=${compareTo}`
+      ? `/api/demand-zones/filters?page=${page}&limit=${rowsPerPage}&proximalWithin=${proximalWithin}&compareTo=${compareTo}&includeSeen=${includeSeen}`
       : `/api/demand-zones?page=${page}&limit=${rowsPerPage}`;
 
     fetch(baseUrl)
@@ -161,6 +163,16 @@ export default function DemandZonesPage() {
             options={[
               { value: "ltp", label: "LTP" },
               { value: "day_low", label: "Day Low" },
+            ]}
+          />
+            {/* ⭐ NEW - Seen Filter */}
+          <Select
+            value={includeSeen}
+            onChange={(v) => setIncludeSeen(v)}
+            style={{ width: screens.xs ? "100%" : 160 }}
+            options={[
+              { value: "true", label: "Show All Zones" },
+              { value: "false", label: "Hide Seen Zones" },
             ]}
           />
 
