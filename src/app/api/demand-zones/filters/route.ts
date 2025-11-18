@@ -18,6 +18,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const includeSeen = searchParams.get("includeSeen") === "true";
+  const includeTested = searchParams.get("includeTested") === "false";
 
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
@@ -50,6 +51,14 @@ export async function GET(req: Request) {
     pipeline.push({
       $match: {
         last_seen: { $exists: false },
+      },
+    });
+  }
+
+  if (!includeTested) {
+    pipeline.push({
+      $match: {
+        freshness: { $gte: 2 },
       },
     });
   }
