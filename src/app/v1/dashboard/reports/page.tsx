@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Card, Typography, Spin, Alert, Divider, Tabs, Tag, Pagination, Button } from "antd";
 import { useReports } from "@/hooks/useReports";
 import Reactions from "@/components/ui/Reactions";
+import { BellOutlined } from "@ant-design/icons";
+import QuickAlertModal from "@/components/alerts/QuickAlertModal";
 
 const { Title } = Typography;
 
@@ -33,10 +35,12 @@ function ZoneCard({
   zone,
   allItemIds,
   showReactions = false,
+  onQuickAlert,
 }: {
   zone: any;
   allItemIds: string[];
   showReactions?: boolean;
+  onQuickAlert: (symbol: string) => void;
 }) {
   const { symbol, timeframe, date } = parseZoneId(zone.zone_id);
 
@@ -80,7 +84,21 @@ function ZoneCard({
       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
     >
       <div className="flex items-center justify-between">
-        <strong style={{ fontSize: 16 }}>{symbol}</strong>
+        <div className="flex items-center gap-2">
+          <strong style={{ fontSize: 16 }}>{symbol}</strong>
+          <BellOutlined
+            onClick={(e) => {
+              e.stopPropagation();
+              onQuickAlert(symbol);
+            }}
+            style={{
+              cursor: "pointer",
+              color: "#1890ff",
+              fontSize: 16,
+            }}
+            title="Set price alert"
+          />
+        </div>
         <span style={{ fontSize: 12, color: "#555" }}>{parseUtcTimeToLocal(zone)}</span>
       </div>
 
@@ -113,10 +131,12 @@ function ZoneSection({
   title,
   data,
   showReactions = false,
+  onQuickAlert,
 }: {
   title: string;
   data: any[];
   showReactions?: boolean;
+  onQuickAlert: (symbol: string) => void;
 }) {
   if (!data || data.length === 0) {
     return (
@@ -125,13 +145,19 @@ function ZoneSection({
       </div>
     );
   }
-  
+
   const allIds = data.map((z) => z._id);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {data.map((zone) => (
-        <ZoneCard key={zone._id} zone={zone} allItemIds={allIds} showReactions={showReactions} />
+        <ZoneCard
+          key={zone._id}
+          zone={zone}
+          allItemIds={allIds}
+          showReactions={showReactions}
+          onQuickAlert={onQuickAlert}
+        />
       ))}
     </div>
   );
@@ -142,16 +168,24 @@ function ReportsPage() {
   const [historyPage, setHistoryPage] = useState(1);
   const [showHistoryReactions, setShowHistoryReactions] = useState(false);
 
+  const [quickAlertSymbol, setQuickAlertSymbol] = useState<string>("");
+  const [quickAlertOpen, setQuickAlertOpen] = useState(false);
+
+  const openQuickAlert = (symbol: string) => {
+    setQuickAlertSymbol(symbol);
+    setQuickAlertOpen(true);
+  };
+
   // Fetch today's data (always)
   const { data: todayData, isLoading: todayLoading, error: todayError } = useReports({
     includeHistory: false,
   });
 
   // Fetch historical data (only when showHistory is true)
-  const { 
-    data: historyData, 
-    isLoading: historyLoading, 
-    error: historyError 
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+    error: historyError
   } = useReports({
     includeHistory: showHistory,
     page: historyPage,
@@ -216,6 +250,12 @@ function ReportsPage() {
         📊 Demand Zone Reports
       </Title>
 
+      <QuickAlertModal
+        open={quickAlertOpen}
+        onClose={() => setQuickAlertOpen(false)}
+        initialSymbol={quickAlertSymbol}
+      />
+
       {/* Today Section */}
       <Card title="Today's Demand Zones" style={{ marginBottom: 24 }}>
         <Tabs
@@ -229,6 +269,7 @@ function ReportsPage() {
                   title="Approaching Zones"
                   data={todayData?.today?.approaching || []}
                   showReactions={true}
+                  onQuickAlert={openQuickAlert}
                 />
               ),
             },
@@ -240,6 +281,7 @@ function ReportsPage() {
                   title="Entered Zones"
                   data={todayData?.today?.entered || []}
                   showReactions={true}
+                  onQuickAlert={openQuickAlert}
                 />
               ),
             },
@@ -251,6 +293,7 @@ function ReportsPage() {
                   title="Breached Zones"
                   data={todayData?.today?.breached || []}
                   showReactions={true}
+                  onQuickAlert={openQuickAlert}
                 />
               ),
             },
@@ -259,11 +302,11 @@ function ReportsPage() {
       </Card>
 
       {/* Historical Section Toggle */}
-      <Card 
+      <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Historical Data</span>
-            <Button 
+            <Button
               type={showHistory ? "default" : "primary"}
               onClick={() => setShowHistory(!showHistory)}
               loading={showHistory && historyLoading}
@@ -309,6 +352,7 @@ function ReportsPage() {
                         title="Approaching Zones"
                         data={currentHistoryData?.approaching || []}
                         showReactions={showHistoryReactions}
+                        onQuickAlert={openQuickAlert}
                       />
                     ),
                   },
@@ -320,6 +364,7 @@ function ReportsPage() {
                         title="Entered Zones"
                         data={currentHistoryData?.entered || []}
                         showReactions={showHistoryReactions}
+                        onQuickAlert={openQuickAlert}
                       />
                     ),
                   },
@@ -331,6 +376,7 @@ function ReportsPage() {
                         title="Breached Zones"
                         data={currentHistoryData?.breached || []}
                         showReactions={showHistoryReactions}
+                        onQuickAlert={openQuickAlert}
                       />
                     ),
                   },

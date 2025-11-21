@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Modal, Tag, Pagination, Spin, Alert, Grid, Space } from "antd";
-import { CopyOutlined, LockOutlined } from "@ant-design/icons";
+import { BellOutlined, CopyOutlined, LockOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
 import useAuthStore from "@/store/useAuthStore";
+import QuickAlertModal from "../alerts/QuickAlertModal";
 
 const { useBreakpoint } = Grid;
 
@@ -46,6 +47,9 @@ export default function TeamsPickModal({
   });
 
   const isFreemium = user?.subscription?.plan === "freemium";
+
+  const [quickAlertSymbol, setQuickAlertSymbol] = useState<string>("");
+  const [quickAlertOpen, setQuickAlertOpen] = useState(false);
 
   // Fetch data when modal opens or pagination changes
   useEffect(() => {
@@ -104,9 +108,19 @@ export default function TeamsPickModal({
     );
   }
 
+  const openQuickAlert = (symbol: string) => {
+    setQuickAlertSymbol(symbol);
+    setQuickAlertOpen(true);
+  };
+
   return (
     <>
       {contextHolder}
+      <QuickAlertModal
+        open={quickAlertOpen}
+        onClose={() => setQuickAlertOpen(false)}
+        initialSymbol={quickAlertSymbol}
+      />
       <Modal
         title={`Team’s Pick Zones (${pagination.total})`}
         open={open}
@@ -138,10 +152,10 @@ export default function TeamsPickModal({
                 const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
                 const formattedDate = match
                   ? new Date(match[0]).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
                   : null;
 
                 return (
@@ -174,6 +188,18 @@ export default function TeamsPickModal({
                           <CopyOutlined
                             onClick={() => copy(zone.ticker)}
                             style={{ cursor: "pointer", color: "#555" }}
+                          />
+                          <BellOutlined
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openQuickAlert(zone.ticker);
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              color: "#1890ff",
+                              fontSize: 16,
+                            }}
+                            title="Set price alert"
                           />
                         </div>
                         <Tag

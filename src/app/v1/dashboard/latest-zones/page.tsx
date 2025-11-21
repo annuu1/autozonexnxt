@@ -198,11 +198,11 @@ export default function LatestZonesPage() {
               const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
               const formattedDate = match
                 ? new Date(match[0]).toLocaleDateString("en-IN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    timeZone: "Asia/Kolkata",
-                  })
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  timeZone: "Asia/Kolkata",
+                })
                 : null;
 
               return (
@@ -232,17 +232,17 @@ export default function LatestZonesPage() {
 
                       {/* Alert Button */}
                       <BellOutlined
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openQuickAlert(zone.ticker);
-                          }}
-                          style={{
-                            cursor: "pointer",
-                            color: "#1890ff",
-                            fontSize: 16,
-                          }}
-                          title="Set price alert"
-                        />
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openQuickAlert(zone.ticker);
+                        }}
+                        style={{
+                          cursor: "pointer",
+                          color: "#1890ff",
+                          fontSize: 16,
+                        }}
+                        title="Set price alert"
+                      />
 
                     </div>
                   </div>
