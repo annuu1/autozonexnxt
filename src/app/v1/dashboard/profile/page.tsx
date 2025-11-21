@@ -15,15 +15,17 @@ import {
   message,
   notification,
 } from "antd"
-import { EditOutlined, ReloadOutlined, LockOutlined } from "@ant-design/icons"
+import { EditOutlined, ReloadOutlined, LockOutlined, SendOutlined } from "@ant-design/icons"
 import useAuthStore from "@/store/useAuthStore"
+import OtherChannelsModal from "@/components/common/OtherChannelsModal"
 
 const { Title } = Typography
 
 export default function ProfilePage() {
-  const { user, logout, setUser,refreshUser } = useAuthStore()
+  const { user, logout, setUser, refreshUser } = useAuthStore()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
   const [passwordForm] = Form.useForm()
@@ -47,7 +49,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async (values: any) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/v1/users/${user.id||user._id}`, {
+      const res = await fetch(`/api/v1/users/${user.id || user._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -71,7 +73,7 @@ export default function ProfilePage() {
   const handleChangePassword = async (values: any) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/v1/users/${user.id||user._id}`, {
+      const res = await fetch(`/api/v1/users/${user.id || user._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,14 +115,14 @@ export default function ProfilePage() {
       <Card
         title={<Title level={3} style={{ marginBottom: 0 }}>User Dashboard</Title>}
         actions={[
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            key="edit"
-            onClick={() => setIsEditModalOpen(true)}
-          >
-            Edit Profile
-          </Button>,
+          // <Button
+          //   type="link"
+          //   icon={<EditOutlined />}
+          //   key="edit"
+          //   onClick={() => setIsEditModalOpen(true)}
+          // >
+          //   Edit Profile
+          // </Button>,
           <Button
             type="link"
             icon={<LockOutlined />}
@@ -128,6 +130,14 @@ export default function ProfilePage() {
             onClick={() => setIsPasswordModalOpen(true)}
           >
             Change Password
+          </Button>,
+          <Button
+            type="link"
+            icon={<SendOutlined />}
+            key="telegram"
+            onClick={() => setIsTelegramModalOpen(true)}
+          >
+            Update Telegram
           </Button>,
           // <Button
           //   type="link"
@@ -186,18 +196,18 @@ export default function ProfilePage() {
 
                   {<Descriptions.Item label="Invited By">{user?.invitedBy?.name || "-"}</Descriptions.Item>}
                   <Descriptions.Item label="Other Contact">
-                  {user.other_channels && user.other_channels.length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: 20 }}>
-                      {user.other_channels.map((ch: any) => (
-                        <li key={ch.channel}>
-                          <strong>{ch.channel}:</strong> {ch.id}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    "No channels added"
-                  )}
-            </Descriptions.Item>
+                    {user.other_channels && user.other_channels.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: 20 }}>
+                        {user.other_channels.map((ch: any) => (
+                          <li key={ch.channel}>
+                            <strong>{ch.channel}:</strong> {ch.id}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      "No channels added"
+                    )}
+                  </Descriptions.Item>
                 </Descriptions>
               ),
             },
@@ -326,6 +336,24 @@ export default function ProfilePage() {
           </Form.Item>
         </Form>
       </Modal>
+      {/* Telegram Username Modal */}
+      <OtherChannelsModal
+        visible={isTelegramModalOpen}
+        onClose={() => setIsTelegramModalOpen(false)}
+        channel="telegramUsername"
+        title="Update Telegram Username"
+        description="Add or update your Telegram username for easy support and seamless services."
+        placeholder="Enter your Telegram username (without @)"
+        initialValue={
+          user?.other_channels?.find(
+            (ch: any) => ch.channel === "telegramUsername"
+          )?.id || ""
+        }
+        onSuccess={() => {
+          messageApi.success("Telegram username updated successfully!")
+          setIsTelegramModalOpen(false)
+        }}
+      />
     </div>
   )
 }

@@ -94,11 +94,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [telegramModalVisible, setTelegramModalVisible] = useState(false);
 
   useEffect(() => {
-  // If not loading and no user, redirect to login
-  if (!loading && !user) {
-    router.replace("/v1/login");
-  }
-}, [loading, user, router]);
+    // If not loading and no user, redirect to login
+    if (!loading && !user) {
+      router.replace("/v1/login");
+    }
+  }, [loading, user, router]);
 
   // Check for Telegram username on user load
   useEffect(() => {
@@ -198,8 +198,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isExpired =
     sub?.status !== "active" || (derivedEndDate && derivedEndDate < new Date());
 
-    const shouldBlock = isExpired && pathname !== "/v1/dashboard/profile" 
-    && pathname !== "/v1/dashboard/billing" && pathname !== "/v1/dashboard" 
+  const shouldBlock = isExpired && pathname !== "/v1/dashboard/profile"
+    && pathname !== "/v1/dashboard/billing" && pathname !== "/v1/dashboard"
     && pathname !== "/v1/dashboard/alerts";
 
   return (
@@ -238,10 +238,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <h1 style={{ marginLeft: 16, fontSize: 18 }}>Dashboard</h1>
           </div>
 
-             {/* Expiring soon banner */}
-             {isExpiringSoon && (
-                  <ExpiringSoonBanner derivedEndDate={derivedEndDate} daysLeft={daysLeft} />
-                )}
+          {/* Expiring soon banner */}
+          {isExpiringSoon && (
+            <ExpiringSoonBanner derivedEndDate={derivedEndDate} daysLeft={daysLeft} />
+          )}
 
 
           {/* {user && (
@@ -327,7 +327,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <h3 style={{ marginBottom: 12 }}>No active subscription found</h3>
               <p style={{ marginBottom: 16 }}>
-              Join or renew to dive into Autozonex’s premium demand-supply tools!
+                Join or renew to dive into Autozonex’s premium demand-supply tools!
               </p>
               <Button
                 type="primary"

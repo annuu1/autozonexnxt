@@ -1,7 +1,7 @@
 // components/common/OtherChannelsModal.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Input, Button } from "antd";
 import useAuthStore from "@/store/useAuthStore";
 
@@ -13,6 +13,7 @@ interface OtherChannelsModalProps {
   description?: string;
   placeholder?: string;
   onSuccess?: () => void;
+  initialValue?: string;
 }
 
 export default function OtherChannelsModal({
@@ -23,9 +24,16 @@ export default function OtherChannelsModal({
   description = "Enter your channel information.",
   placeholder = "Enter value",
   onSuccess,
+  initialValue = "",
 }: OtherChannelsModalProps) {
-  const [value, setValue] = useState("");
-  const {refreshUser } = useAuthStore();
+  const [value, setValue] = useState(initialValue);
+  const { refreshUser } = useAuthStore();
+
+  useEffect(() => {
+    if (visible) {
+      setValue(initialValue);
+    }
+  }, [visible, initialValue]);
 
   const handleAdd = async () => {
     const trimmedValue = value.trim();

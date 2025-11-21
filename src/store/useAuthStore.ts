@@ -6,12 +6,14 @@ interface Subscription {
   status: string
   startDate: string
   // Optional fields for plan duration/expiry tracking
-  billingCycle?: "monthly" | "quarterly" | "yearly"
+  billingCycle?: "daily" | "weekly" | "monthly" | "quarterly" | "yearly"
   endDate?: string
 }
 
 export interface User {
+  invitedBy: any
   id: string
+  _id: string
   name: string
   email: string
   roles: string[]
