@@ -17,9 +17,10 @@ export async function GET(req: Request) {
   const statusFilter = searchParams.get("status") || "approaching";
   const timeframeFilter = searchParams.get("timeframe") || "all";
   const searchTerm = searchParams.get("search") || "";
+  const marketWatch = searchParams.get("market_watch") || "nifty_200";
 
-  // 🔑 Cache key based on status and timeframe only (excluding search)
-  const cacheKey = `zones-${statusFilter}-${timeframeFilter}`;
+  // 🔑 Cache key based on status, timeframe and marketWatch
+  const cacheKey = `zones-${statusFilter}-${timeframeFilter}-${marketWatch}`;
 
   let zones: any[];
 
@@ -28,6 +29,22 @@ export async function GET(req: Request) {
   if (cached) {
     zones = cached as any[];
   } else {
+    // Construct market watch filter
+    let marketWatchFilter: any = {};
+    if (marketWatch !== "all") {
+      if (marketWatch === "small_cap") {
+        marketWatchFilter = { "symbol.watchlists": { $regex: "Smallcap", $options: "i" } };
+      } else if (marketWatch === "mid_cap") {
+        marketWatchFilter = { "symbol.watchlists": { $regex: "Midcap", $options: "i" } };
+      } else if (marketWatch === "large_cap") {
+        marketWatchFilter = { "symbol.watchlists": "Nifty 100" };
+      } else {
+        // nifty_50 -> Nifty 50, etc.
+        const label = marketWatch.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+        marketWatchFilter = { "symbol.watchlists": label };
+      }
+    }
+
     // Fetch from database
     zones = await DemandZone.aggregate([
       {
@@ -39,6 +56,8 @@ export async function GET(req: Request) {
         },
       },
       { $unwind: "$symbol" },
+      // Filter by market watch
+      ...(marketWatch !== "all" ? [{ $match: marketWatchFilter }] : []),
       {
         $addFields: {
           percentDiff: {

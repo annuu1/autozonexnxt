@@ -45,14 +45,16 @@ export function useScanner() {
   const [zoneFilter, setZoneFilter] = useState<"approaching" | "entered">("approaching"); // default
   const [teamFilter, setTeamFilter] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
+  const [marketWatch, setMarketWatch] = useState<string>("all");
 
   // fetch zones from API with filters
   const { data: zones = fallbackZones, isLoading, error } = useQuery<Zone[]>({
-    queryKey: ["scanner", user?.id, timeframe, zoneFilter, search || ""],
+    queryKey: ["scanner", user?.id, timeframe, zoneFilter, search || "", marketWatch],
     queryFn: async () => {
       const params = new URLSearchParams({
         status: zoneFilter || "approaching",
         timeframe: timeframe || "all",
+        market_watch: marketWatch,
       });
 
       if (search) params.append("search", search);
@@ -88,5 +90,7 @@ export function useScanner() {
     setTeamFilter,
     search,
     setSearch,
+    marketWatch,
+    setMarketWatch,
   };
 }

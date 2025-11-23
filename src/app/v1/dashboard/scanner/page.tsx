@@ -37,8 +37,8 @@ const getTimeframeColor = (timeframe: string) => {
     case "1wk": return "cyan";
     case "1mo": return "purple";
     case "3mo": return "orange";
-    case "1d":  return "blue";
-    default:    return "default";
+    case "1d": return "blue";
+    default: return "default";
   }
 };
 
@@ -53,6 +53,8 @@ export default function ScannerPage() {
     error,
     search,
     setSearch,
+    marketWatch,
+    setMarketWatch,
   } = useScanner();
 
   const [selectedZone, setSelectedZone] = useState<any>(null);
@@ -135,6 +137,22 @@ export default function ScannerPage() {
               { value: "1wk", label: "1 Week" },
               { value: "1mo", label: "1 Month" },
               { value: "3mo", label: "3 Months" },
+            ]}
+          />
+
+          <Select
+            value={marketWatch}
+            onChange={setMarketWatch}
+            style={{ width: screens.xs ? "100%" : 150 }}
+            options={[
+              { value: "nifty_50", label: "Nifty 50" },
+              { value: "nifty_100", label: "Nifty 100" },
+              { value: "nifty_200", label: "Nifty 200" },
+              { value: "nifty_500", label: "Nifty 500" },
+              { value: "small_cap", label: "Small Cap" },
+              { value: "mid_cap", label: "Mid Cap" },
+              { value: "large_cap", label: "Large Cap" },
+              { value: "all", label: "All" },
             ]}
           />
 
@@ -253,10 +271,10 @@ export default function ScannerPage() {
                 const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
                 const formattedDate = match
                   ? new Date(match[0]).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
                   : null;
 
                 return (
