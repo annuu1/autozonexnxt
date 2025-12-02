@@ -10,6 +10,7 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
     const statusFilter = searchParams.get("status"); // 'active' | 'expired' | ''
+    const telegramStatus = searchParams.get("telegramStatus"); // 'granted' | 'revoked' | 'pending' | ''
 
     const skip = (page - 1) * limit;
 
@@ -71,6 +72,15 @@ export async function GET(req: Request) {
       });
     }
 
+    // 4. Apply Telegram Status Filter
+    if (telegramStatus) {
+      pipeline.push({
+        $match: {
+          "subscription.telegramAccessStatus": telegramStatus
+        }
+      });
+    }
+
     // 4. Count Total (before pagination)
     // We need a separate count query or use $facet. $facet is better for one round-trip.
     const facetPipeline = [
@@ -106,6 +116,7 @@ export async function GET(req: Request) {
                   status: 1,
                   startDate: 1,
                   billingCycle: 1,
+                  telegramAccessStatus: 1,
                   endDate: "$computedEndDate" // Return the computed date as endDate
                 },
                 invitedBy: { name: 1, email: 1 },

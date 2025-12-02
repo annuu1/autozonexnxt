@@ -24,13 +24,14 @@ export default function UsersPage() {
     });
     const [searchText, setSearchText] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
+    const [telegramFilterStatus, setTelegramFilterStatus] = useState("");
 
     // Modal states
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [detailsModalVisible, setDetailsModalVisible] = useState(false);
     const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
 
-    const fetchUsers = async (page = 1, limit = 10, search = "", status = "") => {
+    const fetchUsers = async (page = 1, limit = 10, search = "", status = "", telegramStatus = "") => {
         setLoading(true);
         try {
             const query = new URLSearchParams({
@@ -38,6 +39,7 @@ export default function UsersPage() {
                 limit: limit.toString(),
                 search,
                 status,
+                telegramStatus,
             });
             const res = await fetch(`/api/v1/admin/users?${query}`);
             const data = await res.json();
@@ -60,11 +62,11 @@ export default function UsersPage() {
     };
 
     useEffect(() => {
-        fetchUsers(pagination.current, pagination.pageSize, searchText, filterStatus);
+        fetchUsers(pagination.current, pagination.pageSize, searchText, filterStatus, telegramFilterStatus);
     }, []);
 
     const handleTableChange = (newPagination: any) => {
-        fetchUsers(newPagination.current, newPagination.pageSize, searchText, filterStatus);
+        fetchUsers(newPagination.current, newPagination.pageSize, searchText, filterStatus, telegramFilterStatus);
     };
 
     const [telegramModalVisible, setTelegramModalVisible] = useState(false);
@@ -122,7 +124,7 @@ export default function UsersPage() {
 
     const handleSearch = (value: string) => {
         setSearchText(value);
-        fetchUsers(1, pagination.pageSize, value, filterStatus);
+        fetchUsers(1, pagination.pageSize, value, filterStatus, telegramFilterStatus);
     };
 
     const columns = [
@@ -253,11 +255,26 @@ export default function UsersPage() {
                     onChange={(value) => {
                         setFilterStatus(value);
                         setPagination({ ...pagination, current: 1 });
-                        fetchUsers(1, pagination.pageSize, searchText, value);
+                        fetchUsers(1, pagination.pageSize, searchText, value, telegramFilterStatus);
                     }}
                 >
                     <Option value="active">Active</Option>
                     <Option value="expired">Expired</Option>
+                </Select>
+                <Select
+                    placeholder="Telegram Status"
+                    style={{ width: 150 }}
+                    allowClear
+                    onChange={(value) => {
+                        setTelegramFilterStatus(value);
+                        setPagination({ ...pagination, current: 1 });
+                        fetchUsers(1, pagination.pageSize, searchText, filterStatus, value);
+                    }}
+                >
+                    <Option value="granted">Granted</Option>
+                    <Option value="revoked">Revoked</Option>
+                    <Option value="pending">Pending</Option>
+                    <Option value="failed">Failed</Option>
                 </Select>
             </div>
 
