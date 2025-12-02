@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Table, Input, Button, Space, Tag, message, Tooltip, Select } from "antd";
+import { Table, Input, Button, Space, Tag, message, Tooltip, Select, Modal, Spin } from "antd";
 import {
     SearchOutlined,
     EyeOutlined,
@@ -67,6 +67,59 @@ export default function UsersPage() {
         fetchUsers(newPagination.current, newPagination.pageSize, searchText, filterStatus);
     };
 
+    const [telegramModalVisible, setTelegramModalVisible] = useState(false);
+    const [telegramActionLoading, setTelegramActionLoading] = useState(false);
+    const [telegramResult, setTelegramResult] = useState<any>(null);
+
+    const handleTelegramAction = (user: any) => {
+        setSelectedUser(user);
+        setTelegramResult(null);
+        setTelegramModalVisible(true);
+        // Optionally check status immediately
+        checkTelegramStatus(user._id);
+    };
+
+    const checkTelegramStatus = async (userId: string) => {
+        setTelegramActionLoading(true);
+        try {
+            const res = await fetch('/api/v1/admin/telegram/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action: 'check' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setTelegramResult((prev: any) => ({ ...prev, status: data.status, telegramUser: data.telegramUser }));
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setTelegramActionLoading(false);
+        }
+    };
+
+    const performTelegramAction = async (action: 'add' | 'remove' | 'resolve' | 'update_status', status?: string) => {
+        setTelegramActionLoading(true);
+        try {
+            const res = await fetch('/api/v1/admin/telegram/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: selectedUser._id, action, status })
+            });
+            const data = await res.json();
+            if (data.success) {
+                message.success(data.message);
+                setTelegramResult((prev: any) => ({ ...prev, ...data }));
+            } else {
+                message.error(data.error);
+            }
+        } catch (error) {
+            message.error("Action failed");
+        } finally {
+            setTelegramActionLoading(false);
+        }
+    };
+
     const handleSearch = (value: string) => {
         setSearchText(value);
         fetchUsers(1, pagination.pageSize, value, filterStatus);
@@ -124,6 +177,15 @@ export default function UsersPage() {
             },
         },
         {
+            title: "Billing Cycle",
+            key: "billingCycle",
+            render: (_: any, record: any) => {
+                const cycle = record.subscription?.billingCycle;
+                if (!cycle) return "-";
+                return <Tag color="purple">{cycle.toUpperCase()}</Tag>;
+            }
+        },
+        {
             title: "Expiry Date",
             key: "expiry",
             render: (_: any, record: any) => {
@@ -155,6 +217,13 @@ export default function UsersPage() {
                                 setSubscriptionModalVisible(true);
                             }}
                         />
+                    </Tooltip>
+                    <Tooltip title="Telegram Actions">
+                        <Button
+                            onClick={() => handleTelegramAction(record)}
+                        >
+                            TG
+                        </Button>
                     </Tooltip>
                 </Space>
             ),
@@ -218,6 +287,79 @@ export default function UsersPage() {
                     }}
                 />
             )}
+
+            <Modal
+                title={`Telegram Management - ${selectedUser?.name}`}
+                open={telegramModalVisible}
+                onCancel={() => setTelegramModalVisible(false)}
+                footer={null}
+            >
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <strong>Current Status: </strong>
+                        {telegramActionLoading && !telegramResult ? <Spin size="small" /> : (
+                            <Tag color={telegramResult?.status === 'member' || telegramResult?.status === 'administrator' || telegramResult?.status === 'creator' ? 'green' : 'red'}>
+                                {telegramResult?.status?.toUpperCase() || 'UNKNOWN'}
+                            </Tag>
+                        )}
+                    </div>
+
+                    {telegramResult?.inviteLink && (
+                        <div className="p-2 bg-gray-100 rounded border">
+                            <p className="text-xs text-gray-500 mb-1">Invite Link (One-time use):</p>
+                            <div className="flex items-center gap-2">
+                                <Input value={telegramResult.inviteLink} readOnly />
+                                <Button onClick={() => {
+                                    navigator.clipboard.writeText(telegramResult.inviteLink);
+                                    message.success("Copied!");
+                                }}>Copy</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex gap-2 justify-end mt-4">
+                        <Button
+                            loading={telegramActionLoading}
+                            onClick={() => performTelegramAction('resolve')}
+                        >
+                            Resolve ID
+                        </Button>
+                        <Button
+                            loading={telegramActionLoading}
+                            onClick={() => performTelegramAction('add')}
+                            type="primary"
+                        >
+                            Generate Invite
+                        </Button>
+                        <Button
+                            loading={telegramActionLoading}
+                            danger
+                            onClick={() => performTelegramAction('remove')}
+                        >
+                            Kick User
+                        </Button>
+                    </div>
+
+                    <div className="border-t pt-4 mt-2">
+                        <p className="text-xs text-gray-500 mb-2">Manual Override (Use with caution):</p>
+                        <div className="flex gap-2 justify-end">
+                            <Button
+                                size="small"
+                                onClick={() => performTelegramAction('update_status', 'granted')}
+                            >
+                                Mark Granted
+                            </Button>
+                            <Button
+                                size="small"
+                                danger
+                                onClick={() => performTelegramAction('update_status', 'revoked')}
+                            >
+                                Mark Revoked
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

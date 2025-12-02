@@ -4,6 +4,9 @@ export interface ISubscription extends Document {
   userId: Types.ObjectId;
   telegramChatId: string;
   telegramUsername?: string;
+  telegramAccessStatus: "pending" | "granted" | "revoked" | "failed";
+  telegramInviteLink?: string;
+  telegramAccessExpiry?: Date;
   plan: string;
   billingCycle: string;
   amount: number;
@@ -20,8 +23,15 @@ export interface ISubscription extends Document {
 const subscriptionSchema = new Schema<ISubscription>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    telegramChatId: { type: String},
+    telegramChatId: { type: String },
     telegramUsername: { type: String },
+    telegramAccessStatus: {
+      type: String,
+      enum: ["pending", "granted", "revoked", "failed"],
+      default: "pending",
+    },
+    telegramInviteLink: { type: String },
+    telegramAccessExpiry: { type: Date },
     plan: { type: String, default: "starter" },
     billingCycle: { type: String, default: "monthly" },
     amount: { type: Number, required: true },

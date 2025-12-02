@@ -64,6 +64,13 @@ const UserSchema = new Schema(
         enum: ["daily", "weekly", "monthly", "quarterly", "yearly"],
         default: "daily",
       },
+      telegramAccessStatus: {
+        type: String,
+        enum: ["pending", "granted", "revoked", "failed"],
+        default: "pending",
+      },
+      telegramInviteLink: { type: String },
+      telegramAccessExpiry: { type: Date },
     },
 
     isVerified: {
@@ -87,7 +94,7 @@ const UserSchema = new Schema(
         required: true,
       },
     }],
-    
+
     // Single active session tracking
     sessionId: {
       type: String,
