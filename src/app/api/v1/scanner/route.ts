@@ -18,9 +18,11 @@ export async function GET(req: Request) {
   const timeframeFilter = searchParams.get("timeframe") || "all";
   const searchTerm = searchParams.get("search") || "";
   const marketWatch = searchParams.get("market_watch") || "nifty_200";
+  const sector = searchParams.get("sector") || "";
+  const watchlist = searchParams.get("watchlist") || "";
 
-  // 🔑 Cache key based on status, timeframe and marketWatch
-  const cacheKey = `zones-${statusFilter}-${timeframeFilter}-${marketWatch}`;
+  // 🔑 Cache key based on status, timeframe, marketWatch, sector, watchlist
+  const cacheKey = `zones-${statusFilter}-${timeframeFilter}-${marketWatch}-${sector}-${watchlist}`;
 
   let zones: any[];
 
@@ -58,6 +60,10 @@ export async function GET(req: Request) {
       { $unwind: "$symbol" },
       // Filter by market watch
       ...(marketWatch !== "all" ? [{ $match: marketWatchFilter }] : []),
+      // Filter by sector
+      ...(sector ? [{ $match: { "symbol.sectors": sector } }] : []),
+      // Filter by watchlist (explicit)
+      ...(watchlist ? [{ $match: { "symbol.watchlists": watchlist } }] : []),
       {
         $addFields: {
           percentDiff: {

@@ -42,14 +42,27 @@ export function useScanner() {
 
   // filters
   const [timeframe, setTimeframe] = useState<string>("all"); // default = all
-  const [zoneFilter, setZoneFilter] = useState<"approaching" | "entered">("approaching"); // default
+  const [zoneFilter, setZoneFilter] = useState<"approaching" | "entered" | null>("approaching"); // default
   const [teamFilter, setTeamFilter] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
-  const [marketWatch, setMarketWatch] = useState<string>("all");
+  const [marketWatch, setMarketWatch] = useState<string>("nifty_200");
+  const [sector, setSector] = useState<string>("");
+  const [watchlist, setWatchlist] = useState<string>("");
+
+  // fetch filters
+  const { data: filters } = useQuery({
+    queryKey: ["scanner-filters"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/scanner/filters");
+      if (!res.ok) throw new Error("Failed to fetch filters");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
 
   // fetch zones from API with filters
   const { data: zones = fallbackZones, isLoading, error } = useQuery<Zone[]>({
-    queryKey: ["scanner", user?.id, timeframe, zoneFilter, search || "", marketWatch],
+    queryKey: ["scanner", user?.id, timeframe, zoneFilter, search || "", marketWatch, sector, watchlist],
     queryFn: async () => {
       const params = new URLSearchParams({
         status: zoneFilter || "approaching",
@@ -58,6 +71,8 @@ export function useScanner() {
       });
 
       if (search) params.append("search", search);
+      if (sector) params.append("sector", sector);
+      if (watchlist) params.append("watchlist", watchlist);
 
       const res = await fetch(`/api/v1/scanner?${params.toString()}`, {
         headers: { "Content-Type": "application/json" },
@@ -71,7 +86,7 @@ export function useScanner() {
 
   // apply team filter (local only)
   const filteredZones = useMemo(() => {
-    return zones.filter((zone) => {
+    return zones.filter((zone: Zone) => {
       if (teamFilter && zone.rating < 8) return false;
       return true;
     });
@@ -92,5 +107,10 @@ export function useScanner() {
     setSearch,
     marketWatch,
     setMarketWatch,
+    sector,
+    setSector,
+    watchlist,
+    setWatchlist,
+    filters: filters || { sectors: [], watchlists: [] },
   };
 }

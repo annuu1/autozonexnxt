@@ -55,6 +55,11 @@ export default function ScannerPage() {
     setSearch,
     marketWatch,
     setMarketWatch,
+    sector,
+    setSector,
+    watchlist,
+    setWatchlist,
+    filters,
   } = useScanner();
 
   const [selectedZone, setSelectedZone] = useState<any>(null);
@@ -140,7 +145,7 @@ export default function ScannerPage() {
             ]}
           />
 
-          <Select
+          {/* <Select
             value={marketWatch}
             onChange={setMarketWatch}
             style={{ width: screens.xs ? "100%" : 150 }}
@@ -154,6 +159,26 @@ export default function ScannerPage() {
               { value: "large_cap", label: "Large Cap" },
               { value: "all", label: "All" },
             ]}
+          /> */}
+
+          <Select
+            placeholder="Sector"
+            value={sector || undefined}
+            onChange={setSector}
+            style={{ width: screens.xs ? "100%" : 150 }}
+            allowClear
+            showSearch
+            options={filters.sectors.map((s: string) => ({ value: s, label: s }))}
+          />
+
+          <Select
+            placeholder="Watchlist"
+            value={watchlist || undefined}
+            onChange={setWatchlist}
+            style={{ width: screens.xs ? "100%" : 150 }}
+            allowClear
+            showSearch
+            options={filters.watchlists.map((w: string) => ({ value: w, label: w }))}
           />
 
           <Input.Search
