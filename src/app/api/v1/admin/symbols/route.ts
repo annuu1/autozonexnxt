@@ -31,6 +31,16 @@ export async function GET(req: Request) {
             matchStage.status = status;
         }
 
+        const sector = searchParams.get("sector");
+        if (sector) {
+            matchStage.sectors = sector;
+        }
+
+        const watchlist = searchParams.get("watchlist");
+        if (watchlist) {
+            matchStage.watchlists = watchlist;
+        }
+
         const total = await Symbol.countDocuments(matchStage);
         const symbols = await Symbol.find(matchStage)
             .sort({ symbol: 1 })

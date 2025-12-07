@@ -46,6 +46,12 @@ export default function SymbolsPage() {
     const [search, setSearch] = useState('');
     const [isLiquidFilter, setIsLiquidFilter] = useState<boolean | undefined>(undefined);
     const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+    const [sectorFilter, setSectorFilter] = useState<string | undefined>(undefined);
+    const [watchlistFilter, setWatchlistFilter] = useState<string | undefined>(undefined);
+
+    // Filter Options
+    const [sectorOptions, setSectorOptions] = useState<string[]>([]);
+    const [watchlistOptions, setWatchlistOptions] = useState<string[]>([]);
 
     // Selection
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -74,6 +80,19 @@ export default function SymbolsPage() {
     const [form] = Form.useForm();
     const [addForm] = Form.useForm();
 
+    const fetchFilters = async () => {
+        try {
+            const res = await fetch('/api/v1/admin/symbols/filters');
+            const data = await res.json();
+            if (data.success) {
+                setSectorOptions(data.sectors);
+                setWatchlistOptions(data.watchlists);
+            }
+        } catch (error) {
+            console.error('Failed to fetch filters', error);
+        }
+    };
+
     const fetchSymbols = async () => {
         setLoading(true);
         try {
@@ -87,6 +106,12 @@ export default function SymbolsPage() {
             }
             if (statusFilter) {
                 params.append('status', statusFilter);
+            }
+            if (sectorFilter) {
+                params.append('sector', sectorFilter);
+            }
+            if (watchlistFilter) {
+                params.append('watchlist', watchlistFilter);
             }
 
             const res = await fetch(`/api/v1/admin/symbols?${params.toString()}`);
@@ -105,8 +130,12 @@ export default function SymbolsPage() {
     };
 
     useEffect(() => {
+        fetchFilters();
+    }, []);
+
+    useEffect(() => {
         fetchSymbols();
-    }, [page, pageSize, search, isLiquidFilter, statusFilter]);
+    }, [page, pageSize, search, isLiquidFilter, statusFilter, sectorFilter, watchlistFilter]);
 
     // --- Demand Zones ---
     const fetchDemandZones = async (ticker: string) => {
@@ -143,6 +172,7 @@ export default function SymbolsPage() {
                 setIsAddModalOpen(false);
                 addForm.resetFields();
                 fetchSymbols();
+                fetchFilters(); // Refresh filters in case new sectors/watchlists were added
             } else {
                 message.error(data.error);
             }
@@ -162,6 +192,7 @@ export default function SymbolsPage() {
             if (data.success) {
                 message.success('Symbol updated');
                 fetchSymbols();
+                fetchFilters();
                 return true;
             } else {
                 message.error(data.error || 'Failed to update symbol');
@@ -183,6 +214,7 @@ export default function SymbolsPage() {
                 message.success(data.message);
                 setSelectedRowKeys([]);
                 fetchSymbols();
+                fetchFilters();
             } else {
                 message.error(data.error);
             }
@@ -212,6 +244,7 @@ export default function SymbolsPage() {
                 setIsBulkActionModalOpen(false);
                 setBulkActionValue('');
                 fetchSymbols();
+                fetchFilters();
             } else {
                 message.error(data.error);
             }
@@ -237,6 +270,7 @@ export default function SymbolsPage() {
                     setTargetSector('');
                     setTargetWatchlist('');
                     fetchSymbols();
+                    fetchFilters();
                 } else {
                     message.error(`${info.file.name} upload failed: ${info.file.response.error}`);
                 }
@@ -280,12 +314,12 @@ export default function SymbolsPage() {
             {
                 key: 'active',
                 label: 'Set Status: Active',
-                onClick: () => handleBulkUpdate('update_status', 'Active'),
+                onClick: () => handleBulkUpdate('update_status', 'active'),
             },
             {
                 key: 'inactive',
                 label: 'Set Status: Inactive',
-                onClick: () => handleBulkUpdate('update_status', 'Inactive'),
+                onClick: () => handleBulkUpdate('update_status', 'inactive'),
             },
             {
                 key: 'liquid',
@@ -351,7 +385,7 @@ export default function SymbolsPage() {
             dataIndex: 'status',
             key: 'status',
             render: (status: string) => (
-                <Tag color={status === 'Active' ? 'green' : 'red'}>{status}</Tag>
+                <Tag color={status === 'active' ? 'green' : 'red'}>{status}</Tag>
             ),
         },
         {
@@ -428,6 +462,22 @@ export default function SymbolsPage() {
                         { value: 'true', label: 'Liquid' },
                         { value: 'false', label: 'Not Liquid' },
                     ]}
+                />
+                <Select
+                    placeholder="Filter by Sector"
+                    allowClear
+                    showSearch
+                    style={{ width: 180 }}
+                    onChange={(value) => setSectorFilter(value)}
+                    options={sectorOptions.map(s => ({ value: s, label: s }))}
+                />
+                <Select
+                    placeholder="Filter by Watchlist"
+                    allowClear
+                    showSearch
+                    style={{ width: 180 }}
+                    onChange={(value) => setWatchlistFilter(value)}
+                    options={watchlistOptions.map(w => ({ value: w, label: w }))}
                 />
                 <Input
                     placeholder="Search symbols..."
