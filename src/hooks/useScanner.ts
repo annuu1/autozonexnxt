@@ -45,7 +45,7 @@ export function useScanner() {
   const [zoneFilter, setZoneFilter] = useState<"approaching" | "entered" | null>("approaching"); // default
   const [teamFilter, setTeamFilter] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
-  const [marketWatch, setMarketWatch] = useState<string>("nifty_200");
+  const [marketWatch, setMarketWatch] = useState<string>("all");
   const [sector, setSector] = useState<string>("");
   const [watchlist, setWatchlist] = useState<string>("");
 
