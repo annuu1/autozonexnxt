@@ -26,6 +26,11 @@ export async function GET(req: Request) {
             matchStage.is_liquid = isLiquid === 'true';
         }
 
+        const status = searchParams.get("status");
+        if (status) {
+            matchStage.status = status;
+        }
+
         const total = await Symbol.countDocuments(matchStage);
         const symbols = await Symbol.find(matchStage)
             .sort({ symbol: 1 })
@@ -101,6 +106,11 @@ export async function PUT(req: Request) {
             { $set: updateData },
             { new: true }
         );
+
+        // If setting is_liquid to false, delete associated demand zones
+        if (updateData.is_liquid === false && updatedSymbol) {
+            await DemandZone.deleteMany({ ticker: updatedSymbol.symbol });
+        }
 
         if (!updatedSymbol) {
             return NextResponse.json(
@@ -188,6 +198,14 @@ export async function PATCH(req: Request) {
                 break;
             default:
                 return NextResponse.json({ success: false, error: "Invalid action" }, { status: 400 });
+        }
+
+        if (action === 'update_liquidity' && value === false) {
+            const symbolsToUpdate = await Symbol.find({ _id: { $in: ids } });
+            const tickers = symbolsToUpdate.map(s => s.symbol);
+            if (tickers.length > 0) {
+                await DemandZone.deleteMany({ ticker: { $in: tickers } });
+            }
         }
 
         await Symbol.updateMany({ _id: { $in: ids } }, updateQuery);

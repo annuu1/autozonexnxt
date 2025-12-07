@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Switch, Input, Button, Modal, Form, Select, message, Tag, Space, Upload, Dropdown, MenuProps, Popconfirm } from 'antd';
+import { Table, Switch, Input, Button, Modal, Form, Select, message, Tag, Space, Upload, Dropdown, MenuProps, Popconfirm, Drawer } from 'antd';
 import {
     EditOutlined,
     SearchOutlined,
@@ -9,9 +9,11 @@ import {
     UploadOutlined,
     DeleteOutlined,
     MoreOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
+import dayjs from 'dayjs';
 
 interface SymbolData {
     _id: string;
@@ -23,6 +25,18 @@ interface SymbolData {
     watchlists: string[];
 }
 
+interface DemandZone {
+    _id: string;
+    zone_id: string;
+    ticker: string;
+    timeframes: string[];
+    proximal_line: number;
+    distal_line: number;
+    freshness: number;
+    trade_score: number;
+    timestamp: string;
+}
+
 export default function SymbolsPage() {
     const [symbols, setSymbols] = useState<SymbolData[]>([]);
     const [loading, setLoading] = useState(false);
@@ -31,6 +45,7 @@ export default function SymbolsPage() {
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
     const [isLiquidFilter, setIsLiquidFilter] = useState<boolean | undefined>(undefined);
+    const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
 
     // Selection
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -46,6 +61,16 @@ export default function SymbolsPage() {
     const [bulkActionType, setBulkActionType] = useState<'add_sector' | 'add_watchlist' | null>(null);
     const [bulkActionValue, setBulkActionValue] = useState('');
 
+    // Demand Zones Drawer
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [currentTicker, setCurrentTicker] = useState<string | null>(null);
+    const [demandZones, setDemandZones] = useState<DemandZone[]>([]);
+    const [zonesLoading, setZonesLoading] = useState(false);
+
+    // Upload Form
+    const [targetSector, setTargetSector] = useState('');
+    const [targetWatchlist, setTargetWatchlist] = useState('');
+
     const [form] = Form.useForm();
     const [addForm] = Form.useForm();
 
@@ -59,6 +84,9 @@ export default function SymbolsPage() {
             });
             if (isLiquidFilter !== undefined) {
                 params.append('is_liquid', isLiquidFilter.toString());
+            }
+            if (statusFilter) {
+                params.append('status', statusFilter);
             }
 
             const res = await fetch(`/api/v1/admin/symbols?${params.toString()}`);
@@ -78,7 +106,27 @@ export default function SymbolsPage() {
 
     useEffect(() => {
         fetchSymbols();
-    }, [page, pageSize, search, isLiquidFilter]);
+    }, [page, pageSize, search, isLiquidFilter, statusFilter]);
+
+    // --- Demand Zones ---
+    const fetchDemandZones = async (ticker: string) => {
+        setZonesLoading(true);
+        setCurrentTicker(ticker);
+        setIsDrawerOpen(true);
+        try {
+            const res = await fetch(`/api/v1/admin/demand-zones?ticker=${ticker}`);
+            const data = await res.json();
+            if (data.success) {
+                setDemandZones(data.zones);
+            } else {
+                message.error('Failed to fetch demand zones');
+            }
+        } catch (error) {
+            message.error('Error fetching demand zones');
+        } finally {
+            setZonesLoading(false);
+        }
+    };
 
     // --- CRUD Operations ---
 
@@ -177,11 +225,17 @@ export default function SymbolsPage() {
         name: 'file',
         action: '/api/v1/admin/symbols/upload',
         showUploadList: false,
+        data: {
+            targetSector,
+            targetWatchlist
+        },
         onChange(info) {
             if (info.file.status === 'done') {
                 if (info.file.response.success) {
                     message.success(`${info.file.name} uploaded successfully. ${info.file.response.message}`);
                     setIsUploadModalOpen(false);
+                    setTargetSector('');
+                    setTargetWatchlist('');
                     fetchSymbols();
                 } else {
                     message.error(`${info.file.name} upload failed: ${info.file.response.error}`);
@@ -317,6 +371,7 @@ export default function SymbolsPage() {
             fixed: 'right' as const,
             render: (_: any, record: SymbolData) => (
                 <Space>
+                    <Button icon={<EyeOutlined />} size="small" onClick={() => fetchDemandZones(record.symbol)} title="View Zones" />
                     <Button icon={<EditOutlined />} size="small" onClick={() => openEditModal(record)} />
                     <Popconfirm title="Delete symbol?" onConfirm={() => handleDelete([record._id])}>
                         <Button icon={<DeleteOutlined />} size="small" danger />
@@ -326,10 +381,23 @@ export default function SymbolsPage() {
         },
     ];
 
+    const zoneColumns = [
+        { title: 'Zone ID', dataIndex: 'zone_id', key: 'zone_id' },
+        { title: 'Timeframes', dataIndex: 'timeframes', key: 'timeframes', render: (t: string[]) => t.join(', ') },
+        { title: 'Proximal', dataIndex: 'proximal_line', key: 'proximal_line' },
+        { title: 'Distal', dataIndex: 'distal_line', key: 'distal_line' },
+        { title: 'Freshness', dataIndex: 'freshness', key: 'freshness' },
+        { title: 'Score', dataIndex: 'trade_score', key: 'trade_score' },
+        { title: 'Date', dataIndex: 'timestamp', key: 'timestamp', render: (d: string) => dayjs(d).format('DD MMM YYYY') },
+    ];
+
     return (
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-                <h1 style={{ margin: 0 }}>Symbol Management</h1>
+                <div>
+                    <h1 style={{ margin: 0 }}>Symbol Management</h1>
+                    <span style={{ color: '#888' }}>Total Symbols: {total}</span>
+                </div>
                 <Space wrap>
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsAddModalOpen(true)}>
                         Add Symbol
@@ -341,6 +409,16 @@ export default function SymbolsPage() {
             </div>
 
             <div style={{ marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Select
+                    placeholder="Filter by Status"
+                    allowClear
+                    style={{ width: 150 }}
+                    onChange={(value) => setStatusFilter(value)}
+                    options={[
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Inactive' },
+                    ]}
+                />
                 <Select
                     placeholder="Filter by Liquidity"
                     allowClear
@@ -394,6 +472,8 @@ export default function SymbolsPage() {
                     current: page,
                     pageSize: pageSize,
                     total: total,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100', '200', '500', '1000'],
                     onChange: (p, ps) => {
                         setPage(p);
                         setPageSize(ps);
@@ -414,8 +494,8 @@ export default function SymbolsPage() {
                     </Form.Item>
                     <Form.Item name="status" label="Status">
                         <Select>
-                            <Select.Option value="Active">Active</Select.Option>
-                            <Select.Option value="Inactive">Inactive</Select.Option>
+                            <Select.Option value="active">Active</Select.Option>
+                            <Select.Option value="inactive">Inactive</Select.Option>
                         </Select>
                     </Form.Item>
                     <Form.Item name="sectors" label="Sectors">
@@ -460,8 +540,23 @@ export default function SymbolsPage() {
                 footer={null}
                 onCancel={() => setIsUploadModalOpen(false)}
             >
+                <div style={{ marginBottom: 16 }}>
+                    <p>Optional: Add all uploaded symbols to a specific Sector or Watchlist.</p>
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                        <Input
+                            placeholder="Target Sector (e.g. Banking)"
+                            value={targetSector}
+                            onChange={e => setTargetSector(e.target.value)}
+                        />
+                        <Input
+                            placeholder="Target Watchlist (e.g. Nifty 50)"
+                            value={targetWatchlist}
+                            onChange={e => setTargetWatchlist(e.target.value)}
+                        />
+                    </Space>
+                </div>
+
                 <p>CSV Format: symbol, company_name, sectors, watchlists, is_liquid, status</p>
-                <p>Note: Sectors and Watchlists should be pipe (|) separated.</p>
                 <Upload.Dragger {...uploadProps}>
                     <p className="ant-upload-drag-icon">
                         <UploadOutlined />
@@ -483,6 +578,24 @@ export default function SymbolsPage() {
                     onChange={(e) => setBulkActionValue(e.target.value)}
                 />
             </Modal>
+
+            {/* Demand Zones Drawer */}
+            <Drawer
+                title={`Demand Zones: ${currentTicker}`}
+                placement="right"
+                width={720}
+                onClose={() => setIsDrawerOpen(false)}
+                open={isDrawerOpen}
+            >
+                <Table
+                    columns={zoneColumns}
+                    dataSource={demandZones}
+                    rowKey="_id"
+                    loading={zonesLoading}
+                    pagination={{ pageSize: 20 }}
+                    size="small"
+                />
+            </Drawer>
         </div>
     );
 }

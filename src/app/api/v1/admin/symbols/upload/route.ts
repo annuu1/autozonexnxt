@@ -8,6 +8,8 @@ export async function POST(req: Request) {
         await dbConnect();
         const formData = await req.formData();
         const file = formData.get("file") as File;
+        const targetSector = formData.get("targetSector") as string;
+        const targetWatchlist = formData.get("targetWatchlist") as string;
 
         if (!file) {
             return NextResponse.json({ success: false, error: "No file uploaded" }, { status: 400 });
@@ -19,8 +21,6 @@ export async function POST(req: Request) {
 
         const symbolsToUpsert = [];
 
-        // Basic CSV parsing (assuming no commas in values for simplicity, or handle quotes later if needed)
-        // A better approach for robust parsing would be needed for complex CSVs
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
@@ -42,32 +42,64 @@ export async function POST(req: Request) {
 
         for (const row of symbolsToUpsert) {
             const filter = { symbol: row.symbol };
-            const update: any = {
-                company_name: row.company_name,
+
+            // Prepare data for creation
+            const createData: any = {
+                symbol: row.symbol,
+                company_name: row.company_name || row.symbol,
                 status: row.status || 'Active',
+                is_liquid: row.is_liquid ? row.is_liquid.toLowerCase() === 'true' : false,
+                sectors: [],
+                watchlists: []
             };
 
-            if (row.is_liquid) {
-                update.is_liquid = row.is_liquid.toLowerCase() === 'true';
+            // Prepare data for update (using $addToSet for arrays)
+            const updateData: any = {
+                $set: {},
+                $addToSet: {}
+            };
+
+            if (row.company_name) updateData.$set.company_name = row.company_name;
+            if (row.status) updateData.$set.status = row.status;
+            if (row.is_liquid) updateData.$set.is_liquid = row.is_liquid.toLowerCase() === 'true';
+
+            // Handle CSV columns for sectors/watchlists
+            const csvSectors = row.sectors ? row.sectors.split('|').map((s: string) => s.trim()) : [];
+            const csvWatchlists = row.watchlists ? row.watchlists.split('|').map((s: string) => s.trim()) : [];
+
+            // Handle Global Targets
+            if (targetSector) csvSectors.push(targetSector);
+            if (targetWatchlist) csvWatchlists.push(targetWatchlist);
+
+            // Deduplicate
+            const uniqueSectors = Array.from(new Set(csvSectors));
+            const uniqueWatchlists = Array.from(new Set(csvWatchlists));
+
+            // For Creation
+            createData.sectors = uniqueSectors;
+            createData.watchlists = uniqueWatchlists;
+
+            // For Update
+            if (uniqueSectors.length > 0) {
+                updateData.$addToSet.sectors = { $each: uniqueSectors };
+            }
+            if (uniqueWatchlists.length > 0) {
+                updateData.$addToSet.watchlists = { $each: uniqueWatchlists };
             }
 
-            if (row.sectors) {
-                update.sectors = row.sectors.split('|').map((s: string) => s.trim()); // Assume pipe separated for arrays in CSV
-            }
+            // Clean up empty update operators
+            if (Object.keys(updateData.$set).length === 0) delete updateData.$set;
+            if (Object.keys(updateData.$addToSet).length === 0) delete updateData.$addToSet;
 
-            if (row.watchlists) {
-                update.watchlists = row.watchlists.split('|').map((s: string) => s.trim());
-            }
-
-            // Check if exists to determine if we need to set _id (for new docs)
             const existing = await Symbol.findOne(filter);
             if (existing) {
-                await Symbol.updateOne(filter, { $set: update });
-                updatedCount++;
+                if (Object.keys(updateData).length > 0) {
+                    await Symbol.updateOne(filter, updateData);
+                    updatedCount++;
+                }
             } else {
-                update.symbol = row.symbol;
-                update._id = new mongoose.Types.ObjectId();
-                await Symbol.create(update);
+                createData._id = new mongoose.Types.ObjectId();
+                await Symbol.create(createData);
                 createdCount++;
             }
         }
