@@ -1,8 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Switch, Input, Button, Modal, Form, Select, message, Tag } from 'antd';
-import { EditOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Switch, Input, Button, Modal, Form, Select, message, Tag, Space, Upload, Dropdown, MenuProps, Popconfirm } from 'antd';
+import {
+    EditOutlined,
+    SearchOutlined,
+    PlusOutlined,
+    UploadOutlined,
+    DeleteOutlined,
+    MoreOutlined,
+    ExclamationCircleOutlined
+} from '@ant-design/icons';
+import type { UploadProps } from 'antd';
 
 interface SymbolData {
     _id: string;
@@ -23,9 +32,22 @@ export default function SymbolsPage() {
     const [search, setSearch] = useState('');
     const [isLiquidFilter, setIsLiquidFilter] = useState<boolean | undefined>(undefined);
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    // Selection
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+    // Modals
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [editingSymbol, setEditingSymbol] = useState<SymbolData | null>(null);
+
+    // Bulk Action Modals
+    const [isBulkActionModalOpen, setIsBulkActionModalOpen] = useState(false);
+    const [bulkActionType, setBulkActionType] = useState<'add_sector' | 'add_watchlist' | null>(null);
+    const [bulkActionValue, setBulkActionValue] = useState('');
+
     const [form] = Form.useForm();
+    const [addForm] = Form.useForm();
 
     const fetchSymbols = async () => {
         setLoading(true);
@@ -58,6 +80,29 @@ export default function SymbolsPage() {
         fetchSymbols();
     }, [page, pageSize, search, isLiquidFilter]);
 
+    // --- CRUD Operations ---
+
+    const handleCreate = async (values: any) => {
+        try {
+            const res = await fetch('/api/v1/admin/symbols', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(values),
+            });
+            const data = await res.json();
+            if (data.success) {
+                message.success('Symbol created');
+                setIsAddModalOpen(false);
+                addForm.resetFields();
+                fetchSymbols();
+            } else {
+                message.error(data.error);
+            }
+        } catch (error) {
+            message.error('Failed to create symbol');
+        }
+    };
+
     const handleUpdate = async (id: string, updates: Partial<SymbolData>) => {
         try {
             const res = await fetch('/api/v1/admin/symbols', {
@@ -67,7 +112,7 @@ export default function SymbolsPage() {
             });
             const data = await res.json();
             if (data.success) {
-                message.success('Symbol updated successfully');
+                message.success('Symbol updated');
                 fetchSymbols();
                 return true;
             } else {
@@ -80,6 +125,75 @@ export default function SymbolsPage() {
         }
     };
 
+    const handleDelete = async (ids: string[]) => {
+        try {
+            const res = await fetch(`/api/v1/admin/symbols?ids=${ids.join(',')}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+            if (data.success) {
+                message.success(data.message);
+                setSelectedRowKeys([]);
+                fetchSymbols();
+            } else {
+                message.error(data.error);
+            }
+        } catch (error) {
+            message.error('Failed to delete symbols');
+        }
+    };
+
+    // --- Bulk Operations ---
+
+    const handleBulkUpdate = async (action: string, value: any) => {
+        if (selectedRowKeys.length === 0) return;
+        try {
+            const res = await fetch('/api/v1/admin/symbols', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ids: selectedRowKeys,
+                    action,
+                    value
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                message.success('Bulk update successful');
+                setSelectedRowKeys([]);
+                setIsBulkActionModalOpen(false);
+                setBulkActionValue('');
+                fetchSymbols();
+            } else {
+                message.error(data.error);
+            }
+        } catch (error) {
+            message.error('Failed to perform bulk update');
+        }
+    };
+
+    // --- Upload ---
+    const uploadProps: UploadProps = {
+        name: 'file',
+        action: '/api/v1/admin/symbols/upload',
+        showUploadList: false,
+        onChange(info) {
+            if (info.file.status === 'done') {
+                if (info.file.response.success) {
+                    message.success(`${info.file.name} uploaded successfully. ${info.file.response.message}`);
+                    setIsUploadModalOpen(false);
+                    fetchSymbols();
+                } else {
+                    message.error(`${info.file.name} upload failed: ${info.file.response.error}`);
+                }
+            } else if (info.file.status === 'error') {
+                message.error(`${info.file.name} upload failed.`);
+            }
+        },
+    };
+
+    // --- UI Helpers ---
+
     const openEditModal = (record: SymbolData) => {
         setEditingSymbol(record);
         form.setFieldsValue({
@@ -89,16 +203,16 @@ export default function SymbolsPage() {
             watchlists: record.watchlists,
             is_liquid: record.is_liquid,
         });
-        setIsModalOpen(true);
+        setIsEditModalOpen(true);
     };
 
-    const handleModalOk = async () => {
+    const handleEditOk = async () => {
         try {
             const values = await form.validateFields();
             if (editingSymbol) {
                 const success = await handleUpdate(editingSymbol._id, values);
                 if (success) {
-                    setIsModalOpen(false);
+                    setIsEditModalOpen(false);
                     setEditingSymbol(null);
                 }
             }
@@ -107,22 +221,69 @@ export default function SymbolsPage() {
         }
     };
 
+    const bulkMenuProps: MenuProps = {
+        items: [
+            {
+                key: 'active',
+                label: 'Set Status: Active',
+                onClick: () => handleBulkUpdate('update_status', 'Active'),
+            },
+            {
+                key: 'inactive',
+                label: 'Set Status: Inactive',
+                onClick: () => handleBulkUpdate('update_status', 'Inactive'),
+            },
+            {
+                key: 'liquid',
+                label: 'Set Liquid: True',
+                onClick: () => handleBulkUpdate('update_liquidity', true),
+            },
+            {
+                key: 'not_liquid',
+                label: 'Set Liquid: False',
+                onClick: () => handleBulkUpdate('update_liquidity', false),
+            },
+            {
+                type: 'divider',
+            },
+            {
+                key: 'add_sector',
+                label: 'Add Sector...',
+                onClick: () => {
+                    setBulkActionType('add_sector');
+                    setIsBulkActionModalOpen(true);
+                },
+            },
+            {
+                key: 'add_watchlist',
+                label: 'Add Watchlist...',
+                onClick: () => {
+                    setBulkActionType('add_watchlist');
+                    setIsBulkActionModalOpen(true);
+                },
+            },
+        ],
+    };
+
     const columns = [
         {
             title: 'Symbol',
             dataIndex: 'symbol',
             key: 'symbol',
+            fixed: 'left' as const,
             render: (text: string) => <b>{text}</b>,
         },
         {
             title: 'Company Name',
             dataIndex: 'company_name',
             key: 'company_name',
+            responsive: ['md'],
         },
         {
             title: 'Sectors',
             dataIndex: 'sectors',
             key: 'sectors',
+            responsive: ['lg'],
             render: (sectors: string[]) => (
                 <>
                     {sectors?.map((sector) => (
@@ -153,42 +314,82 @@ export default function SymbolsPage() {
         {
             title: 'Actions',
             key: 'actions',
+            fixed: 'right' as const,
             render: (_: any, record: SymbolData) => (
-                <Button icon={<EditOutlined />} onClick={() => openEditModal(record)} />
+                <Space>
+                    <Button icon={<EditOutlined />} size="small" onClick={() => openEditModal(record)} />
+                    <Popconfirm title="Delete symbol?" onConfirm={() => handleDelete([record._id])}>
+                        <Button icon={<DeleteOutlined />} size="small" danger />
+                    </Popconfirm>
+                </Space>
             ),
         },
     ];
 
     return (
-        <div>
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1>Symbol Management</h1>
-                <div style={{ display: 'flex', gap: 10 }}>
-                    <Select
-                        placeholder="Filter by Liquidity"
-                        allowClear
-                        style={{ width: 150 }}
-                        onChange={(value) => setIsLiquidFilter(value === 'true' ? true : value === 'false' ? false : undefined)}
-                        options={[
-                            { value: 'true', label: 'Liquid' },
-                            { value: 'false', label: 'Not Liquid' },
-                        ]}
-                    />
-                    <Input
-                        placeholder="Search symbols..."
-                        prefix={<SearchOutlined />}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        style={{ width: 200 }}
-                    />
-                </div>
+        <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                <h1 style={{ margin: 0 }}>Symbol Management</h1>
+                <Space wrap>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsAddModalOpen(true)}>
+                        Add Symbol
+                    </Button>
+                    <Button icon={<UploadOutlined />} onClick={() => setIsUploadModalOpen(true)}>
+                        Upload CSV
+                    </Button>
+                </Space>
             </div>
 
+            <div style={{ marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Select
+                    placeholder="Filter by Liquidity"
+                    allowClear
+                    style={{ width: 150 }}
+                    onChange={(value) => setIsLiquidFilter(value === 'true' ? true : value === 'false' ? false : undefined)}
+                    options={[
+                        { value: 'true', label: 'Liquid' },
+                        { value: 'false', label: 'Not Liquid' },
+                    ]}
+                />
+                <Input
+                    placeholder="Search symbols..."
+                    prefix={<SearchOutlined />}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ width: 200 }}
+                />
+            </div>
+
+            {selectedRowKeys.length > 0 && (
+                <div style={{ marginBottom: 16, padding: 12, background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <span>Selected {selectedRowKeys.length} items</span>
+                    <Space>
+                        <Popconfirm
+                            title={`Delete ${selectedRowKeys.length} symbols?`}
+                            description="This will also delete associated Demand Zones."
+                            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+                            onConfirm={() => handleDelete(selectedRowKeys as string[])}
+                        >
+                            <Button danger icon={<DeleteOutlined />}>Delete Selected</Button>
+                        </Popconfirm>
+
+                        <Dropdown menu={bulkMenuProps}>
+                            <Button icon={<MoreOutlined />}>Bulk Actions</Button>
+                        </Dropdown>
+                    </Space>
+                </div>
+            )}
+
             <Table
-                columns={columns}
+                columns={columns as any}
                 dataSource={symbols}
                 rowKey="_id"
                 loading={loading}
+                rowSelection={{
+                    selectedRowKeys,
+                    onChange: (keys) => setSelectedRowKeys(keys),
+                }}
+                scroll={{ x: 1000 }}
                 pagination={{
                     current: page,
                     pageSize: pageSize,
@@ -200,11 +401,12 @@ export default function SymbolsPage() {
                 }}
             />
 
+            {/* Edit Modal */}
             <Modal
                 title={`Edit Symbol: ${editingSymbol?.symbol}`}
-                open={isModalOpen}
-                onOk={handleModalOk}
-                onCancel={() => setIsModalOpen(false)}
+                open={isEditModalOpen}
+                onOk={handleEditOk}
+                onCancel={() => setIsEditModalOpen(false)}
             >
                 <Form form={form} layout="vertical">
                     <Form.Item name="company_name" label="Company Name">
@@ -226,6 +428,60 @@ export default function SymbolsPage() {
                         <Switch />
                     </Form.Item>
                 </Form>
+            </Modal>
+
+            {/* Add Modal */}
+            <Modal
+                title="Add New Symbol"
+                open={isAddModalOpen}
+                onOk={() => addForm.submit()}
+                onCancel={() => setIsAddModalOpen(false)}
+            >
+                <Form form={addForm} layout="vertical" onFinish={handleCreate}>
+                    <Form.Item name="symbol" label="Symbol" rules={[{ required: true }]}>
+                        <Input placeholder="e.g. RELIANCE" />
+                    </Form.Item>
+                    <Form.Item name="company_name" label="Company Name">
+                        <Input placeholder="e.g. Reliance Industries" />
+                    </Form.Item>
+                    <Form.Item name="sectors" label="Sectors">
+                        <Select mode="tags" placeholder="Add sectors" />
+                    </Form.Item>
+                    <Form.Item name="is_liquid" label="Is Liquid" valuePropName="checked">
+                        <Switch />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Upload Modal */}
+            <Modal
+                title="Upload Symbols CSV"
+                open={isUploadModalOpen}
+                footer={null}
+                onCancel={() => setIsUploadModalOpen(false)}
+            >
+                <p>CSV Format: symbol, company_name, sectors, watchlists, is_liquid, status</p>
+                <p>Note: Sectors and Watchlists should be pipe (|) separated.</p>
+                <Upload.Dragger {...uploadProps}>
+                    <p className="ant-upload-drag-icon">
+                        <UploadOutlined />
+                    </p>
+                    <p className="ant-upload-text">Click or drag file to this area to upload</p>
+                </Upload.Dragger>
+            </Modal>
+
+            {/* Bulk Action Input Modal */}
+            <Modal
+                title={bulkActionType === 'add_sector' ? 'Add Sector to Selected' : 'Add Watchlist to Selected'}
+                open={isBulkActionModalOpen}
+                onOk={() => handleBulkUpdate(bulkActionType!, bulkActionValue)}
+                onCancel={() => setIsBulkActionModalOpen(false)}
+            >
+                <Input
+                    placeholder={bulkActionType === 'add_sector' ? 'Sector Name' : 'Watchlist Name'}
+                    value={bulkActionValue}
+                    onChange={(e) => setBulkActionValue(e.target.value)}
+                />
             </Modal>
         </div>
     );
