@@ -236,7 +236,7 @@ export default function UsersPage() {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">User Management</h1>
-                <Link href="/v1/dashboard/admin">
+                <Link href="/v1/admin">
                     <Button>Back to Dashboard</Button>
                 </Link>
             </div>

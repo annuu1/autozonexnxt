@@ -12,6 +12,7 @@ const symbolSchema = new Schema(
     day_low: { type: Number },
     updated_at: { type: Date },
     status: { type: String },
+    is_liquid: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
