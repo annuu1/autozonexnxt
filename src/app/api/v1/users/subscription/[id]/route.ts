@@ -15,7 +15,7 @@ export async function GET(
     }
 
     await dbConnect();
-    
+
     const user = await User.findById(params.id);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -31,6 +31,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const { id } = await params;
   try {
     const auth = await requireAuth(req, { rolesAllowed: ["admin", "manager", "associate", "user"] });
     if (!("ok" in auth) || !auth.ok) {
@@ -39,7 +40,7 @@ export async function PATCH(
 
     await dbConnect();
 
-    const user = await User.findById(params.id);
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -84,7 +85,7 @@ export async function PATCH(
       user.subscription.status = "active";
       user.subscription.plan = "starter";
       user.subscription.startDate = new Date();
-      
+
       // Set trial end date (e.g., 7 days from now)
       const trialEndDate = new Date();
       trialEndDate.setDate(trialEndDate.getDate() + 7);
