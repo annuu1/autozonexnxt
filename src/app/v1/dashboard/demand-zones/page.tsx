@@ -166,7 +166,7 @@ export default function DemandZonesPage() {
               { value: "day_low", label: "Day Low" },
             ]}
           />
-            {/* ⭐ NEW - Seen Filter */}
+          {/* ⭐ NEW - Seen Filter */}
           <Select
             value={includeSeen}
             onChange={(v) => setIncludeSeen(v)}
@@ -214,9 +214,10 @@ export default function DemandZonesPage() {
             <Card
               key={zone._id}
               className="shadow-sm"
-              style={{ transition: "0.2s ease",
+              style={{
+                transition: "0.2s ease",
                 border: zone.last_seen ? "2px solid #52c41a" : "1px solid #f0f0f0",
-               }}
+              }}
               bodyStyle={{ padding: 14 }}
             >
               {/* HEADER */}
@@ -263,7 +264,7 @@ export default function DemandZonesPage() {
                       {getDiffTag(
                         ((ltp - zone.proximal_line) /
                           zone.proximal_line) *
-                          100
+                        100
                       )}
                     </Space>
                   ) : (
@@ -279,7 +280,7 @@ export default function DemandZonesPage() {
                       {getDiffTag(
                         ((dayLow - zone.proximal_line) /
                           zone.proximal_line) *
-                          100
+                        100
                       )}
                     </Space>
                   ) : (
@@ -290,14 +291,14 @@ export default function DemandZonesPage() {
 
               {/* FOOTER: Alert Button */}
               <div className="flex justify-end mt-2" style={{ gap: 12 }}>
-                 <div className="mr-3">
-                                      <Reactions
-                                        itemId={zone._id}
-                                        type="zone"
-                                        allItemIds={zones.map((z: any) => z._id)}
-                                        teamPickEnabled
-                                      />
-                                    </div>
+                <div className="mr-3">
+                  <Reactions
+                    itemId={zone._id}
+                    type="zone"
+                    allItemIds={zones.map((z: any) => z._id)}
+                    teamPickEnabled
+                  />
+                </div>
 
                 {/* Quick Alert Button */}
                 <BellOutlined
