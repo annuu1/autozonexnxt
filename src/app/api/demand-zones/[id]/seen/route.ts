@@ -9,7 +9,7 @@ export async function POST(
 ) {
   await dbConnect();
 
-  const { id } = context.params; // ✅ no "await"
+  const { id } = await context.params; // ✅ no "await"
 
   // validate objectId
   if (!Types.ObjectId.isValid(id)) {
