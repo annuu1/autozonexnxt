@@ -7,9 +7,10 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const id = await params.id;
   try {
     await dbConnect();
-    const trade = await TradeAnalysis.findById(params.id);
+    const trade = await TradeAnalysis.findById(id);
 
     if (!trade) {
       return NextResponse.json(
@@ -32,12 +33,13 @@ export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const id = await params.id;
   try {
     await dbConnect();
     const body = await req.json();
 
     const updatedTrade = await TradeAnalysis.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true, runValidators: true }
     );
@@ -63,10 +65,11 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const id = await params.id;
   try {
     await dbConnect();
 
-    const deletedTrade = await TradeAnalysis.findByIdAndDelete(params.id);
+    const deletedTrade = await TradeAnalysis.findByIdAndDelete(id);
 
     if (!deletedTrade) {
       return NextResponse.json(
