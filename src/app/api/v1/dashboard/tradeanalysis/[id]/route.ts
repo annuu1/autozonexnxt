@@ -7,7 +7,7 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = await params.id;
+  const { id } = await params;
   try {
     await dbConnect();
     const trade = await TradeAnalysis.findById(id);
@@ -33,7 +33,7 @@ export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = await params.id;
+  const { id } = await params;
   try {
     await dbConnect();
     const body = await req.json();
@@ -65,7 +65,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = await params.id;
+  const { id } = await params;
   try {
     await dbConnect();
 
