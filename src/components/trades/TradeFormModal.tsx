@@ -7,23 +7,37 @@ import TradeForm from "./TradeForm";
 export default function TradeFormModal({
   onSuccess,
   trigger,
+  initialValues,
 }: {
   onSuccess?: () => void;
-  trigger?: React.ReactNode; // custom button if needed
+  trigger?: React.ReactNode;
+  initialValues?: any;
 }) {
   const [visible, setVisible] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+
+  // set form values when opening
+  React.useEffect(() => {
+    if (visible && initialValues) {
+      form.setFieldsValue(initialValues);
+    } else if (visible) {
+      form.resetFields();
+    }
+  }, [visible, initialValues, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
 
+      const method = initialValues?._id ? "PUT" : "POST";
+      const payload = { ...values, _id: initialValues?._id };
+
       const res = await fetch("/api/v1/trades", {
-        method: "POST",
+        method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Failed to add trade");
@@ -46,7 +60,7 @@ export default function TradeFormModal({
         <span onClick={() => setVisible(true)}>{trigger}</span>
       ) : (
         <Button type="primary" onClick={() => setVisible(true)}>
-         <span style={{ marginRight: 8, fontSize: 16, fontWeight: "bold", color: "#fff" }}>+</span> Add
+          <span style={{ marginRight: 8, fontSize: 16, fontWeight: "bold", color: "#fff" }}>+</span> Add
         </Button>
       )}
 
