@@ -29,6 +29,8 @@ const ActivityLogSchema = new Schema<IActivityLog>(
 ActivityLogSchema.index({ userId: 1 });
 ActivityLogSchema.index({ action: 1 });
 ActivityLogSchema.index({ endpoint: 1 });
+// Add TTL index to automatically delete logs older than 7 days (604800 seconds)
+ActivityLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
 
 export default mongoose.models.ActivityLog ||
   mongoose.model<IActivityLog>("ActivityLog", ActivityLogSchema);

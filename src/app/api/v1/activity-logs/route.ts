@@ -14,19 +14,7 @@ export async function POST(req: Request) {
 
     const log = await ActivityLog.create(body);
 
-    // After inserting, check total count
-    const total = await ActivityLog.countDocuments();
-
-    if (total > 3000) {
-      // delete the oldest 2000 records
-      await ActivityLog.find({})
-        .sort({ createdAt: 1 }) // oldest first
-        .limit(2000)
-        .then((oldLogs) => {
-          const ids = oldLogs.map((l) => l._id);
-          return ActivityLog.deleteMany({ _id: { $in: ids } });
-        });
-    }
+    // Manual cleanup removed in favor of MongoDB TTL index
 
     return NextResponse.json(log, { status: 201 });
   } catch (error: any) {
@@ -63,7 +51,7 @@ export async function GET(req: Request) {
     const logs = await Promise.all(
       rawLogs.map(async (log) => {
         let userDetails: any = null;
-    
+
         if (log.userId && log.userId.toLowerCase() !== "guest") {
           try {
             // Convert string ID to ObjectId
@@ -83,7 +71,7 @@ export async function GET(req: Request) {
             subscription: null,
           };
         }
-    
+
         return {
           ...log,
           user: userDetails,
