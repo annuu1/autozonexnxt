@@ -48,10 +48,10 @@ export const features = {
     minPlan: "starter" as const,
     allowedRoles: ["admin", "manager", "user"], 
   },
-  trades: { 
+  journal: { 
     enabled: true,
-    minPlan: "pro" as const,
-    allowedRoles: ["admin"], 
+    minPlan: "freemium" as const,
+    allowedRoles: ["admin", "manager", "user", "associate"], 
   },
   zonesReport: { 
     enabled: true,
