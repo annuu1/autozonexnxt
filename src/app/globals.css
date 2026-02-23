@@ -3,6 +3,28 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #0ea5e9;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0ea5e9;
+  --chart-1: #0ea5e9;
+  --chart-2: #f59e0b;
+  --chart-3: #10b981;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
 }
 
 @theme inline {
@@ -10,6 +32,33 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #0a0a0a;
+  --card-foreground: #ededed;
+  --popover: #0a0a0a;
+  --popover-foreground: #ededed;
+  --primary: #0ea5e9;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #0ea5e9;
+  --chart-1: #0ea5e9;
+  --chart-2: #f59e0b;
+  --chart-3: #10b981;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +72,299 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Ant Design dark mode overrides */
+.dark .ant-layout {
+  background: var(--background) !important;
+}
+
+.dark .ant-layout-header {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-layout-sider {
+  background: var(--card) !important;
+}
+
+.dark .ant-menu {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-menu-item {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-menu-item:hover {
+  background: var(--accent) !important;
+}
+
+.dark .ant-menu-item-selected {
+  background: var(--accent) !important;
+  color: var(--primary) !important;
+}
+
+.dark .ant-card {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-table {
+  background: var(--card) !important;
+}
+
+.dark .ant-table-thead > tr > th {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-table-tbody > tr > td {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-table-tbody > tr:hover > td {
+  background: var(--accent) !important;
+}
+
+.dark .ant-btn {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-btn:hover {
+  background: var(--accent) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-btn-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.dark .ant-input {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-select {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-select-selector {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-modal-content {
+  background: var(--card) !important;
+}
+
+.dark .ant-modal-header {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-modal-title {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-dropdown-menu {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-dropdown-menu-item {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-dropdown-menu-item:hover {
+  background: var(--accent) !important;
+}
+
+.dark .ant-tooltip-inner {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-popover-inner {
+  background: var(--card) !important;
+}
+
+.dark .ant-popover-inner-content {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-divider {
+  border-color: var(--border) !important;
+}
+
+.dark .ant-spin-dot-item {
+  background-color: var(--primary) !important;
+}
+
+/* Custom scrollbar for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* Additional dark mode fixes for content areas */
+.dark .ant-layout-content {
+  background: var(--background) !important;
+}
+
+.dark .ant-card-body {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-typography {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-typography h1,
+.dark .ant-typography h2,
+.dark .ant-typography h3,
+.dark .ant-typography h4,
+.dark .ant-typography h5,
+.dark .ant-typography h6 {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-statistic-title {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-statistic-content {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-tag {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-badge {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-progress-text {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-empty-description {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-result-title {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-result-subtitle {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-list-item {
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .ant-list-item-meta-title {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-list-item-meta-description {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-descriptions-item-label {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-descriptions-item-content {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-timeline-item-content {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-timeline-item-head {
+  border-color: var(--border) !important;
+}
+
+.dark .ant-steps-item-title {
+  color: var(--foreground) !important;
+}
+
+.dark .ant-steps-item-description {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-breadcrumb {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-breadcrumb a {
+  color: var(--primary) !important;
+}
+
+.dark .ant-breadcrumb-separator {
+  color: var(--muted-foreground) !important;
+}
+
+.dark .ant-back-top {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ant-back-top:hover {
+  background: var(--accent) !important;
+}
+
+/* Custom scrollbar for all dark mode elements */
+.dark *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
 }

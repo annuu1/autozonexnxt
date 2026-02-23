@@ -34,6 +34,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import { usePathname } from "next/navigation";
 import ExpiringSoonBanner from "@/components/common/ExpiringSoonBanner";
 import OtherChannelsModal from "@/components/common/OtherChannelsModal";
+import ThemeToggle from "@/components/common/ThemeToggle";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -213,11 +214,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Header
           style={{
             padding: "0 16px",
-            background: "#fff",
+            background: "var(--card)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid #f0f0f0",
+            borderBottom: "1px solid var(--border)",
             position: "sticky",
             top: 0,
             zIndex: 1,
@@ -242,6 +243,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {isExpiringSoon && (
             <ExpiringSoonBanner derivedEndDate={derivedEndDate} daysLeft={daysLeft} />
           )}
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
 
           {/* {user && (
@@ -288,7 +292,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           style={{
             margin: screens.xs ? "12px" : "24px 16px",
             padding: screens.xs ? 12 : 24,
-            background: "#fff",
+            background: "var(--background)",
             borderRadius: 8,
             minHeight: "calc(100vh - 112px)", // adjust for header
             position: "relative",
@@ -315,8 +319,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
-                background: "#fff",
-                border: "1px solid #ddd",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 padding: 24,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",

@@ -143,7 +143,7 @@ export default function DemandZonesPage() {
       <Title level={3}>📈 Demand Zones</Title>
 
       {/* 🔹 Filters */}
-      <Card size="small" style={{ marginBottom: 16 }}>
+      <Card size="small" style={{ marginBottom: 16, background: "var(--card)", borderColor: "var(--border)" }}>
         <Space
           wrap
           direction={screens.xs ? "vertical" : "horizontal"}
@@ -216,9 +216,10 @@ export default function DemandZonesPage() {
               className="shadow-sm"
               style={{
                 transition: "0.2s ease",
-                border: zone.last_seen ? "2px solid #52c41a" : "1px solid #f0f0f0",
+                border: zone.last_seen ? "2px solid #52c41a" : "1px solid var(--border)",
+                background: "var(--card)",
               }}
-              bodyStyle={{ padding: 14 }}
+              bodyStyle={{ padding: 14, background: "var(--card)" }}
             >
               {/* HEADER */}
               <div className="flex justify-between items-center mb-1">
@@ -231,7 +232,7 @@ export default function DemandZonesPage() {
                     fontWeight: 600,
                     fontSize: 17,
                     cursor: "pointer",
-                    color: "#1677ff",
+                    color: "var(--primary)",
                   }}
                 >
                   {zone.ticker}

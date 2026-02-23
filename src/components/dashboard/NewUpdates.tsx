@@ -3,15 +3,15 @@ import { Card, Button, message } from "antd";
 
 export default function NewUpdates(user: any) {
   return (
-    <Card title="🔥 Don’t Miss Out: Hot News & Updates" style={{ marginTop: 24 }}>
+    <Card title="🔥 Don't Miss Out: Hot News & Updates" style={{ marginTop: 24, background: "var(--card)", borderColor: "var(--border)" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         
         {/* Hot News / Announcements */}
         <div
           style={{
             padding: "10px",
-            background: "#fffbe6",
-            border: "1px solid #ffe58f",
+            background: "var(--muted)",
+            border: "1px solid var(--border)",
             borderRadius: 8,
           }}
         >
@@ -51,12 +51,12 @@ export default function NewUpdates(user: any) {
         <div
           style={{
             padding: "20px",
-            background: "linear-gradient(135deg, #0088cc, #1e90ff)",
+            background: "linear-gradient(135deg, var(--primary), #1e90ff)",
             color: "#fff",
             borderRadius: 12,
             textAlign: "center",
             boxShadow: "0 6px 16px rgba(0,0,0,0.3)",
-            border: "2px solid #40c4ff",
+            border: "2px solid var(--primary)",
             position: "relative",
             overflow: "hidden",
           }}
@@ -89,13 +89,14 @@ export default function NewUpdates(user: any) {
               // {user.invitedBy !== null ? `https://t.me/autozonex_nxt` : "https://t.me/autozonex_nxt"}
               target="_blank"
               style={{
-                background: "#fff",
-                color: "#0088cc",
+                background: "var(--card)",
+                color: "var(--primary)",
                 fontWeight: "bold",
                 padding: "0 24px",
                 height: "48px",
                 borderRadius: "8px",
                 transition: "transform 0.2s",
+                border: "1px solid var(--border)",
               }}
             >
               🔗 Join Telegram Now
@@ -106,13 +107,14 @@ export default function NewUpdates(user: any) {
               href="https://www.youtube.com/@AutozonexOfficial"
               target="_blank"
               style={{
-                background: "#fff",
+                background: "var(--card)",
                 color: "#ff0000",
                 fontWeight: "bold",
                 padding: "0 24px",
                 height: "48px",
                 borderRadius: "8px",
                 transition: "transform 0.2s",
+                border: "1px solid var(--border)",
               }}
             >
               📺 Subscribe on YouTube
