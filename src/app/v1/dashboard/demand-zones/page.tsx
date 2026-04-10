@@ -26,6 +26,7 @@ import {
 import QuickAlertModal from "@/components/alerts/QuickAlertModal";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import Reactions from "@/components/ui/Reactions";
+import ZoneCard from "@/components/common/ZoneCard";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -206,139 +207,19 @@ export default function DemandZonesPage() {
           gap: "16px",
         }}
       >
-        {zones.map((zone) => {
-          const ltp = zone.symbol_data?.ltp;
-          const dayLow = zone.symbol_data?.day_low;
-
-          return (
-            <Card
-              key={zone._id}
-              className="shadow-sm"
-              style={{
-                transition: "0.2s ease",
-                border: zone.last_seen ? "2px solid #52c41a" : "1px solid var(--border)",
-                background: "var(--card)",
-              }}
-              bodyStyle={{ padding: 14, background: "var(--card)" }}
-            >
-              {/* HEADER */}
-              <div className="flex justify-between items-center mb-1">
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCardClick(zone);
-                  }}
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 17,
-                    cursor: "pointer",
-                    color: "var(--primary)",
-                  }}
-                >
-                  {zone.ticker}
-                </span>
-
-                <CopyOutlined
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copy(zone.ticker);
-                    handleLastSeen(zone._id);
-                  }}
-                  style={{ cursor: "pointer", fontSize: 16 }}
-                />
-              </div>
-
-              <Divider style={{ margin: "8px 0" }} />
-
-              <div style={{ fontSize: 14 }}>
-                <div>Timeframe: {zone.timeframes}</div>
-                <div>Pattern: {zone.pattern}</div>
-                <div>Proximal: {formatNumber(zone.proximal_line)}</div>
-                <div>Distal: {formatNumber(zone.distal_line)}</div>
-                <div>Freshness: {zone.freshness}</div>
-
-                <div className="mt-1">
-                  LTP:{" "}
-                  {ltp ? (
-                    <Space size={4}>
-                      <span>{formatNumber(ltp)}</span>
-                      {getDiffTag(
-                        ((ltp - zone.proximal_line) /
-                          zone.proximal_line) *
-                        100
-                      )}
-                    </Space>
-                  ) : (
-                    "-"
-                  )}
-                </div>
-
-                <div className="mt-1">
-                  Day Low:{" "}
-                  {dayLow ? (
-                    <Space size={4}>
-                      <span>{formatNumber(dayLow)}</span>
-                      {getDiffTag(
-                        ((dayLow - zone.proximal_line) /
-                          zone.proximal_line) *
-                        100
-                      )}
-                    </Space>
-                  ) : (
-                    "-"
-                  )}
-                </div>
-              </div>
-
-              {/* FOOTER: Alert Button */}
-              <div className="flex justify-end mt-2" style={{ gap: 12 }}>
-                <div className="mr-3">
-                  <Reactions
-                    itemId={zone._id}
-                    type="zone"
-                    allItemIds={zones.map((z: any) => z._id)}
-                    teamPickEnabled
-                  />
-                </div>
-
-                {/* Quick Alert Button */}
-                <BellOutlined
-                  style={{
-                    fontSize: 18,
-                    color: "#1890ff",
-                    cursor: "pointer",
-                  }}
-                  title="Set alert"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openQuickAlert(zone.ticker);
-                  }}
-                />
-
-                {/* Delete Zone Button */}
-                <Popconfirm
-                  title="Delete this zone?"
-                  okText="Yes"
-                  cancelText="No"
-                  onConfirm={(e) => {
-                    e?.stopPropagation?.();
-                    handleDelete(zone.zone_id);
-                  }}
-                >
-                  <DeleteOutlined
-                    style={{
-                      fontSize: 18,
-                      color: "red",
-                      cursor: "pointer",
-                    }}
-                    title="Delete zone"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </Popconfirm>
-              </div>
-            </Card>
-          );
-        })}
+        {zones.map((zone) => (
+          <ZoneCard
+            key={zone._id}
+            zone={zone}
+            variant="demand"
+            onClick={handleCardClick}
+            onCopy={copy}
+            onAlert={openQuickAlert}
+            onDelete={handleDelete}
+            onLastSeen={handleLastSeen}
+            allItemIds={zones.map((z: any) => z._id)}
+          />
+        ))}
       </div>
 
       {/* Pagination */}

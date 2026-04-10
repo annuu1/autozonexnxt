@@ -6,6 +6,7 @@ import { useReports } from "@/hooks/useReports";
 import Reactions from "@/components/ui/Reactions";
 import { BellOutlined } from "@ant-design/icons";
 import QuickAlertModal from "@/components/alerts/QuickAlertModal";
+import ZoneCard from "@/components/common/ZoneCard";
 
 const { Title } = Typography;
 
@@ -31,100 +32,30 @@ function parseZoneId(zone_id: string) {
   return { symbol, timeframe, date: formattedDate };
 }
 
-function ZoneCard({
-  zone,
-  allItemIds,
-  showReactions = false,
-  onQuickAlert,
-}: {
-  zone: any;
-  allItemIds: string[];
-  showReactions?: boolean;
-  onQuickAlert: (symbol: string) => void;
-}) {
-  const { symbol, timeframe, date } = parseZoneId(zone.zone_id);
+function parseUtcTimeToLocal(zone: any) {
+  const isoDateMatch = zone.zone_id.match(/\d{4}-\d{2}-\d{2}/);
+  const datePart = isoDateMatch ? isoDateMatch[0] : null;
 
-  function parseUtcTimeToLocal(zone: any) {
-    const isoDateMatch = zone.zone_id.match(/\d{4}-\d{2}-\d{2}/);
-    const datePart = isoDateMatch ? isoDateMatch[0] : null;
+  if (!datePart || !zone.time) return zone.time;
 
-    if (!datePart || !zone.time) return zone.time;
+  const time24h = (() => {
+    const [time, modifier] = zone.time.toLowerCase().split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
 
-    const time24h = (() => {
-      const [time, modifier] = zone.time.toLowerCase().split(' ');
-      let [hours, minutes] = time.split(':').map(Number);
+    if (modifier === 'pm' && hours < 12) hours += 12;
+    if (modifier === 'am' && hours === 12) hours = 0;
 
-      if (modifier === 'pm' && hours < 12) hours += 12;
-      if (modifier === 'am' && hours === 12) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+  })();
 
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-    })();
+  const utcDateTimeStr = `${datePart}T${time24h}Z`;
+  const dateObj = new Date(utcDateTimeStr);
 
-    const utcDateTimeStr = `${datePart}T${time24h}Z`;
-    const dateObj = new Date(utcDateTimeStr);
-
-    return dateObj.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  }
-
-  return (
-    <div
-      key={zone._id}
-      className="p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition"
-      style={{
-        transition: "transform 0.15s ease-in-out, box-shadow 0.15s",
-        minWidth: 250,
-        maxWidth: 350,
-        margin: "0 auto",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <strong style={{ fontSize: 16 }}>{symbol}</strong>
-          <BellOutlined
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuickAlert(symbol);
-            }}
-            style={{
-              cursor: "pointer",
-              color: "#1890ff",
-              fontSize: 16,
-            }}
-            title="Set price alert"
-          />
-        </div>
-        <span style={{ fontSize: 12, color: "#555" }}>{parseUtcTimeToLocal(zone)}</span>
-      </div>
-
-      <div className="mt-2 text-sm text-gray-600">
-        <Tag color={timeframe === "1wk" ? "green" : timeframe === "1mo" ? "blue" : "orange"}>
-          {timeframe}
-        </Tag>
-        <Tag>{date}</Tag>
-      </div>
-
-      <div className="mt-1 text-sm text-gray-700">
-        Range: <strong>{zone.range}</strong>
-      </div>
-
-      {showReactions && (
-        <div className="mt-3">
-          <Reactions
-            itemId={zone._id}
-            type="zone"
-            allItemIds={allItemIds}
-            teamPickEnabled
-          />
-        </div>
-      )}
-    </div>
-  );
+  return dateObj.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
 function ZoneSection({
@@ -150,15 +81,27 @@ function ZoneSection({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {data.map((zone) => (
-        <ZoneCard
-          key={zone._id}
-          zone={zone}
-          allItemIds={allIds}
-          showReactions={showReactions}
-          onQuickAlert={onQuickAlert}
-        />
-      ))}
+      {data.map((zone) => {
+        const { symbol, timeframe, date } = parseZoneId(zone.zone_id);
+        const mappedZone = {
+          ...zone,
+          ticker: symbol,
+          timeframes: [timeframe],
+          time: parseUtcTimeToLocal(zone),
+          reportDate: date,
+          showReactions,
+        };
+
+        return (
+          <ZoneCard
+            key={mappedZone._id}
+            zone={mappedZone}
+            variant="report"
+            allItemIds={allIds}
+            onAlert={onQuickAlert}
+          />
+        );
+      })}
     </div>
   );
 }

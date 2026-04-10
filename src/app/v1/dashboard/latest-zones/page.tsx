@@ -15,6 +15,7 @@ import { BellOutlined, CopyOutlined, LockOutlined } from "@ant-design/icons";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import QuickAlertModal from "@/components/alerts/QuickAlertModal";
+import ZoneCard from "@/components/common/ZoneCard";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -194,70 +195,16 @@ export default function LatestZonesPage() {
               gap: "16px",
             }}
           >
-            {(plan === "freemium" ? zones.slice(0, 9) : zones).map((zone) => {
-              const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
-              const formattedDate = match
-                ? new Date(match[0]).toLocaleDateString("en-IN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  timeZone: "Asia/Kolkata",
-                })
-                : null;
-
-              return (
-                <div
-                  key={zone._id}
-                  className="p-3 border rounded-md bg-white shadow-sm cursor-pointer hover:shadow-md transition"
-                  style={{ transition: "transform 0.15s ease-in-out, box-shadow 0.15s" }}
-                  onClick={() => handleCardClick(zone)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <strong>{zone.ticker}</strong>
-                      <div>
-                        {(zone.timeframes || []).map((f: string) => (
-                          <Tag key={f} color={getTimeframeColor(f)} style={{ margin: 0 }}>
-                            {f}
-                          </Tag>
-                        ))}
-                      </div>
-                      <CopyOutlined
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          copy(zone.ticker);
-                        }}
-                        style={{ cursor: "pointer", color: "#555" }}
-                      />
-
-                      {/* Alert Button */}
-                      <BellOutlined
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openQuickAlert(zone.ticker);
-                        }}
-                        style={{
-                          cursor: "pointer",
-                          color: "#1890ff",
-                          fontSize: 16,
-                        }}
-                        title="Set price alert"
-                      />
-
-                    </div>
-                  </div>
-                  <div className="mt-2 text-sm text-gray-600">
-                    {formattedDate && <div>Date: {formattedDate}</div>}
-                    <div>Pattern: {zone.pattern}</div>
-                    <div>Proximal: {Number(zone.proximal_line).toFixed(2)}</div>
-                    <div>Distal: {Number(zone.distal_line).toFixed(2)}</div>
-                    <div>Trade Score: {zone.trade_score}</div>
-                    <div>Freshness: {zone.freshness}</div>
-                    <div>Coinciding Zones: {zone.coinciding_lower_zones.length}</div>
-                  </div>
-                </div>
-              );
-            })}
+            {(plan === "freemium" ? zones.slice(0, 9) : zones).map((zone) => (
+              <ZoneCard
+                key={zone._id}
+                zone={zone}
+                variant="latest"
+                onClick={handleCardClick}
+                onCopy={copy}
+                onAlert={openQuickAlert}
+              />
+            ))}
           </div>
 
           {/* Locked message for Freemium */}

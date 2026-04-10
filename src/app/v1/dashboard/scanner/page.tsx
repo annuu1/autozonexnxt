@@ -28,6 +28,7 @@ import Reactions from "@/components/ui/Reactions";
 import TeamsPickModal from "@/components/scanner/TeamsPickModal";
 import QuickAlertModal from "@/components/alerts/QuickAlertModal";
 import useAuthStore from "@/store/useAuthStore";
+import ZoneCard from "@/components/common/ZoneCard";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -290,143 +291,19 @@ export default function ScannerPage() {
                 gap: "16px",
               }}
             >
-              {paginatedZones.map((zone) => {
-                const locked = isLockedPage;
-
-                const match = zone.zone_id?.match(/\d{4}-\d{2}-\d{2}/);
-                const formattedDate = match
-                  ? new Date(match[0]).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                  : null;
-
-                return (
-                  <div
-                    key={zone._id}
-                    className="p-3 border rounded-md bg-white shadow-sm cursor-pointer relative"
-                    style={{
-                      transition:
-                        "transform 0.15s ease-in-out, box-shadow 0.15s",
-                      ...(locked && {
-                        filter: "blur(3px)",
-                        userSelect: "none", // ✅ disable selection
-                        pointerEvents: "none", // ✅ disable interaction
-                      }),
-                    }}
-                  >
-                    {/* Overlay lock */}
-                    {locked && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          background: "rgba(255,255,255,0.7)",
-                          borderRadius: 8,
-                          zIndex: 10,
-                          userSelect: "none",
-                          pointerEvents: "auto", // allow upgrade button click
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <LockOutlined
-                            style={{ fontSize: 28, color: "#faad14" }}
-                          />
-                          <Button
-                            type="primary"
-                            size="small"
-                            onClick={() =>
-                              (window.location.href = "/v1/dashboard/billing")
-                            }
-                          >
-                            Upgrade
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Card content */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <strong onClick={() => handleCardClick(zone)}>{zone.ticker}</strong>
-
-                        <Space size={4}>
-                          {(zone.timeframes || []).map((f: string) => (
-                            <Tag
-                              key={f}
-                              color={getTimeframeColor(f)}
-                              style={{ margin: 0 }}
-                            >
-                              {f}
-                            </Tag>
-                          ))}
-                        </Space>
-                        <CopyOutlined
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copy(zone.ticker);
-                          }}
-                          style={{ cursor: "pointer", color: "#555" }}
-                        />
-
-                        {/* Alert Button */}
-                        <BellOutlined
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openQuickAlert(zone.ticker);
-                          }}
-                          style={{
-                            cursor: "pointer",
-                            color: "#1890ff",
-                            fontSize: 16,
-                          }}
-                          title="Set price alert"
-                        />
-                      </div>
-                      <Tag
-                        color={zone.status === "entered" ? "green" : "blue"}
-                      >
-                        {zone.status?.toUpperCase()}
-                      </Tag>
-                    </div>
-
-                    <div className="mt-2 text-sm text-gray-600">
-                      {formattedDate && <div>Legout: {formattedDate}</div>}
-                      <div>Pattern: {zone.pattern}</div>
-                      <div>Proximal: {zone.proximal_line?.toFixed(2)}</div>
-                      <div>Distal: {zone.distal_line?.toFixed(2)}</div>
-                      <div>
-                        Approach:{" "}
-                        <span
-                          style={{ fontWeight: "bold", color: "#d46b08" }}
-                        >
-                          {zone.percentDiff.toFixed(3)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      <Reactions
-                        itemId={zone._id}
-                        type="zone"
-                        allItemIds={filteredZones.map((z: any) => z._id)}
-                        teamPickEnabled
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+              {paginatedZones.map((zone) => (
+                <ZoneCard
+                  key={(zone as any)._id || (zone as any).zone_id}
+                  zone={zone}
+                  variant="scanner"
+                  onClick={handleCardClick}
+                  onCopy={copy}
+                  onAlert={openQuickAlert}
+                  locked={isLockedPage}
+                  onUpgrade={() => (window.location.href = "/v1/dashboard/billing")}
+                  allItemIds={filteredZones.map((z: any) => z._id)}
+                />
+              ))}
             </div>
 
             {/* Pagination */}
