@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePwaStore } from "@/store/usePwaStore";
 
 // Utility: basic platform detection
 function usePlatform() {
@@ -25,41 +26,59 @@ function usePlatform() {
 }
 
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const setDeferredPrompt = usePwaStore((state) => state.setDeferredPrompt);
+  const deferredPrompt = usePwaStore((state) => state.deferredPrompt);
+  const setIsInstallable = usePwaStore((state) => state.setIsInstallable);
+  const forceShowPrompt = usePwaStore((state) => state.forceShowPrompt);
+  const setForceShowPrompt = usePwaStore((state) => state.setForceShowPrompt);
+
   const [visible, setVisible] = useState(false);
   const { isIOS, isInStandalone } = usePlatform();
 
   useEffect(() => {
+    if (forceShowPrompt) {
+      setVisible(true);
+      setForceShowPrompt(false);
+    }
+  }, [forceShowPrompt, setForceShowPrompt]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // If already installed, do not show the prompt UI
     if (isInStandalone) {
       setVisible(false);
+      setIsInstallable(false);
       return;
     }
 
-    // Desktop & Android: capture beforeinstallprompt
     const handleBeforeInstallPrompt = (e: any) => {
-      // Stop the mini-infobar
       e.preventDefault();
       setDeferredPrompt(e);
-      setVisible(true);
+      setIsInstallable(true);
+      
+      if (localStorage.getItem("pwa-prompt-dismissed") !== "true") {
+        setVisible(true);
+      }
     };
 
     const handleAppInstalled = () => {
       setVisible(false);
       setDeferredPrompt(null);
+      setIsInstallable(false);
+      localStorage.removeItem("pwa-prompt-dismissed");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
-    // iOS Safari: no beforeinstallprompt; show manual banner
     let iosTimer: any;
     if (isIOS) {
-      iosTimer = setTimeout(() => {
-        setVisible(true);
-      }, 1500);
+      setIsInstallable(true);
+      if (localStorage.getItem("pwa-prompt-dismissed") !== "true") {
+        iosTimer = setTimeout(() => {
+          setVisible(true);
+        }, 1500);
+      }
     }
 
     return () => {
@@ -67,7 +86,12 @@ export default function InstallPrompt() {
       window.removeEventListener("appinstalled", handleAppInstalled);
       if (iosTimer) clearTimeout(iosTimer);
     };
-  }, [isIOS, isInStandalone]);
+  }, [isIOS, isInStandalone, setDeferredPrompt, setIsInstallable]);
+
+  const handleClose = () => {
+    localStorage.setItem("pwa-prompt-dismissed", "true");
+    setVisible(false);
+  };
 
   if (!visible) return null;
 
@@ -84,21 +108,21 @@ export default function InstallPrompt() {
           </span>
         </div>
         {isIOS ? (
-          <IOSInstructions onClose={() => setVisible(false)} />
+          <IOSInstructions onClose={handleClose} />
         ) : (
           <InstallButtons
             onInstall={async () => {
               if (!deferredPrompt) return;
               deferredPrompt.prompt();
               const { outcome } = await deferredPrompt.userChoice;
-              // Hide if accepted or dismissed; we'll show again on a new event
               setVisible(false);
               setDeferredPrompt(null);
+              setIsInstallable(false);
               if (outcome === "accepted") {
-                // no-op; appinstalled event will fire on success
+                // success
               }
             }}
-            onClose={() => setVisible(false)}
+            onClose={handleClose}
           />
         )}
       </div>

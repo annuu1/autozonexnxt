@@ -17,7 +17,8 @@ import {
   AuditOutlined,
   ProfileOutlined,
   CloseOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -35,6 +36,7 @@ import { usePathname } from "next/navigation";
 import ExpiringSoonBanner from "@/components/common/ExpiringSoonBanner";
 import OtherChannelsModal from "@/components/common/OtherChannelsModal";
 import ThemeToggle from "@/components/common/ThemeToggle";
+import { usePwaStore } from "@/store/usePwaStore";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -86,6 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, loading } = useAuthStore();
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const { isInstallable, setForceShowPrompt } = usePwaStore();
 
   const [showExpiryBanner, setShowExpiryBanner] = useState(true);
 
@@ -244,48 +247,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <ExpiringSoonBanner derivedEndDate={derivedEndDate} daysLeft={daysLeft} />
           )}
 
-          {/* Theme Toggle */}
-          <ThemeToggle />
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {isInstallable && (
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                size="middle"
+                onClick={() => setForceShowPrompt(true)}
+              >
+                {!screens.xs && "Install App"}
+              </Button>
+            )}
 
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
-          {/* {user && (
-            <Dropdown overlay={userCard} trigger={["click"]} placement="bottomRight" arrow>
-              <div style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 8 }}>
-                <Avatar size="small" icon={<UserOutlined />} />
-                <span>{user.name}</span>
-                <PlanBadge plan={user?.subscription?.plan || "freemium"} />
-              </div>
-            </Dropdown>
-          )} */}
-
-          {user && !screens.xs && (
-            <Dropdown
-              trigger={["click"]}
-              placement="bottomRight"
-              arrow
-              menu={{
-                items: [
-                  {
-                    key: "user-card",
-                    label: userCard,
-                  },
-                ],
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  gap: 8,
+            {user && !screens.xs && (
+              <Dropdown
+                trigger={["click"]}
+                placement="bottomRight"
+                arrow
+                menu={{
+                  items: [
+                    {
+                      key: "user-card",
+                      label: userCard,
+                    },
+                  ],
                 }}
               >
-                <Avatar size="small" icon={<UserOutlined />} />
-                <span>{user.name}</span>
-                <PlanBadge plan={user?.subscription?.plan || "freemium"} />
-              </div>
-            </Dropdown>
-          )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    gap: 8,
+                  }}
+                >
+                  <Avatar size="small" icon={<UserOutlined />} />
+                  <span>{user.name}</span>
+                  <PlanBadge plan={user?.subscription?.plan || "freemium"} />
+                </div>
+              </Dropdown>
+            )}
+          </div>
         </Header>
 
         <Content
