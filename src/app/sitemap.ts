@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://autozonexnxt.netlify.app/";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://autozonexnxt.netlify.app").replace(/\/$/, "");
 
 // Public routes to include in sitemap (auth/private routes excluded)
 const routes = [
-  "/",
+  "",
+  "/v1/login",
+  "/v1/register",
+  "/v1/forgot-password"
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -15,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     let priority = 0.5;
     let changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"] = "weekly";
 
-    if (path === "/") {
+    if (path === "") {
       priority = 1.0;
       changeFrequency = "weekly";
     }
