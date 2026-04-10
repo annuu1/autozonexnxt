@@ -1,59 +1,30 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import FeatureSlider from "@/components/home/FeatureSlider";
-import { ArrowRightOutlined, ThunderboltFilled } from "@ant-design/icons";
+import { ArrowRightOutlined } from "@ant-design/icons";
+import PublicNavbar from "@/components/layout/PublicNavbar";
+import PublicFooter from "@/components/layout/PublicFooter";
+import PublicBackground from "@/components/layout/PublicBackground";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Home() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500/30 selection:text-blue-200">
-
-      {/* --- Dynamic Background --- */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {/* Grid Pattern */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px',
-            maskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)'
-          }}
-        ></div>
-        {/* Glowing Orbs */}
-        <div className="absolute top-[-20%] left-[20%] w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px]"></div>
-      </div>
-
-      {/* ---- Navbar ---- */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-              <ThunderboltFilled className="text-white text-lg" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">
-              AutoZone<span className="text-blue-500">X</span>
-            </span>
-          </div>
-
-          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-400">
-            <Link href="#features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="#contact" className="hover:text-white transition-colors">Contact</Link>
-          </nav>
-
-          <div className="flex items-center space-x-4">
-            <Link href="/v1/login" className="text-sm font-medium text-gray-300 hover:text-white transition">Login</Link>
-            <Link href="/v1/register" className="px-5 py-2 text-sm font-semibold bg-white text-black rounded-full hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div
+      className="min-h-screen font-sans transition-colors duration-500 flex flex-col"
+      style={{
+        background: isDark ? "#000" : "#fafbfc",
+        color: isDark ? "#fff" : "#111",
+      }}
+    >
+      <PublicBackground />
+      <PublicNavbar />
 
       {/* --- Main Content --- */}
-      <main className="relative z-10 pt-32 pb-20">
+      <main className="relative z-10 pt-32 pb-20 flex-1">
 
         {/* Hero Section */}
         <section className="max-w-5xl mx-auto px-6 text-center mb-24">
@@ -65,11 +36,14 @@ export default function Home() {
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
             Precision Trading with <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]">
-              Supply & Demand Zones
+              Supply &amp; Demand Zones
             </span>
           </h1>
 
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p
+            className="text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+            style={{ color: isDark ? "#9ca3af" : "#666" }}
+          >
             Stop guessing. Start tracking institutional zones with AutoZoneX.
             Real-time scanner, advanced journaling, and automated alerts for the serious trader.
           </p>
@@ -78,13 +52,23 @@ export default function Home() {
             <Link href="/v1/register" className="h-14 px-8 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg flex items-center justify-center transition hover:scale-105 shadow-[0_0_40px_rgba(37,99,235,0.4)]">
               Start Free Trial <ArrowRightOutlined className="ml-2" />
             </Link>
-            <Link href="#demo" className="h-14 px-8 rounded-full border border-white/20 hover:bg-white/5 text-white font-medium text-lg flex items-center justify-center transition">
-              View Live Demo
+            <Link
+              href="/blogs"
+              className="h-14 px-8 rounded-full border font-medium text-lg flex items-center justify-center transition"
+              style={{
+                borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)",
+                color: isDark ? "#fff" : "#333",
+              }}
+            >
+              📈 Read Insights
             </Link>
           </div>
 
           {/* Stats Bar */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-white/10 pt-8 max-w-4xl mx-auto">
+          <div
+            className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 border-t pt-8 max-w-4xl mx-auto"
+            style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }}
+          >
             {[
               { label: "Active Traders", value: "2,500+" },
               { label: "Stocks Tracked", value: "2,600+" },
@@ -92,8 +76,13 @@ export default function Home() {
               { label: "Daily Alerts", value: "10k+" },
             ].map((stat, i) => (
               <div key={i}>
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
-                <div className="text-sm text-gray-500 uppercase tracking-wider">{stat.label}</div>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <div
+                  className="text-sm uppercase tracking-wider"
+                  style={{ color: isDark ? "#6b7280" : "#9ca3af" }}
+                >
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
@@ -108,7 +97,7 @@ export default function Home() {
         <section id="features" className="max-w-7xl mx-auto px-6 mb-24">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Everything you need to <span className="text-blue-400">dominate</span> the market</h2>
-            <p className="text-gray-400">Engineered for speed, accuracy, and discipline.</p>
+            <p style={{ color: isDark ? "#9ca3af" : "#666" }}>Engineered for speed, accuracy, and discipline.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -120,37 +109,52 @@ export default function Home() {
               { title: "Sector Heatmaps", desc: "Visualize sector strength and rotation to pick the right stocks.", icon: "🌡️" },
               { title: "Strategy Testing", desc: "Simulate setups and track win-rates before risking real capital.", icon: "🧪" },
             ].map((card, i) => (
-              <div key={i} className="group p-8 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition hover:border-blue-500/30">
+              <div
+                key={i}
+                className="group p-8 rounded-2xl border transition hover:border-blue-500/30"
+                style={{
+                  borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)",
+                  boxShadow: isDark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
+                }}
+              >
                 <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{card.icon}</div>
-                <h3 className="text-xl font-bold text-white mb-2">{card.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{card.desc}</p>
+                <h3 className="text-xl font-bold mb-2">{card.title}</h3>
+                <p style={{ color: isDark ? "#9ca3af" : "#666" }} className="leading-relaxed">
+                  {card.desc}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Footer CTA */}
-        <section className="max-w-4xl mx-auto px-6 text-center py-20 border-t border-white/10">
+        <section
+          className="max-w-4xl mx-auto px-6 text-center py-20 border-t"
+          style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }}
+        >
           <h2 className="text-4xl font-bold mb-6">Ready to upgrade your trading?</h2>
-          <p className="text-gray-400 mb-8 text-lg">Join thousands of smart traders using AutoZoneX today.</p>
-          <Link href="/v1/register" className="inline-block px-10 py-4 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+          <p className="mb-8 text-lg" style={{ color: isDark ? "#9ca3af" : "#666" }}>
+            Join thousands of smart traders using AutoZoneX today.
+          </p>
+          <Link
+            href="/v1/register"
+            className="inline-block px-10 py-4 font-bold rounded-lg transition"
+            style={{
+              background: isDark ? "#fff" : "#111",
+              color: isDark ? "#000" : "#fff",
+              boxShadow: isDark
+                ? "0 0 30px rgba(255,255,255,0.3)"
+                : "0 0 30px rgba(0,0,0,0.15)",
+            }}
+          >
             Get Started Now
           </Link>
         </section>
 
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 bg-gray-900/50 py-12">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} AutoZoneX Inc. All rights reserved.</p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white transition">Privacy</a>
-            <a href="#" className="hover:text-white transition">Terms</a>
-            <a href="#" className="hover:text-white transition">Twitter</a>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

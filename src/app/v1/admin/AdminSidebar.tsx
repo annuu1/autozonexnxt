@@ -8,6 +8,7 @@ import {
     DashboardOutlined,
     StockOutlined,
     DollarOutlined,
+    FileTextOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -70,6 +71,11 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
             key: '/v1/admin/subscriptions',
             icon: <DollarOutlined />,
             label: <Link href="/v1/admin/subscriptions">Subscriptions</Link>,
+        },
+        {
+            key: '/v1/admin/blogs',
+            icon: <FileTextOutlined />,
+            label: <Link href="/v1/admin/blogs">Blogs</Link>,
         },
     ];
 
