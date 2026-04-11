@@ -103,7 +103,7 @@ export default async function BlogDetail({ params }: { params: any }) {
           <img
             src={blog.coverImage}
             alt={blog.title}
-            className="w-full max-h-[550px] object-cover"
+            className="w-full h-auto max-h-[800px] object-contain rounded-2xl"
           />
         </div>
       )}

@@ -35,7 +35,7 @@ export default function BlogList({ blogs }: { blogs: any[] }) {
             }}
           >
             {b.coverImage ? (
-              <div className="w-full h-56 overflow-hidden relative">
+              <div className="w-full h-auto max-h-[300px] overflow-hidden relative flex justify-center bg-gray-50/50 dark:bg-black/20">
                 <div 
                   className="absolute inset-0 z-10 pointer-events-none transition-colors duration-500"
                   style={{
@@ -47,7 +47,7 @@ export default function BlogList({ blogs }: { blogs: any[] }) {
                 <img
                   src={b.coverImage}
                   alt={b.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
+                  className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-700 ease-in-out"
                 />
                 <div className="absolute bottom-4 left-4 z-20">
                   <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-200 bg-blue-600/60 backdrop-blur-md rounded-full border border-blue-400/30">
