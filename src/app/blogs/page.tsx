@@ -4,6 +4,8 @@ import Blog from '@/models/Blog';
 import dbConnect from '@/lib/mongodb';
 import BlogList from '@/components/blogs/BlogList';
 
+export const revalidate = 3600; // 60 minutes
+
 export const metadata: Metadata = {
   title: 'Blogs',
   description: 'Read the latest blogs, demand & supply strategies, and trading insights from Autozonex.',

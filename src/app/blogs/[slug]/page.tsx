@@ -4,6 +4,8 @@ import { Metadata, ResolvingMetadata } from 'next';
 import Blog from '@/models/Blog';
 import dbConnect from '@/lib/mongodb';
 
+export const revalidate = 3600; // 60 minutes
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://autozonexnxt.netlify.app';
 
 export async function generateMetadata(
